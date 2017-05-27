@@ -1,8 +1,10 @@
 function plot_sanity(data, metadata)
-% Make sure that we didn't fuck up anything
+
+% Some sanity plots. Make sure that we didn't fuck up anything big time
 %
 % INPUT:
 % data, metadata as output by load_data
+%
 
 utils; % include some convenient utils 
 
