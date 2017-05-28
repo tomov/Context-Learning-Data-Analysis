@@ -4,7 +4,15 @@ function plot_behavior(data, metadata, params, which_structures)
 % and a few other goodies. These are the main behavioral plots.
 % 
 % INPUT 
-% same as simulate_subjects
+% data, metadata = subject data and metadata as output by load_data
+% params = vector of hyperparameters:
+%    params(:, 1) = prior_variance
+%    params(:, 2) = inv_softmax_temp
+%          for fixed effects, only have 1 row and these parameters will be
+%          used for all subjects. For random effects, have a separate row
+%          with the parameters for each subject
+% which_structures = which causal structures to use, as a logical vector,
+%                    e.g. [1 1 1 0] = M1, M2, M3
 %
 
 utils; % include some nifty lambdas
