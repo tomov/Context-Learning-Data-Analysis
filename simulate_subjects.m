@@ -57,10 +57,10 @@ for who = metadata.subjects
     s_id = s_id + 1;
     for condition = unique(data.contextRole)'
         which_runs = which_rows & strcmp(data.participant, who) & strcmp(data.contextRole, condition);
-        runs = unique(data.roundId(which_runs))';
+        runs = unique(data.runId(which_runs))';
         for run = runs
-            which_train = which_runs & data.isTrain & data.roundId == run;
-            which_test = which_runs & ~data.isTrain & data.roundId == run;
+            which_train = which_runs & data.isTrain & data.runId == run;
+            which_test = which_runs & ~data.isTrain & data.runId == run;
 
             % figure out the parameters
             %

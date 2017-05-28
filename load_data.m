@@ -29,7 +29,7 @@ function [data, metadata] = load_data(filename, isFmriData, goodSubjects_ords)
 %    .chose_sick = whether the subject chose 'Sick' on that trial
 %    .timeout = whether the subject timed out
 %    .isTrain = is this a training trial (vs. a test trial)
-%    .roundId = which run/round/block of the session
+%    .runId = which run/round/block of the session
 %    .trialId = trial ordinal; test trials start over (1..4)
 %    .contextRole = condition
 %    .participant = subject id as entered in psychopy
@@ -55,7 +55,7 @@ if isFmriData
     [data.drop, data.participant, data.session, data.mriMode, data.isPractice, data.runFilename,...
         data.contextRole, data.contextId, data.cueId, data.sick, data.corrAns, ...
         data.response.keys, data.response.rt, data.response.corr, data.restaurant, data.food, ...
-        data.isTrain, data.roundId, data.trialId, ...
+        data.isTrain, data.runId, data.trialId, ...
         data.trialStartWallTime, data.actualChoiceOnset, data.actualChoiceOffset, ...
         data.actualIsiOnset, data.actualIsiOffset, data.actualFeedbackOnset, data.actualFeedbackOffset, ...
         data.actualItiOnset, data.actualItiOffset, data.actualItiDuration, data.itiDriftAdjustment, ...
@@ -66,7 +66,7 @@ else
     %
     format = '%s %s %s %d %s %s %s %d %d %s %s %s %f %d %s %s %d %d %d';
 
-    [data.participant, data.session, data.mriMode, data.isPractice, data.restaurantsReshuffled, data.foodsReshuffled, data.contextRole, data.contextId, data.cueId, data.sick, data.corrAns, data.response.keys, data.response.rt, data.response.corr, data.restaurant, data.food, data.isTrain, data.roundId, data.trialId] = ...
+    [data.participant, data.session, data.mriMode, data.isPractice, data.restaurantsReshuffled, data.foodsReshuffled, data.contextRole, data.contextId, data.cueId, data.sick, data.corrAns, data.response.keys, data.response.rt, data.response.corr, data.restaurant, data.food, data.isTrain, data.runId, data.trialId] = ...
         textread(filename, format, 'delimiter', ',', 'headerlines', 1);
 end
     
@@ -74,6 +74,7 @@ data.which_rows = logical(true(size(data.participant))); % by default, include a
 data.chose_sick = strcmp(data.response.keys, 'left');
 data.timeout = strcmp(data.response.keys, 'None');
 data.no_response = cellfun(@isempty, data.actualChoiceOffset);
+data.isTest = ~data.isTrain;
 assert(isequal(data.timeout, data.no_response));
 
 metadata.allSubjects = unique(data.participant)';
@@ -92,8 +93,9 @@ end
 
 % Set the metadata
 %
-metadata.roundsPerContext = 3; % = blocks per context = runs per context = runs / 3
-metadata.trialsNReps = 5; % = training trials per round / 4
+metadata.runsPerContext = 3; % = blocks per context = runs per context = runs / 3
+metadata.runsPerSubject = 9;
+metadata.trialRepsPerRun = 5; % = training trials per run / 4
 metadata.trainingTrialsPerRun = 20;
 metadata.testTrialsPerRun = 4;
 metadata.trialsPerRun = metadata.trainingTrialsPerRun + metadata.testTrialsPerRun;
@@ -102,4 +104,8 @@ metadata.N = numel(metadata.subjects);
 metadata.contextRoles = {'irrelevant', 'modulatory', 'additive'};
 metadata.conditions = metadata.contextRoles;
 assert(isequal(sort(metadata.contextRoles), sort(unique(data.contextRole))'));
+
+% Set some more data
+%
+data.newTrialId = data.trialId + data.isTest * metadata.trainingTrialsPerRun; % numbered 1..24 for the run (otherwise it's 1..20 for training trials and 1..4 for test trials)
 

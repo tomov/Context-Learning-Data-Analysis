@@ -15,7 +15,7 @@ function [train_x, train_k, train_r, test_x, test_k] = convert_run(data, metadat
 % test_x, test_k = same but for model_test.m
 %
 
-which_trials = data.which_rows & strcmp(data.participant, who) & data.roundId == run;
+which_trials = data.which_rows & strcmp(data.participant, who) & data.runId == run;
 assert(sum(which_trials) == metadata.trialsPerRun);
 
 which_train = which_trials & data.isTrain;

@@ -53,7 +53,7 @@ function EXPT = context_expt(local)
         
         EXPT.subject(subj).structural = 'struct.nii';
         
-        assert(nRuns{subj} == length(unique(data.roundId(strcmp(data.participant, allSubjects{subj})))));
+        assert(nRuns{subj} == length(unique(data.runId(strcmp(data.participant, allSubjects{subj})))));
         for run = 1:nRuns{subj}
             EXPT.subject(subj).functional{run} = ['run',sprintf('%03d',run),'.nii'];
         end

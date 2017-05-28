@@ -37,8 +37,8 @@ function multi = context_create_multi(glmodel, subj, run)
     % determine whether subjects are good or not before we have run the GLM
     % and inspected for stuff like rotation and such.
     %
-    which_train = ~data.drop & data.isTrain & strcmp(data.participant, allSubjects{subj}) & data.roundId == run;
-    which_test = ~data.drop & ~data.isTrain & strcmp(data.participant, allSubjects{subj}) & data.roundId == run;
+    which_train = ~data.drop & data.isTrain & strcmp(data.participant, allSubjects{subj}) & data.runId == run;
+    which_test = ~data.drop & ~data.isTrain & strcmp(data.participant, allSubjects{subj}) & data.runId == run;
     which_rows = which_test | which_train;
     assert(sum(which_train) == metadata.trainingTrialsPerRun);
     assert(sum(which_test) == metadata.testTrialsPerRun);
@@ -153,7 +153,7 @@ function multi = context_create_multi(glmodel, subj, run)
             % Events 3, 4, 5, 6: Test stimulus, one per
             % condition-cue-context tuple
             %
-            % name = test_{condition}_x{cueId + 1}c{contextId + 1}
+            % name = test_{condition}_x{data.cueId + 1}c{data.contextId + 1}
             %   e.g. test_irrelevant_x1c3
             % onset = stimulus onset
             % duration = 0
@@ -163,11 +163,11 @@ function multi = context_create_multi(glmodel, subj, run)
             % of modulation that we see in behavior
             % just look at the betas then (no pmods for test trials)
             %
-            test_cueIds = cueId(which_test);
-            test_contextIds = contextId(which_test);
+            test_data.cueIds = data.cueId(which_test);
+            test_data.contextIds = data.contextId(which_test);
             test_data.actualChoiceOnsets = cellfun(@str2num, data.actualChoiceOnset(which_test))';
             for i=1:length(test_data.actualChoiceOnsets)
-                multi.names{2 + i} = sprintf('test_%s_x%dc%d', condition, test_cueIds(i) + 1, test_contextIds(i) + 1);
+                multi.names{2 + i} = sprintf('test_%s_x%dc%d', condition, test_data.cueIds(i) + 1, test_data.contextIds(i) + 1);
                 multi.onsets{2 + i} = test_data.actualChoiceOnsets(i);
                 multi.durations{2 + i} = 0;
             end
@@ -2362,14 +2362,14 @@ function multi = context_create_multi(glmodel, subj, run)
             % whether subject thought c1 makes you sick (unlikely but does
             % happen ~25% of the time)
             %{
-            x3c1_choice = response.keys(which_test & cueId == 2 & contextId == 0);
+            x3c1_choice = response.keys(which_test & data.cueId == 2 & data.contextId == 0);
             if strcmp(x3c1_choice, 'left')
                 x3c1_choice = 'sick';
             else
                 x3c1_choice = 'not_sick';
             end
 
-            which_trials = which_train & contextId == 0;
+            which_trials = which_train & data.contextId == 0;
             
             % c1 association @ feedback/outcome onset
             % 
@@ -2378,7 +2378,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = ones(size(data.contextRole(which_trials))); % 1s durations
             
             % whether c1 made you sick on a given trial
-            c1_outcomes = strcmp(corrAns(which_trials & contextId == 0), 'left');
+            c1_outcomes = strcmp(corrAns(which_trials & data.contextId == 0), 'left');
             if ~strcmp(condition, 'additive') % we don't like additive here (c1 always makes you sick)
                 multi.pmod(1).name{1} = 'c1_outcome';
                 multi.pmod(1).param{1} = c1_outcomes'; % whether c1 made you sick on trials 1..20
@@ -2406,14 +2406,14 @@ function multi = context_create_multi(glmodel, subj, run)
         case 102
             % whether subject thought x1 makes you sick (unlikely but does
             % happen ~25% of the time)
-            x1c3_choice = response.keys(which_test & cueId == 0 & contextId == 2);
+            x1c3_choice = response.keys(which_test & data.cueId == 0 & data.contextId == 2);
             if strcmp(x1c3_choice, 'left')
                 x1c3_choice = 'sick';
             else
                 x1c3_choice = 'not_sick';
             end
 
-            which_trials = which_train & cueId == 0;
+            which_trials = which_train & data.cueId == 0;
             
             % x1 association @ feedback/outcome onset
             % 
@@ -2422,7 +2422,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = ones(size(data.contextRole(which_trials))); % 1s durations
             
             % whether c1 made you sick on a given trial
-            x1_outcomes = strcmp(corrAns(which_trials & cueId == 0), 'left');
+            x1_outcomes = strcmp(corrAns(which_trials & data.cueId == 0), 'left');
             if ~strcmp(condition, 'irrelevant') % we don't like irrelevant here (x1 always makes you sick)
                 multi.pmod(1).name{1} = 'x1_outcome';
                 multi.pmod(1).param{1} = x1_outcomes'; % whether x1 made you sick on trials 1..20
@@ -3094,14 +3094,14 @@ function multi = context_create_multi(glmodel, subj, run)
         case 124
             % sanity check
             %{ 
-            x1c3_choice = response.keys(which_test & cueId == 0 & contextId == 2);
-            x3c1_choice = response.keys(which_test & cueId == 2 & contextId == 0);
+            x1c3_choice = response.keys(which_test & data.cueId == 0 & data.contextId == 2);
+            x3c1_choice = response.keys(which_test & data.cueId == 2 & data.contextId == 0);
             if ~strcmp(x1c3_choice, 'None') && ~strcmp(x3c1_choice, 'None')
                 x1c3_choice = strcmp(x1c3_choice, 'left');
                 x3c1_choice = strcmp(x3c1_choice, 'left');
                 
-                x1c3_idx = trialId(which_test & cueId == 0 & contextId == 2);
-                x3c1_idx = trialId(which_test & cueId == 2 & contextId == 0);
+                x1c3_idx = trialId(which_test & data.cueId == 0 & data.contextId == 2);
+                x3c1_idx = trialId(which_test & data.cueId == 2 & data.contextId == 0);
                 
                 x1c3_values = test_valuess(x1c3_idx, :);
                 x3c1_values = test_valuess(x3c1_idx, :);
@@ -3115,7 +3115,7 @@ function multi = context_create_multi(glmodel, subj, run)
             %}
             
             % for sanity check with above
-            %which_trials = which_test & cueId ~= contextId & ~strcmp(response.keys, 'None');
+            %which_trials = which_test & data.cueId ~= data.contextId & ~strcmp(response.keys, 'None');
             
             which_trials = which_test & ~strcmp(response.keys, 'None');
             if sum(which_trials) > 0

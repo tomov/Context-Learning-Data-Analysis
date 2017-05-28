@@ -26,10 +26,10 @@ for context = metadata.contextRoles
     x2c2 = strcmp(data.corrAns(which & data.cueId == 1 & data.contextId == 1), 'left');
 
     if ~exist('analyze_with_gui') || ~analyze_with_gui
-        assert(length(x1c1) == metadata.roundsPerContext * metadata.trialsNReps * length(metadata.subjects));
-        assert(length(x1c2) == metadata.roundsPerContext * metadata.trialsNReps * length(metadata.subjects));
-        assert(length(x2c1) == metadata.roundsPerContext * metadata.trialsNReps * length(metadata.subjects));
-        assert(length(x2c2) == metadata.roundsPerContext * metadata.trialsNReps * length(metadata.subjects));
+        assert(length(x1c1) == metadata.runsPerContext * metadata.trialRepsPerRun * length(metadata.subjects));
+        assert(length(x1c2) == metadata.runsPerContext * metadata.trialRepsPerRun * length(metadata.subjects));
+        assert(length(x2c1) == metadata.runsPerContext * metadata.trialRepsPerRun * length(metadata.subjects));
+        assert(length(x2c2) == metadata.runsPerContext * metadata.trialRepsPerRun * length(metadata.subjects));
     end
 
     M = get_means(x1c1, x1c2, x2c1, x2c2);
@@ -65,10 +65,10 @@ for context = metadata.contextRoles
     x2c2 = which & data.cueId == 1 & data.contextId == 1;
 
     if ~exist('analyze_with_gui') || ~analyze_with_gui
-        assert(sum(x1c1) == metadata.roundsPerContext * metadata.trialsNReps * length(metadata.subjects));
-        assert(sum(x1c2) == metadata.roundsPerContext * metadata.trialsNReps * length(metadata.subjects));
-        assert(sum(x2c1) == metadata.roundsPerContext * metadata.trialsNReps * length(metadata.subjects));
-        assert(sum(x2c2) == metadata.roundsPerContext * metadata.trialsNReps * length(metadata.subjects));
+        assert(sum(x1c1) == metadata.runsPerContext * metadata.trialRepsPerRun * length(metadata.subjects));
+        assert(sum(x1c2) == metadata.runsPerContext * metadata.trialRepsPerRun * length(metadata.subjects));
+        assert(sum(x2c1) == metadata.runsPerContext * metadata.trialRepsPerRun * length(metadata.subjects));
+        assert(sum(x2c2) == metadata.runsPerContext * metadata.trialRepsPerRun * length(metadata.subjects));
     end
 
     M = sum([x1c1, x1c2, x2c1, x2c2]) / sum(which);
@@ -102,10 +102,10 @@ for context = metadata.contextRoles
     x3c3 = which & data.cueId == 2 & data.contextId == 2;
 
     if ~exist('analyze_with_gui') || ~analyze_with_gui
-        assert(sum(x1c1) == metadata.roundsPerContext * length(metadata.subjects));
-        assert(sum(x1c3) == metadata.roundsPerContext * length(metadata.subjects));
-        assert(sum(x3c1) == metadata.roundsPerContext * length(metadata.subjects));
-        assert(sum(x3c3) == metadata.roundsPerContext * length(metadata.subjects));
+        assert(sum(x1c1) == metadata.runsPerContext * length(metadata.subjects));
+        assert(sum(x1c3) == metadata.runsPerContext * length(metadata.subjects));
+        assert(sum(x3c1) == metadata.runsPerContext * length(metadata.subjects));
+        assert(sum(x3c3) == metadata.runsPerContext * length(metadata.subjects));
     end
 
     M = sum([x1c1, x1c3, x3c1, x3c3]) / sum(which);
@@ -187,8 +187,8 @@ runs_perf = [];
 runs_perf_sem = [];
 runs_captions = {};
 
-for run = unique(data.roundId)';
-    which = data.which_rows & data.isTrain & data.roundId == run;
+for run = unique(data.runId)';
+    which = data.which_rows & data.isTrain & data.runId == run;
     
     corr = strcmp(data.response.keys(which), data.corrAns(which));
     timeout = strcmp(data.response.keys(which), 'None');
@@ -213,8 +213,8 @@ runs_perf = [];
 runs_perf_sem = [];
 runs_captions = {};
 
-for run = unique(data.roundId)';
-    which = data.which_rows & ~data.isTrain & data.roundId == run;
+for run = unique(data.runId)';
+    which = data.which_rows & ~data.isTrain & data.runId == run;
     
     timeout = strcmp(data.response.keys(which), 'None');
     runs_perf = [runs_perf; mean([~timeout timeout])];
