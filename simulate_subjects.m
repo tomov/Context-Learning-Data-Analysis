@@ -55,7 +55,6 @@ fixed_effects = size(params, 1) == 1;
 s_id = 0;
 for who = metadata.subjects
     s_id = s_id + 1;
-    disp(who);
     for condition = unique(data.contextRole)'
         which_runs = which_rows & strcmp(data.participant, who) & strcmp(data.contextRole, condition);
         runs = unique(data.roundId(which_runs))';
@@ -118,7 +117,7 @@ for who = metadata.subjects
 
             % See what the model predicts for the test trials of that run
             %
-            [test_choices] = model_test(test_x, test_k, P_n, ww_n, subject_params);
+            [test_choices, test_values, test_valuess] = model_test(test_x, test_k, P_n, ww_n, subject_params);
 
             model_test_choices = test_choices > rand;
             model_test_response_keys = {};
@@ -126,6 +125,8 @@ for who = metadata.subjects
             model_test_response_keys(~model_test_choices) = {'right'};
             simulated.keys(which_test) = model_test_response_keys;
             simulated.pred(which_test) = test_choices;
+            simulated.values(which_test, :) = test_values;
+            simulated.valuess(which_test, :) = test_valuess;
 
             % Get the subject's responses too.
             %

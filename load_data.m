@@ -73,6 +73,8 @@ end
 data.which_rows = logical(true(size(data.participant))); % by default, include all rows
 data.chose_sick = strcmp(data.response.keys, 'left');
 data.timeout = strcmp(data.response.keys, 'None');
+data.no_response = cellfun(@isempty, data.actualChoiceOffset);
+assert(isequal(data.timeout, data.no_response));
 
 metadata.allSubjects = unique(data.participant)';
 
@@ -98,5 +100,6 @@ metadata.trialsPerRun = metadata.trainingTrialsPerRun + metadata.testTrialsPerRu
 metadata.subjects = unique(data.participant(data.which_rows))'; % only the included subjects
 metadata.N = numel(metadata.subjects);
 metadata.contextRoles = {'irrelevant', 'modulatory', 'additive'};
-assert(mean(strcmp(sort(metadata.contextRoles), sort(unique(data.contextRole))')) == 1); % should be equal
+metadata.conditions = metadata.contextRoles;
+assert(isequal(sort(metadata.contextRoles), sort(unique(data.contextRole))'));
 
