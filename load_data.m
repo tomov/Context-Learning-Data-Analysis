@@ -6,14 +6,14 @@ function [data, metadata] = load_data(filename, isFmriData, goodSubjects_ords)
 %
 % Example USAGE: 
 % [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects())
-% [data, metadata] = load_data('data/pilot.csv', false, [])
+% [data, metadata] = load_data('data/pilot.csv', false)
 %
 % INPUT:
 % filename = path to csv file e.g. 'data/fmri.csv' or 'data/pilot.csv'
 % isFmriData = boolean flag whether this is data from the fmri sessions
 %                or the behavioral pilot sessions. Those have different
 %                formats so it's important to get this right.
-% goodSubject_ords = vector of indices of the subjects to include in the
+% goodSubject_ords (optional) = vector of indices of the subjects to include in the
 %                analysis. If empty, assumes all subjects are included.
 %                Indices correspond to the ordinal of the subject in the
 %                csv file
@@ -39,6 +39,12 @@ function [data, metadata] = load_data(filename, isFmriData, goodSubjects_ords)
 %    .response.keys = 'left' if subject said 'sick', 'right' if said 'not
 %                     sick', 'None' if subject timed out
 %
+
+% Set default arguments
+%
+if nargin < 3
+    goodSubjects_ords = [];
+end
 
 % Load from CSV file
 %

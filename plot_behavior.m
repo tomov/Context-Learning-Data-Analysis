@@ -15,6 +15,16 @@ function plot_behavior(data, metadata, params, which_structures)
 %                    e.g. [1 1 1 0] = M1, M2, M3
 %
 
+if nargin < 4 || isempty(which_structures)
+    which_structures = [1 1 1 0]; % by defulat, use M1 M2 M3
+end
+
+if nargin < 3 || isempty(params)
+    params = [0.1249 2.0064]; % by default, use the params from the pilot fit
+end
+
+
+
 utils; % include some nifty lambdas
 
 % First simulate the subjects with the causal structure model

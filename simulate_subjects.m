@@ -1,4 +1,4 @@
-function simulated = simulate_subjects(data, metadata, params, which_structures)
+function simulated = simulate_subjects(data, metadata, params, which_structures, which_rows)
 
 % Simulate the subjects using the causal structure learning model, 
 % given their stimulus sequences
@@ -13,7 +13,16 @@ function simulated = simulate_subjects(data, metadata, params, which_structures)
 %          with the parameters for each subject
 % which_structures = which causal structures to use, as a logical vector,
 %                    e.g. [1 1 1 0] = M1, M2, M3
+% which_rows (optional) = binary mask saying which rows from the data to
+%                         use. If not supplied, assumes all rows are used.
 %
+
+if nargin < 5 || isempty(which_rows)
+    which_rows = data.which_rows; % use all rows by default
+else
+    % make sure to still ignore rows that are not good
+    which_rows = data.which_rows & which_rows;
+end
 
 simulated.keys = {}; % equivalent to response.keys but for the model (i.e. the responses)
 simulated.pred = []; % the choice probability (not the actual choice) for each trial
@@ -46,8 +55,9 @@ fixed_effects = size(params, 1) == 1;
 s_id = 0;
 for who = metadata.subjects
     s_id = s_id + 1;
+    disp(who);
     for condition = unique(data.contextRole)'
-        which_runs = data.which_rows & strcmp(data.participant, who) & strcmp(data.contextRole, condition);
+        which_runs = which_rows & strcmp(data.participant, who) & strcmp(data.contextRole, condition);
         runs = unique(data.roundId(which_runs))';
         for run = runs
             which_train = which_runs & data.isTrain & data.roundId == run;
