@@ -3,7 +3,7 @@ function plot_sanity(data, metadata)
 % Some sanity plots. Make sure that we didn't fuck up anything big time
 %
 % INPUT:
-% data, metadata as output by load_data
+% data, metadata = subject data and metadata as output by load_data
 %
 
 utils; % include some convenient utils 

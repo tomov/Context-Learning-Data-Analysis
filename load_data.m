@@ -33,7 +33,11 @@ function [data, metadata] = load_data(filename, isFmriData, goodSubjects_ords)
 %    .trialId = trial ordinal; test trials start over (1..4)
 %    .contextRole = condition
 %    .participant = subject id as entered in psychopy
-%    .corrAns = was the subject correct (training trials only)
+%    .corrAns = the correct answer on that trial
+%    .sick = 'Yes' or 'No', whether the outcome was sick
+%    .response.corr = was the subject correct (training trials only)
+%    .response.keys = 'left' if subject said 'sick', 'right' if said 'not
+%                     sick', 'None' if subject timed out
 %
 
 % Load from CSV file
@@ -82,7 +86,9 @@ end
 %
 metadata.roundsPerContext = 3; % = blocks per context = runs per context = runs / 3
 metadata.trialsNReps = 5; % = training trials per round / 4
-metadata.trialsPerRound = 24;
+metadata.trainingTrialsPerRun = 20;
+metadata.testTrialsPerRun = 4;
+metadata.trialsPerRun = metadata.trainingTrialsPerRun + metadata.testTrialsPerRun;
 metadata.subjects = unique(data.participant(data.which_rows))'; % only the included subjects
 metadata.N = numel(metadata.subjects);
 metadata.contextRoles = {'irrelevant', 'modulatory', 'additive'};
