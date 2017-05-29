@@ -73,11 +73,9 @@ end
 data.which_rows = logical(true(size(data.participant))); % by default, include all rows
 data.chose_sick = strcmp(data.response.keys, 'left');
 data.timeout = strcmp(data.response.keys, 'None');
-data.no_response = cellfun(@isempty, data.actualChoiceOffset);
 data.isTest = ~data.isTrain;
 data.outcome = strcmp(data.sick, 'Yes');
 data.condition = data.contextRole;
-assert(isequal(data.timeout, data.no_response), 'these should be one and the same -- maybe bug in psychopy code');
 
 metadata.allSubjects = unique(data.participant)';
 
@@ -89,8 +87,13 @@ if ~isempty(goodSubjects_ords)
 end
 
 if isFmriData
+    data.no_response = cellfun(@isempty, data.actualChoiceOffset);
+    assert(isequal(data.timeout, data.no_response), 'these should be one and the same -- maybe bug in psychopy code');
+
     % we shouldn't be including any dropped trials in the analysis
     assert(sum(data.drop(data.which_rows)) == 0, 'bad trials found -- perhaps need to pass a list of good subjects');
+else
+    data.no_response = data.timeout;
 end
 
 % Set the metadata

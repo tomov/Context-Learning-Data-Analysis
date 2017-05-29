@@ -3,14 +3,12 @@ function [results, results_options] = fit_params()
 % Fit the hyperparameters of the model based on behavioral data
 %
 % OUTPUT: 
-% results = struct array with resulting free parameters for each version of
+% results = struct array with resulting parameter fits for each version of
 %           the model that was fit
 % results_options = options for the particular version of the model, e.g.
 %           was it random effects vs. fixed effects, or was it fmri data or
 %           pilot data
 
-results = struct([]); % resulting parameter fits
-results_options = struct([]); % settings for each version of the model, e.g. which data we used this time
 results_ord = 0; % ordinal = which version of the model we're fitting now
 
 % fit behavioral (0) or fMRI (1) data
