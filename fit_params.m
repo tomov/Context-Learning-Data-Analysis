@@ -21,9 +21,9 @@ for isFmriData = [0 1]
     options.isFmriData = isFmriData;
     
     if isFmriData
-        [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
+        [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
     else
-        [data, metadata] = load_data('data/pilot.csv', false);
+        [data, metadata] = load_data(fullfile('data', 'pilot.csv'), false);
     end    
     
     % fixed effects (1) or random effects (0)

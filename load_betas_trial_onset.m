@@ -1,4 +1,4 @@
-function [betas] = load_trial_onset_betas(mask, data, metadata)
+function betas = load_betas_trial_onset(mask, data, metadata)
 
 % Load all the betas corresponding to activations at trial onset for the
 % given mask. Does this for all trials for all runs for all subjects.
@@ -41,9 +41,10 @@ for subj = subjs
             if isempty(betas)
                 betas = nan(size(data.participant, 1), size(beta, 2));
             end
-                
+            % append beta
             betas(which_rows, :) = beta;
-            fprintf('loaded subj %d, run %d, trail %d\n', subj, run, trial);
+            
+            fprintf('loaded subj %d, run %d, trail %d (%s): %d voxels\n', subj, run, trial, regressor, sum(~isnan(beta)));
         end
     end
 end

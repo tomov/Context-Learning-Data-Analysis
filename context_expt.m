@@ -40,7 +40,7 @@ function EXPT = context_expt(local)
     
     % Load data from file with all subjects
     %
-    [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
+    [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
     
     [allSubjects, subjdirs, nRuns] = context_getSubjectsDirsAndRuns();
     allSubjects

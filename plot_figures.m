@@ -9,9 +9,9 @@ end
 % load behavioral data
 %
 if isFmriData
-    [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
+    [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
 else
-    [data, metadata] = load_data('data/pilot.csv', false);
+    [data, metadata] = load_data(fullfile('data', 'pilot.csv'), false);
 end
 
 % Plot figure according to plotname
@@ -33,7 +33,7 @@ switch plotname
    
         % Check if we already computed the parameter fits
         %
-        if ~exist('fit_params_output.mat', 'file') == 2
+        if exist('fit_params_output.mat', 'file') ~= 2
             [results, results_options] = fit_params();
             save('fit_params_output.mat');
         else

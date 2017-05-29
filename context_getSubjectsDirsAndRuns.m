@@ -4,7 +4,7 @@ function [ subjects, subjdirs, nRuns ] = context_getSubjectsDirsAndRuns()
 % fMRI GLM code
 %
 
-[data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
+[data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
 
 % the participant id as entered in psychopy
 subjects = {'con001', 'con002', 'con003', 'con004', ...

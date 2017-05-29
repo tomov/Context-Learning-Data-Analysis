@@ -5,8 +5,8 @@ function [data, metadata] = load_data(filename, isFmriData, goodSubjects_ords)
 % It's assumed to be in "wide format" csv for all subjects.
 %
 % Example USAGE: 
-% [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects())
-% [data, metadata] = load_data('data/pilot.csv', false)
+% [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects())
+% [data, metadata] = load_data(fullfile('data', 'pilot.csv'), false)
 %
 % INPUT:
 % filename = path to csv file e.g. 'data/fmri.csv' or 'data/pilot.csv'
@@ -75,6 +75,8 @@ data.chose_sick = strcmp(data.response.keys, 'left');
 data.timeout = strcmp(data.response.keys, 'None');
 data.no_response = cellfun(@isempty, data.actualChoiceOffset);
 data.isTest = ~data.isTrain;
+data.outcome = strcmp(data.sick, 'Yes');
+data.condition = data.contextRole;
 assert(isequal(data.timeout, data.no_response));
 
 metadata.allSubjects = unique(data.participant)';
@@ -101,7 +103,7 @@ metadata.testTrialsPerRun = 4;
 metadata.trialsPerRun = metadata.trainingTrialsPerRun + metadata.testTrialsPerRun;
 metadata.subjects = unique(data.participant(data.which_rows))'; % only the included subjects
 metadata.N = numel(metadata.subjects);
-metadata.contextRoles = {'irrelevant', 'modulatory', 'additive'};
+metadata.contextRoles = {'irrelevant', 'modulatory', 'additive'}; % in order
 metadata.conditions = metadata.contextRoles;
 assert(isequal(sort(metadata.contextRoles), sort(unique(data.contextRole))'));
 
