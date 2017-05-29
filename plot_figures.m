@@ -43,7 +43,7 @@ switch plotname
         % TODO plot stuff
 
     otherwise
-        assert(false, 'should be one of the above');
+        assert(false, 'invalid plotname -- should be one of the above');
         
 end
 

@@ -25,6 +25,5 @@ function classifier = classify(method, mask, what, training_runs, training_trial
 %           'z-run-voxel' = z-score each voxel separately within each run
 
 subjs = getGoodSubjects();
-subjs = 1:2;
 classifier = classify_train(method, training_runs, training_trials, subjs, mask, what, z_score);
 classify_test(method, classifier, test_runs, test_trials, subjs, mask, what, z_score);

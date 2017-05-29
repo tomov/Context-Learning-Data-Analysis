@@ -1,11 +1,14 @@
 function context_create_multi_sanity(glmodels, subjs, runs)
 
-% Sanity test context_create_multi.m before shipping to NCF
+% Sanity test context_create_multi.m before shipping to NCF by running
+% through the GLMs and generating multi structures with differnet subjects
+% / runs
 %
 % INPUT:
 % glms = glmodels to test, e.g. 1:20
-% subjs (optional) = subject indices to test, e.g. getGoodSubjects()
-% runs (optional) = runs to test, e.g. 1:9
+% subjs (optional) = subject indices to test, e.g. getGoodSubjects().
+%                    Defaults to all good subjects
+% runs (optional) = runs to test, e.g. 1:9. Defaults to 1:9
 %
 
 % set default parameters

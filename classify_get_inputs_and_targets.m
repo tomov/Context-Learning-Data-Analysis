@@ -165,7 +165,7 @@ switch z_score
         end
         
     otherwise
-        assert(false, 'should be one of the above');        
+        assert(false, 'invalid z_score -- should be one of the above');        
     
 end
 

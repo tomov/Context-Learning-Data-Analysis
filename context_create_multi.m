@@ -2379,7 +2379,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = ones(size(data.contextRole(which_trials))); % 1s durations
             
             % whether c1 made you sick on a given trial
-            c1_outcomes = strcmp(corrAns(which_trials & data.contextId == 0), 'left');
+            c1_outcomes = strcmp(data.corrAns(which_trials & data.contextId == 0), 'left');
             if ~strcmp(condition, 'additive') % we don't like additive here (c1 always makes you sick)
                 multi.pmod(1).name{1} = 'c1_outcome';
                 multi.pmod(1).param{1} = c1_outcomes'; % whether c1 made you sick on trials 1..20
@@ -2423,7 +2423,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = ones(size(data.contextRole(which_trials))); % 1s durations
             
             % whether c1 made you sick on a given trial
-            x1_outcomes = strcmp(corrAns(which_trials & data.cueId == 0), 'left');
+            x1_outcomes = strcmp(data.corrAns(which_trials & data.cueId == 0), 'left');
             if ~strcmp(condition, 'irrelevant') % we don't like irrelevant here (x1 always makes you sick)
                 multi.pmod(1).name{1} = 'x1_outcome';
                 multi.pmod(1).param{1} = x1_outcomes'; % whether x1 made you sick on trials 1..20
@@ -2996,7 +2996,7 @@ function multi = context_create_multi(glmodel, subj, run)
         case 120
             trial_onsets = cellfun(@str2num, data.actualChoiceOnset(which_rows))';
             iti_onsets = cellfun(@str2num, data.actualItiOnset(which_rows))';
-            iti_offsets = cellfun(@str2num, actualItiOffset(which_rows))';
+            iti_offsets = cellfun(@str2num, data.actualItiOffset(which_rows))';
             
             % const during trials (trials 1..24)
             % 
@@ -3224,7 +3224,7 @@ function multi = context_create_multi(glmodel, subj, run)
             
             
         otherwise
-            assert(false, 'should be one of the above');
+            assert(false, 'invalid glmodel -- should be one of the above');
             
     end % end of switch statement
 
