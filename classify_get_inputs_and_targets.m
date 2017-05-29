@@ -10,8 +10,11 @@ function [inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, t
 %         contextGetSubjectsDirsAndRuns, e.g. getGoodSubjects()
 % mask = .nii file name of which mask to use
 % predict_what = 'condition', 'response', 'runId', or 'contextId'
-% z_score = whether to z-score the betas within each run to account for
-%           stuff like drift and faciliate cross-run comparison
+% z_score = how to z-score the betas within each run to account for
+%           stuff like drift and faciliate cross-run comparison. Options:
+%           'z-none' = no z-scoring,
+%           'z-run' = z-score all voxels within each run
+%           'z-run-voxel' = z-score each voxel separately within each run
 % 
 % OUTPUT:
 % inputs = [n_observations x n_voxels] input to classifier
@@ -57,10 +60,12 @@ condition_labels = containers.Map(metadata.conditions, ...
 n_observations = length(subjs) * length(runs) * length(trials);
 n_voxels = size(betas, 2);
 
-which_rows = ~data.drop & ismember(data.participant, metadata.allSubjects(subjs)) & ...
+% figure out which rows (trials) we're looking at
+%
+which_rows = ismember(data.participant, metadata.allSubjects(subjs)) & ...
     ismember(data.runId, runs) & ismember(data.newTrialId, trials);
-save('test.mat');
-assert(sum(which_rows) == n_observations);
+assert(~any(data.drop(which_rows)), 'we should only be using good subjects here; maybe passed some "bad" subjects?');
+assert(sum(which_rows) == n_observations, 'maybe wrong order of parameters, e.g. runs and trials');
 
 if strcmp(predict_what, 'responses')
     % if we're looking at subject responses, ignore trials when the subject
@@ -69,14 +74,18 @@ if strcmp(predict_what, 'responses')
     n_observations = sum(which_rows);
 end
 
+%
 % Compute input vectors
 %
+
 inputs = betas(which_rows, :); % rows = x = observations, cols = voxels / dependent vars
 assert(size(inputs, 1) == n_observations);
 assert(size(inputs, 2) == n_voxels);
 
+%
 % Compute target vectors
 %
+
 targets = []; % rows = y = observations, cols = indep vars (condition as binary vector)
 
 % target depends on what we're trying to predict
@@ -85,29 +94,78 @@ switch predict_what
     case 'condition'
         targets = values(condition_labels, data.contextRole(which_rows));
         targets = cell2mat(targets);
+        
     case 'response'
         targets = zeros(n_observations, 2);
         targets(sub2ind(size(targets), [1:n_observations]', data.chose_sick(which_rows) + 1)) = 1;
+        
     case 'runId'
         targets = zeros(n_observations, 9);
         targets(sub2ind(size(targets), [1:n_observations]', data.runId(which_rows))) = 1;
+        
     case 'contextId'
         targets = zeros(n_observations, 3);
         targets(sub2ind(size(targets), [1:n_observations]', data.contextId(which_rows) + 1)) = 1;
-    case 'contextId_training_only'
+        
+    case 'contextId-training-only'
         assert(all(data.contextId(which_rows) < 2));
         targets = zeros(n_observations, 2);
         targets(sub2ind(size(targets), [1:n_observations]', data.contextId(which_rows) + 1)) = 1;
+        
+    otherwise
+        assert(false, 'should be one of the above');
 end            
 
 assert(size(targets, 1) == size(inputs, 1));
 
+%
+% Optionally z-score the inputs
+%
 
-%{
-if z_score
-    % TODO
-    run_mean_voxel = mean(reshape(inputs(run_input_idxs, :), 1, length(run_input_idxs) * n_voxels));
-    run_std_voxel = std(reshape(inputs(run_input_idxs, :), 1, length(run_input_idxs) * n_voxels));
-    inputs(run_input_idxs, :) = (inputs(run_input_idxs, :) - run_mean_voxel) / run_std_voxel;
+% get the attributes of the trials we took the betas from
+% note that from now on, we'll use these to generate bitmasks referring to
+% rows from the the inputs vector, instead of the ones in data
+%
+runId = data.runId(which_rows);
+newTrialId = data.newTrialId(which_rows);
+participant = data.participant(which_rows);
+
+switch z_score
+    
+    case 'z-none'
+        % do nothing
+        
+    case 'z-run'
+        % z-score all voxels within the same run
+        %
+        for subj = subjs
+            for run = runs
+                which = strcmp(participant, metadata.allSubjects{subj}) & runId == run;
+                assert(sum(which) == numel(trials));
+                
+                inputs_for_run = inputs(which, :);
+                z_scored_inputs_for_run = reshape(zscore(inputs_for_run(:)), size(inputs_for_run));
+                inputs(which, :) = z_scored_inputs_for_run;
+                assert(abs(mean(z_scored_inputs_for_run(:))) < 1e-10);
+            end
+        end
+        
+    case 'z-run-voxel'
+        % z-score each voxel within the same run
+        %
+        for subj = subjs
+            for run = runs
+                which = strcmp(participant, metadata.allSubjects{subj}) & runId == run;
+                assert(sum(which) == numel(trials));
+                
+                inputs_for_run = inputs(which, :);
+                inputs(which, :) = zscore(inputs_for_run, 0, 1);
+                assert(max(abs(mean(inputs(which, :), 1))) < 1e-10);
+            end
+        end
+        
+    otherwise
+        assert(false, 'should be one of the above');        
+    
 end
-%}
+

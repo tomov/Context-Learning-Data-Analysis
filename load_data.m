@@ -77,7 +77,7 @@ data.no_response = cellfun(@isempty, data.actualChoiceOffset);
 data.isTest = ~data.isTrain;
 data.outcome = strcmp(data.sick, 'Yes');
 data.condition = data.contextRole;
-assert(isequal(data.timeout, data.no_response));
+assert(isequal(data.timeout, data.no_response), 'these should be one and the same -- maybe bug in psychopy code');
 
 metadata.allSubjects = unique(data.participant)';
 
@@ -90,7 +90,7 @@ end
 
 if isFmriData
     % we shouldn't be including any dropped trials in the analysis
-    assert(sum(data.drop(data.which_rows)) == 0);
+    assert(sum(data.drop(data.which_rows)) == 0, 'bad trials found -- perhaps need to pass a list of good subjects');
 end
 
 % Set the metadata
@@ -105,7 +105,7 @@ metadata.subjects = unique(data.participant(data.which_rows))'; % only the inclu
 metadata.N = numel(metadata.subjects);
 metadata.contextRoles = {'irrelevant', 'modulatory', 'additive'}; % in order
 metadata.conditions = metadata.contextRoles;
-assert(isequal(sort(metadata.contextRoles), sort(unique(data.contextRole))'));
+assert(isequal(sort(metadata.contextRoles), sort(unique(data.contextRole))'), 'maybe extra contextRoles in data');
 
 % Set some more data
 %

@@ -1586,7 +1586,7 @@ function multi = context_create_multi(glmodel, subj, run)
         % result: almost same as main effect on 1..20
         %
         case 65
-            which_trials = which_train & trialId >= 10;
+            which_trials = which_train & data.trialId >= 10;
             
             % context role @ feedback/outcome onset
             % 
@@ -1604,7 +1604,7 @@ function multi = context_create_multi(glmodel, subj, run)
         % result: almost same as main effect on 1..20
         %
         case 66
-            which_trials = which_train & trialId >= 10;
+            which_trials = which_train & data.trialId >= 10;
             
             % context role @ RT
             % 
@@ -2054,7 +2054,7 @@ function multi = context_create_multi(glmodel, subj, run)
         % result: nothing
         %
         case 86
-            which_trials = which_train & trialId >= 10;
+            which_trials = which_train & data.trialId >= 10;
             
             % context role @ feedback/outcome onset
             % 
@@ -2066,7 +2066,7 @@ function multi = context_create_multi(glmodel, subj, run)
         % result: nothing
         %
         case 87
-            which_trials = which_train & trialId >= 10;
+            which_trials = which_train & data.trialId >= 10;
             
             % context role @ feedback/outcome onset
             % 
@@ -2078,7 +2078,7 @@ function multi = context_create_multi(glmodel, subj, run)
         % result: nothing
         %
         case 88
-            which_trials = which_train & trialId >= 10;
+            which_trials = which_train & data.trialId >= 10;
 
             RTs = data.actualChoiceOffset(which_trials);
             feedback_time = data.actualFeedbackOnset(which_trials);
@@ -2103,7 +2103,7 @@ function multi = context_create_multi(glmodel, subj, run)
         % result: nothing
         %
         case 89
-            which_trials = which_train & trialId >= 10;
+            which_trials = which_train & data.trialId >= 10;
             
             RTs = data.actualChoiceOffset(which_trials);
             feedback_time = data.actualFeedbackOnset(which_trials);
@@ -2197,7 +2197,7 @@ function multi = context_create_multi(glmodel, subj, run)
         % main effect @ trial onset + 0.5 s, trials 10..24
         %
         case 94
-            which_trials = (which_train & trialId >= 10) | which_test;
+            which_trials = (which_train & data.trialId >= 10) | which_test;
             
             % context role @ feedback/outcome onset
             % 
@@ -2208,7 +2208,7 @@ function multi = context_create_multi(glmodel, subj, run)
         % main effect @ trial onset + 1 s, trials 10..24
         %
         case 95
-            which_trials = (which_train & trialId >= 10) | which_test;
+            which_trials = (which_train & data.trialId >= 10) | which_test;
             
             % context role @ feedback/outcome onset
             % 
@@ -2219,7 +2219,7 @@ function multi = context_create_multi(glmodel, subj, run)
         % main effect @ feedback - 1.5s (RT - 0.5s), trials 10..24
         %
         case 96
-            which_trials = (which_train & trialId >= 10) | which_test;
+            which_trials = (which_train & data.trialId >= 10) | which_test;
 
             RTs = data.actualChoiceOffset(which_trials);
             feedback_time = data.actualFeedbackOnset(which_trials);
@@ -2243,7 +2243,7 @@ function multi = context_create_multi(glmodel, subj, run)
         % main effect @ feedback - 2s (RT - 1s), trials 10..24
         %
         case 97
-            which_trials = (which_train & trialId >= 10) | which_test;
+            which_trials = (which_train & data.trialId >= 10) | which_test;
             
             RTs = data.actualChoiceOffset(which_trials);
             feedback_time = data.actualFeedbackOnset(which_trials);
@@ -2362,7 +2362,7 @@ function multi = context_create_multi(glmodel, subj, run)
         case 101
             % whether subject thought c1 makes you sick (unlikely but does
             % happen ~25% of the time)
-            %{
+            
             x3c1_choice = data.response.keys(which_test & data.cueId == 2 & data.contextId == 0);
             if strcmp(x3c1_choice, 'left')
                 x3c1_choice = 'sick';
@@ -2389,7 +2389,7 @@ function multi = context_create_multi(glmodel, subj, run)
                 multi.pmod(1).param{1} = c1_outcomes'; % whether c1 made you sick on trials 1..20
                 multi.pmod(1).poly{1} = 1; % first order            
             end 
-            %}
+            
             % const @ trial onset
             % 
             multi.names{2} = 'trial_onset';
@@ -2448,7 +2448,7 @@ function multi = context_create_multi(glmodel, subj, run)
         %                     sp_opp : !invalid contrast
         %
         case 103
-            which_trials = which_train & trialId >= 6;
+            which_trials = which_train & data.trialId >= 6;
             
             priors = which_structures / sum(which_structures);
             Q = [priors; P(1:end-1,:)];
@@ -3101,8 +3101,8 @@ function multi = context_create_multi(glmodel, subj, run)
                 x1c3_choice = strcmp(x1c3_choice, 'left');
                 x3c1_choice = strcmp(x3c1_choice, 'left');
                 
-                x1c3_idx = trialId(which_test & data.cueId == 0 & data.contextId == 2);
-                x3c1_idx = trialId(which_test & data.cueId == 2 & data.contextId == 0);
+                x1c3_idx = data.trialId(which_test & data.cueId == 0 & data.contextId == 2);
+                x3c1_idx = data.trialId(which_test & data.cueId == 2 & data.contextId == 0);
                 
                 x1c3_values = test_valuess(x1c3_idx, :);
                 x3c1_values = test_valuess(x3c1_idx, :);
@@ -3121,7 +3121,7 @@ function multi = context_create_multi(glmodel, subj, run)
             which_trials = which_test & ~strcmp(data.response.keys, 'None');
             if sum(which_trials) > 0
                 subj_choices = strcmp(data.response.keys(which_trials), 'left');
-                trial_idxs = trialId(which_trials);
+                trial_idxs = data.trialId(which_trials);
 
                 trial_values = test_valuess(trial_idxs, :);
                 trial_probs = predict(trial_values);
@@ -3222,6 +3222,9 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.onsets{1} = trial_onsets;
             multi.durations{1} = iti_onsets - trial_onsets;
             
+            
+        otherwise
+            assert(false, 'should be one of the above');
             
     end % end of switch statement
 

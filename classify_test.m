@@ -10,10 +10,10 @@ rng('shuffle');
 fprintf('classify_test\n');
 disp(method);
 
-[inputs, targets] = classify_get_inputs_and_targets(runs, trials, subjs, mask, predict_what, z_score);
+[inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, trials, subjs, mask, predict_what, z_score);
 
 [~, maskname, ~] = fileparts(mask);
-outFilename = fullfile('classifier', ['classify_test_', method, '_', maskname, '_', predict_what, '_', random_string()]);
+outFilename = fullfile('classifier', ['classify_test_', method, '_', maskname, '_', predict_what, '_', z_score, '_', random_string()]);
 
 switch method
     
@@ -80,7 +80,15 @@ switch method
 
         accuracy = classify_get_accuracy(outputs, targets);
         fprintf('Success rate (lambda = %.4f) is %.2f%%\n', CVfit.lambda_1se, accuracy);
+        
+    otherwise
+        assert(false, 'should be one of the above');
 end
 
+% Save everything
+%
+if size(inputs, 2) > 5000
+    clear inputs; % too big
+end
 fprintf('SAVING to %s\n', outFilename);
 save(outFilename);

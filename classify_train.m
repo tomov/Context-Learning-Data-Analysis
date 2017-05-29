@@ -11,10 +11,10 @@ rng('shuffle');
 fprintf('classify_train\n');
 disp(method);
 
-[inputs, targets] = classify_get_inputs_and_targets(runs, trials, subjs, mask, predict_what, z_score);
+[inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, trials, subjs, mask, predict_what, z_score);
 
 [~, maskname, ~] = fileparts(mask);
-outFilename = fullfile('classifier', ['classify_train_', method, '_', maskname, '_', predict_what, '_', random_string()]);
+outFilename = fullfile('classifier', ['classify_train_', method, '_', maskname, '_', predict_what, '_', z_score, '_', random_string()]);
 
 tic
 disp('training classifier...');
@@ -104,20 +104,20 @@ switch method
         fitObj = glmnet(inputs, targets, 'multinomial', options);
         glmnetPrint(fitObj);
 
-        %save('classify_glmnet_fitObj_only_1-19_mask_scramble_runs.mat', 'fitObj', 'random_run_labels');
-
+        % no need to do that manually here -- cvglmnet does it
+        % automatically
+        %
         %[mses, msesems] = glmnetKFoldCrossValidation(inputs, targets, fitObj, 'multinomial', 'response', 4);
         %[~, lambda_idx] = min(mses); % pick lambda with smallest MSE
         %lambda = fitObj.lambda(lambda_idx);
 
-        %save('classify_glmnet_fitObj_only.mat', 'fitObj', 'mses', 'msesems', 'lambda');
-        %save('classify_glmnet_w000t.mat', '-v7.3');
-
         outputss = glmnetPredict(fitObj, inputs, fitObj.lambda, 'response');
 
+        accuracies = nan(size(outputss, 3), 1);
         for l = 1:size(outputss, 3) % for all lambdas
             outputs = outputss(:,:,l);
             accuracy = classify_get_accuracy(outputs, targets);
+            accuracies(l) = accuracy;
             fprintf('Success rate for %d (lambda = %.4f) = %.2f%%\n', l, fitObj.lambda(l), accuracy);
         end
 
@@ -144,9 +144,17 @@ switch method
         fprintf('Success rate (lambda = %.4f) is %.2f%%\n', CVfit.lambda_1se, accuracy);
 
         classifier = CVfit;
+        
+    otherwise
+        assert(false, 'should be one of the above');
 end
 
 toc
 
+% Save everything
+%
+if size(inputs, 2) > 5000
+    clear inputs; % too big
+end
 fprintf('SAVING to %s\n', outFilename);
 save(outFilename);
