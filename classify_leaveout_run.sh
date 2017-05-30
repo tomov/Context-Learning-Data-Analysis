@@ -25,7 +25,7 @@ do
 
             for test_run in "${runs_to_leaveout[@]}" 
             do
-                training_runs="[1:$((run - 1)) $((run + 1)):9]"
+                training_runs="[1:$((test_run - 1)) $((test_run + 1)):9]"
                 echo Leave out run $test_run, train with $training_runs
 
                 outfileprefix="classify_${method}_${z_score}_${maskname}_leaveout_run_${test_run}"
@@ -33,11 +33,11 @@ do
 
                 # send the job to NCF
                 #
-                matlab_fn_call="classify('$method', '$mask', '$predict_what', $trials, $training_runs, $trials, $test_run, '$z_score')"
+                matlab_fn_call="classify('$method', '$mask', '$predict_what', $training_runs, $trials, $test_run, $trials, '$z_score')"
                 echo $matlab_fn_call
-                #sbatch_output=`sbatch -p ncf --mem 25000 -t 20-18:20 -o ${outfileprefix}_%j.out --mail-type=END --wrap="matlab -nodisplay -nosplash -nojvm -r $\"matlab_fn_call;   exit\""`
+                sbatch_output=`sbatch -p ncf --mem 25000 -t 20-18:20 -o ${outfileprefix}_%j.out --mail-type=END --wrap="matlab -nodisplay -nosplash -nojvm -r $\"$matlab_fn_call;   exit\""`
                 # for local testing
-                sbatch_output=`echo Submitted batch job 88725417`
+                #sbatch_output=`echo Submitted batch job 88725417`
                 echo $sbatch_output
 
                 # Append job id to jobs.txt

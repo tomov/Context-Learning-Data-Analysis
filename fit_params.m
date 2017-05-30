@@ -1,4 +1,4 @@
-function [results, results_options] = fit_params()
+function [results, results_options, mfit_data] = fit_params()
 
 % Fit the hyperparameters of the model based on behavioral data
 %
@@ -10,6 +10,8 @@ function [results, results_options] = fit_params()
 %           pilot data
 
 results_ord = 0; % ordinal = which version of the model we're fitting now
+
+tic
 
 % fit behavioral (0) or fMRI (1) data
 %
@@ -89,13 +91,13 @@ for isFmriData = [0 1]
             param(2).lb = 0;
             param(2).ub = 10; % can't make it too large b/c you get prob = 0 and -Inf likelihiood which fmincon doesn't like
 
-            % P(data | model)
+            % P(behavioral data | model)
             % the likelihood function takes in all the subject data every
             % time (data and metadata); mfit_data tells it which subjects
             % to simulate by passing a bitmask which includes only rows for
             % this subject / those subjects
             %
-            likfun = @(params, mfit_data) model_likfun(data, metadata, params, which_structures, mfit_data.which_rows);
+            likfun = @(params, mfit_data) model_likfun(data, metadata, params, which_structures, mfit_data.which_rows, false);
             
             % run optimization
             %
@@ -112,3 +114,5 @@ for isFmriData = [0 1]
         end
     end
 end
+
+toc

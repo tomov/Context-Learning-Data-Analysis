@@ -1,4 +1,4 @@
-function total_loglik = model_likfun(data, metadata, params, which_structures, which_rows)
+function total_loglik = model_likfun(data, metadata, params, which_structures, which_rows, testTrialsOnly)
 % Log likelihood function of the subject data according to the model predictions
 %
 % INPUT:
@@ -20,9 +20,12 @@ function total_loglik = model_likfun(data, metadata, params, which_structures, w
 %
 simulated = simulate_subjects(data, metadata, params, which_structures, which_rows);
 
-% Get log likelihood for test choices only
+% Exclude timeouts & training trials (optional)
 %
-which = which_rows & ~data.isTrain & ~data.timeout;
+which = which_rows & ~data.timeout;
+if testTrialsOnly
+    which = which & ~data.isTrain;
+end
 
 X = data.chose_sick(which); % actual subject choice on each trial
 P = simulated.pred(which); % probability of subject choice on each trial

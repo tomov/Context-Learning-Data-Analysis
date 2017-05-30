@@ -46,10 +46,10 @@ betas_filename = fullfile('betas', ['betas_trial_onset_', maskname, '.mat']);
 if exist(betas_filename, 'file') ~= 2
     fprintf('Loading betas from disk and saving them to %s\n', betas_filename);
     betas = load_betas_trial_onset(mask, data, metadata);
-    save(betas_filename, '-v7.3');
+    save(betas_filename, 'betas');
 else
     fprintf('Loading precomputed betas from %s\n', betas_filename);
-    load(betas_filename);
+    load(betas_filename, 'betas'); % crucial to load betas only
 end
 
 % condition = context role labels
@@ -79,6 +79,7 @@ end
 %
 
 inputs = betas(which_rows, :); % rows = x = observations, cols = voxels / dependent vars
+inputs(isnan(inputs)) = 0; % some of them fall outside the imaging range and are NaNs; don't let those screw up our analysis
 assert(size(inputs, 1) == n_observations);
 assert(size(inputs, 2) == n_voxels);
 
