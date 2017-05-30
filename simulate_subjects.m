@@ -45,6 +45,7 @@ simulated.Sigma1 = []; % Sigma for M1 at each trial
 simulated.Sigma2 = []; % Sigma for M2 at each trial
 simulated.Sigma3 = []; % Sigma for M3 at each trial
 simulated.Sigma4 = []; % Sigma for M4 at each trial
+simulated.lambdas = []; % lambdas at each trial
 
 % we either have the same params for all subjects (fixed effects)
 % or a set of parameters for each subject (random effects)
@@ -55,20 +56,24 @@ fixed_effects = size(params, 1) == 1;
 s_id = 0;
 for who = metadata.subjects
     s_id = s_id + 1;
+    
+    % figure out the parameters
+    %
+    if fixed_effects
+        subject_params = params;
+    else
+        subject_params = params(s_id, :);
+    end
+    fprintf('Simulating subj %s with params [%f %f]\n', who{1}, subject_params);
+    
+    % Simulate each run separately
+    %
     for condition = unique(data.contextRole)'
         which_runs = which_rows & strcmp(data.participant, who) & strcmp(data.contextRole, condition);
         runs = unique(data.runId(which_runs))';
         for run = runs
             which_train = which_runs & data.isTrain & data.runId == run;
             which_test = which_runs & ~data.isTrain & data.runId == run;
-
-            % figure out the parameters
-            %
-            if fixed_effects
-                subject_params = params;
-            else
-                subject_params = params(s_id, :);
-            end
 
             % Get the training & test stimuli sequences for that run
             %
@@ -77,7 +82,8 @@ for who = metadata.subjects
             % For a given run of a given subject, run the model on the same
             % sequence of stimuli and see what it does.
             %
-            [choices, P_n, ww_n, P, ww, values, valuess, likelihoods, new_values, new_valuess, Sigma] = model_train(train_x, train_k, train_r, subject_params, which_structures, false);
+            [choices, P_n, ww_n, P, ww, values, valuess, likelihoods, new_values, new_valuess, Sigma, lambdas] = ...
+                model_train(train_x, train_k, train_r, subject_params, which_structures, false);
 
             model_choices = choices > rand;
             model_response_keys = {};
@@ -102,10 +108,10 @@ for who = metadata.subjects
             simulated.ww4(which_train, :) = ww{4};
             simulated.values(which_train, :) = values;
             simulated.valuess(which_train, :) = valuess;
-            logs = log2(P ./ Q); 
+            logs = log2(P) - log2(Q); 
             logs(isnan(logs)) = 0; % lim_{x->0} x log(x) = 0
             surprise = sum(P .* logs, 2);
-            surprise(isnan(surprise)) = 0; % weird things happen when P --> 0 TODO FIXME
+            surprise(isnan(surprise)) = 0; % weird things happen when P --> 0, e.g. we get -Infs
             simulated.surprise(which_train, :) = surprise;
             simulated.likelihoods(which_train, :) = likelihoods;
             simulated.new_values(which_train, :) = new_values;
@@ -114,10 +120,12 @@ for who = metadata.subjects
             simulated.Sigma2(which_train, :) = Sigma{2};
             simulated.Sigma3(which_train, :) = Sigma{3};
             simulated.Sigma4(which_train, :) = Sigma{4};
+            simulated.lambdas(which_train, :) = lambdas;
 
             % See what the model predicts for the test trials of that run
             %
-            [test_choices, test_values, test_valuess] = model_test(test_x, test_k, P_n, ww_n, subject_params);
+            [test_choices, test_values, test_valuess] = ...
+                model_test(test_x, test_k, P_n, ww_n, subject_params);
 
             model_test_choices = test_choices > rand;
             model_test_response_keys = {};

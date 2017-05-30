@@ -52,7 +52,7 @@ Ms = [];
 for g=3:3 % for each group
     fprintf('\n\n ---------------- GROUP %d ------------------\n\n', g);
 
-    [choices, P_n, ww_n, P, ww, values, valuess] = model_train(x{g}, c{g}, r{g}, [learning_rate, softmax_temp], [1 1 1 0], false);
+    [choices, P_n, ww_n, P, ww, values, valuess, likelihoods, new_values, new_valuess, Sigma, lambdas] = model_train(x{g}, c{g}, r{g}, [learning_rate, softmax_temp], [1 1 1 0], false);
 
     [test_choices] = model_test(test_x, test_c, P_n, ww_n, [learning_rate, softmax_temp]);
     for n = 1:size(test_x, 1)

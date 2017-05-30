@@ -51,16 +51,33 @@ function multi = context_create_multi(glmodel, subj, run)
     
     % Run model on training trials
     %
-    prior_variance = 0.1249;
-    inv_softmax_temp = 2.0064;
-    params = [prior_variance inv_softmax_temp];
-    which_structures = [1 1 1 0];
     
-    simulated = simulate_subjects(data, metadata, params, which_structures, which_rows);
+    if glmodel < 127
+        % All models before 127 use the fixed effects parameter fit with the pilot
+        % data
+        %
+        prior_variance = 0.1249;
+        inv_softmax_temp = 2.0064;
+        params = [prior_variance inv_softmax_temp];
+        which_structures = [1 1 1 0];
+        
+        simulated = simulate_subjects(data, metadata, params, which_structures, which_rows);
+    else
+        % All models frmo 127 onwards use the random effects parameter fit on the fMRI data 
+        %
+        load(fullfile('results', 'fit_params_results_BAD.mat'), 'results', 'results_options');
+        result = results(22);
+        options = results_options(22);
+        assert(options.isFmriData == true);
+        assert(~options.fixedEffects);
+        assert(isequal(options.which_structures, [1 1 1 0]));
+
+        simulated = simulate_subjects(data, metadata, result.x, options.which_structures, which_rows);        
+    end
     
     % get the data for training trials on this run only
     %
-    outcome = data.outcome(which_train);
+    outcomes = data.outcome(which_train);
     choices = simulated.pred(which_train, :);
     P = simulated.P(which_train, :);
     values = simulated.values(which_train, :);
@@ -77,7 +94,6 @@ function multi = context_create_multi(glmodel, subj, run)
     
     % get the data for test trials on this run only
     %
-    predict = @(V_n) softmax(V_n, inv_softmax_temp);
     test_choices = simulated.pred(which_test, :);
     test_values = simulated.values(which_test, :);
     test_valuess = simulated.valuess(which_test, :);
@@ -204,7 +220,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(1).name{1} = 'prediction_error';
-            multi.pmod(1).param{1} = outcome' - choices'; % outcome - expected outcome for trials 1..20
+            multi.pmod(1).param{1} = outcomes' - choices'; % outcome - expected outcome for trials 1..20
             multi.pmod(1).poly{1} = 1; % first order  
             
             % const @ trial onset (trials 1..20)
@@ -243,9 +259,9 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.onsets{1} = cellfun(@str2num,data.actualFeedbackOnset(which_train))';
             multi.durations{1} = zeros(size(data.contextRole(which_train)));
             
-            assert(isequal(strcmp(data.sick(which_train), 'Yes'), outcome));
+            assert(isequal(strcmp(data.sick(which_train), 'Yes'), outcomes));
             multi.pmod(1).name{1} = 'outcome';
-            multi.pmod(1).param{1} = outcome'; % outcome == sick (1 or 0) for trials 1..20
+            multi.pmod(1).param{1} = outcomes'; % outcome == sick (1 or 0) for trials 1..20
             multi.pmod(1).poly{1} = 1; % first order  
             
             % const @ trial onset (trials 1..20)
@@ -672,7 +688,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(2).name{1} = 'actual';
-            multi.pmod(2).param{1} = outcome'; % outcome for trials 1..20
+            multi.pmod(2).param{1} = outcomes'; % outcome for trials 1..20
             multi.pmod(2).poly{1} = 1; % first order  
             
             % const @ trial onset (trials 1..20)
@@ -692,7 +708,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(1).name{1} = 'actual';
-            multi.pmod(1).param{1} = outcome' - values'; % outcome - expected outcome for trials 1..20
+            multi.pmod(1).param{1} = outcomes' - values'; % outcome - expected outcome for trials 1..20
             multi.pmod(1).poly{1} = 1; % first order  
             
             % const @ trial onset (trials 1..20)
@@ -843,7 +859,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(2).name{1} = 'prediction_error';
-            multi.pmod(2).param{1} = outcome' - values'; % PE = outcome - expected outcome for trials 1..20
+            multi.pmod(2).param{1} = outcomes' - values'; % PE = outcome - expected outcome for trials 1..20
             multi.pmod(2).poly{1} = 1; % first order  
 
             % const @ trial onset (trials 1..20)
@@ -886,7 +902,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(2).name{1} = 'prediction_error';
-            multi.pmod(2).param{1} = outcome' - values'; % PE = outcome - expected outcome for trials 1..20
+            multi.pmod(2).param{1} = outcomes' - values'; % PE = outcome - expected outcome for trials 1..20
             multi.pmod(2).poly{1} = 1; % first order      
             
          
@@ -915,7 +931,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(2).name{1} = 'prediction_error';
-            multi.pmod(2).param{1} = outcome' - valuess(:,1)'; % PE = outcome - expected outcome by M1 for trials 1..20
+            multi.pmod(2).param{1} = outcomes' - valuess(:,1)'; % PE = outcome - expected outcome by M1 for trials 1..20
             multi.pmod(2).poly{1} = 1; % first order      
             
             % const @ trial onset (trials 1..20)
@@ -946,7 +962,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(2).name{1} = 'prediction_error';
-            multi.pmod(2).param{1} = outcome' - valuess(:,2)'; % PE = outcome - expected outcome by M2 for trials 1..20
+            multi.pmod(2).param{1} = outcomes' - valuess(:,2)'; % PE = outcome - expected outcome by M2 for trials 1..20
             multi.pmod(2).poly{1} = 1; % first order      
             
             % const @ trial onset (trials 1..20)
@@ -977,7 +993,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(2).name{1} = 'prediction_error';
-            multi.pmod(2).param{1} = outcome' - valuess(:,3)'; % PE = outcome - expected outcome by M3 for trials 1..20
+            multi.pmod(2).param{1} = outcomes' - valuess(:,3)'; % PE = outcome - expected outcome by M3 for trials 1..20
             multi.pmod(2).poly{1} = 1; % first order      
             
             % const @ trial onset (trials 1..20)
@@ -1011,7 +1027,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(2).name{1} = 'prediction_error';
-            multi.pmod(2).param{1} = outcome' - valuess(:,1)'; % PE = outcome - expected outcome by M1 for trials 1..20
+            multi.pmod(2).param{1} = outcomes' - valuess(:,1)'; % PE = outcome - expected outcome by M1 for trials 1..20
             multi.pmod(2).poly{1} = 1; % first order      
 
         % M2 value pmod @ trial onset (before updated)
@@ -1038,7 +1054,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(2).name{1} = 'prediction_error';
-            multi.pmod(2).param{1} = outcome' - valuess(:,2)'; % PE = outcome - expected outcome by M2 for trials 1..20
+            multi.pmod(2).param{1} = outcomes' - valuess(:,2)'; % PE = outcome - expected outcome by M2 for trials 1..20
             multi.pmod(2).poly{1} = 1; % first order      
 
         % M3 value pmod @ trial onset (before updated)
@@ -1066,7 +1082,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(2).name{1} = 'prediction_error';
-            multi.pmod(2).param{1} = outcome' - valuess(:,3)'; % PE = outcome - expected outcome by M3 for trials 1..20
+            multi.pmod(2).param{1} = outcomes' - valuess(:,3)'; % PE = outcome - expected outcome by M3 for trials 1..20
             multi.pmod(2).poly{1} = 1; % first order   
             
             
@@ -1142,7 +1158,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(1).name{1} = 'prediction_error';
-            multi.pmod(1).param{1} = outcome' - values'; % PE = outcome - expected outcome for trials 1..20
+            multi.pmod(1).param{1} = outcomes' - values'; % PE = outcome - expected outcome for trials 1..20
             multi.pmod(1).poly{1} = 1; % first order  
 
             % const @ trial onset (trials 1..20)
@@ -1163,7 +1179,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(1).name{1} = 'prediction_error';
-            multi.pmod(1).param{1} = outcome' - values'; % PE = outcome - expected outcome for trials 1..20
+            multi.pmod(1).param{1} = outcomes' - values'; % PE = outcome - expected outcome for trials 1..20
             multi.pmod(1).poly{1} = 1; % first order      
             
             
@@ -1182,7 +1198,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(1).name{1} = 'prediction_error';
-            multi.pmod(1).param{1} = outcome' - valuess(:,1)'; % PE = outcome - expected outcome by M1 for trials 1..20
+            multi.pmod(1).param{1} = outcomes' - valuess(:,1)'; % PE = outcome - expected outcome by M1 for trials 1..20
             multi.pmod(1).poly{1} = 1; % first order      
             
             % const @ trial onset (trials 1..20)
@@ -1201,7 +1217,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(1).name{1} = 'prediction_error';
-            multi.pmod(1).param{1} = outcome' - valuess(:,2)'; % PE = outcome - expected outcome by M2 for trials 1..20
+            multi.pmod(1).param{1} = outcomes' - valuess(:,2)'; % PE = outcome - expected outcome by M2 for trials 1..20
             multi.pmod(1).poly{1} = 1; % first order      
             
             % const @ trial onset (trials 1..20)
@@ -1220,7 +1236,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(1).name{1} = 'prediction_error';
-            multi.pmod(1).param{1} = outcome' - valuess(:,3)'; % PE = outcome - expected outcome by M3 for trials 1..20
+            multi.pmod(1).param{1} = outcomes' - valuess(:,3)'; % PE = outcome - expected outcome by M3 for trials 1..20
             multi.pmod(1).poly{1} = 1; % first order      
             
             % const @ trial onset (trials 1..20)
@@ -1241,7 +1257,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(1).name{1} = 'prediction_error';
-            multi.pmod(1).param{1} = outcome' - valuess(:,1)'; % PE = outcome - expected outcome by M1 for trials 1..20
+            multi.pmod(1).param{1} = outcomes' - valuess(:,1)'; % PE = outcome - expected outcome by M1 for trials 1..20
             multi.pmod(1).poly{1} = 1; % first order      
 
         % M2 only PE @ feedback (outcome) onset
@@ -1256,7 +1272,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(1).name{1} = 'prediction_error';
-            multi.pmod(1).param{1} = outcome' - valuess(:,2)'; % PE = outcome - expected outcome by M2 for trials 1..20
+            multi.pmod(1).param{1} = outcomes' - valuess(:,2)'; % PE = outcome - expected outcome by M2 for trials 1..20
             multi.pmod(1).poly{1} = 1; % first order      
 
         % M3 only PE @ feedback (outcome) onset
@@ -1271,7 +1287,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(1).name{1} = 'prediction_error';
-            multi.pmod(1).param{1} = outcome' - valuess(:,3)'; % PE = outcome - expected outcome by M3 for trials 1..20
+            multi.pmod(1).param{1} = outcomes' - valuess(:,3)'; % PE = outcome - expected outcome by M3 for trials 1..20
             multi.pmod(1).poly{1} = 1; % first order      
             
         % Value (expected outcome) @ trial onset
@@ -1296,7 +1312,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(2).name{1} = 'prediction_error';
-            multi.pmod(2).param{1} = outcome' - values'; % outcome - expected outcome for trials 1..20
+            multi.pmod(2).param{1} = outcomes' - values'; % outcome - expected outcome for trials 1..20
             multi.pmod(2).poly{1} = 1; % first order  
             
             % const @ trial onset (trials 1..20)
@@ -1329,7 +1345,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(2).name{1} = 'prediction_error';
-            multi.pmod(2).param{1} = outcome' - values'; % outcome - expected outcome for trials 1..20
+            multi.pmod(2).param{1} = outcomes' - values'; % outcome - expected outcome for trials 1..20
             multi.pmod(2).poly{1} = 1; % first order  
             
         % M3 posterior - M2 posterior pmod @ outcome
@@ -2292,7 +2308,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(2).name{1} = 'prediction_error';
-            multi.pmod(2).param{1} = outcome' - valuess(:,4)'; % PE = outcome - expected outcome by M1 for trials 1..20
+            multi.pmod(2).param{1} = outcomes' - valuess(:,4)'; % PE = outcome - expected outcome by M1 for trials 1..20
             multi.pmod(2).poly{1} = 1; % first order
 
         % M1 value + M4 value pmod @ trial onset (before updated)
@@ -2790,7 +2806,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = zeros(size(data.contextRole(which_train)));
             
             pressed_sick = strcmp(data.response.keys(which_train), 'left');
-            PE = outcome' - pressed_sick'; % outcome - subject predicted outcome for trials 1..20
+            PE = outcomes' - pressed_sick'; % outcome - subject predicted outcome for trials 1..20
             if std(PE) > 1e-6 % only include if variable
                 multi.pmod(1).name{1} = 'actual';
                 multi.pmod(1).param{1} = PE;
@@ -2815,7 +2831,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = zeros(size(data.contextRole(which_train)));
             
             pressed_sick = strcmp(data.response.keys(which_train), 'left');
-            PE = outcome' - pressed_sick'; % outcome - subject predicted outcome for trials 1..20
+            PE = outcomes' - pressed_sick'; % outcome - subject predicted outcome for trials 1..20
             if std(PE) > 1e-6 % only include if variable
                 multi.pmod(1).name{1} = 'actual';
                 multi.pmod(1).param{1} = PE;
@@ -3097,6 +3113,7 @@ function multi = context_create_multi(glmodel, subj, run)
             %{ 
             x1c3_choice = data.response.keys(which_test & data.cueId == 0 & data.contextId == 2);
             x3c1_choice = data.response.keys(which_test & data.cueId == 2 & data.contextId == 0);
+            predict = @(V_n) softmax(V_n, inv_softmax_temp);
             if ~strcmp(x1c3_choice, 'None') && ~strcmp(x3c1_choice, 'None')
                 x1c3_choice = strcmp(x1c3_choice, 'left');
                 x3c1_choice = strcmp(x3c1_choice, 'left');
@@ -3124,6 +3141,7 @@ function multi = context_create_multi(glmodel, subj, run)
                 trial_idxs = data.trialId(which_trials);
 
                 trial_values = test_valuess(trial_idxs, :);
+                predict = @(V_n) softmax(V_n, inv_softmax_temp);
                 trial_probs = predict(trial_values);
 
                 %trial_likelihoods = arrayfun(@(i) binopdf(subj_choices(i), 1, trial_probs(i,:)), 1:numel(subj_choices), 'UniformOutput', false);
@@ -3223,9 +3241,83 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = iti_onsets - trial_onsets;
             
             
+        %
+        % These are with the random effects parameters fit for the fMRI
+        % behavioral data
+        %
+            
+        % Bayesian surprise = Kullback?Leibler divergence @ feedback
+        % (outcome) onset
+        % + error regressor on wrong trials, to account for error signal
+        % same as 123
+        %
+        case 127     
+            surprise = simulated.surprise(which_train, :);
+    
+            multi.names{1} = 'feedback';
+            multi.onsets{1} = cellfun(@str2num,data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+            
+            multi.pmod(1).name{1} = 'surprise';
+            multi.pmod(1).param{1} = surprise';
+            multi.pmod(1).poly{1} = 1; % first order        
+
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+            
+            % correct vs. wrong (0/1) @ feedback / outcome onset (WRONG trials 1..20)
+            % 
+            which_error = which_train & ~data.response.corr;
+            
+            if sum(which_error) > 0
+                multi.names{3} = 'wrong';
+                multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
+                multi.durations{3} = zeros(size(data.contextRole(which_error)));
+            end
+        
+         
+        % Squared PE = outcome - expected outcome @ feedback time
+        %
+        case 128
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num,data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+            
+            multi.pmod(1).name{1} = 'squared_PE';
+            multi.pmod(1).param{1} = (outcomes' - values').^2;
+            multi.pmod(1).poly{1} = 1; % first order        
+
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+            
+        % Squared PE 2 = new expected outcome - expected outcome @ feedback time
+        %            
+        case 129
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num,data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+            
+            multi.pmod(1).name{1} = 'squared_PE_2';
+            multi.pmod(1).param{1} = (new_values' - values').^2;
+            multi.pmod(1).poly{1} = 1; % first order        
+
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+            
+            
         otherwise
             assert(false, 'invalid glmodel -- should be one of the above');
             
     end % end of switch statement
 
+    save(fullfile('temp', 'context_create_multi.mat'));
 end 

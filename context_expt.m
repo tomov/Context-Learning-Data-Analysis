@@ -23,7 +23,12 @@ function EXPT = context_expt(local)
     %
     if nargin < 1
         [~, name] = system('hostname');
-        if strfind(name, 'MacBook') % probably local           
+        if ~isempty(strfind(name, 'MacBook')) || ~isempty(strfind(name, 'memsql'))
+            % err on the side of falsely thinking it's NCF. Because locally
+            % you will catch that mistake immediatley. On NCF, you will
+            % catch it after you're already sent 100 jobs and they all
+            % fail 2 days later...
+            %
             local = true;
         else
             local = false;

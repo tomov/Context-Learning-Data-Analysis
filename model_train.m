@@ -1,4 +1,4 @@
-function [choices, P_n, ww_n, P, ww, values, valuess, likelihoods, new_values, new_valuess, Sigma] = model_train(x, k, r, params, which_structures, DO_PRINT)
+function [choices, P_n, ww_n, P, ww, values, valuess, likelihoods, new_values, new_valuess, Sigma, lambdas] = model_train(x, k, r, params, which_structures, DO_PRINT)
 
 % Kalman filter to learn the context-cue-reward associations & posteriors
 % for each causal structure
@@ -86,6 +86,7 @@ Sigma{1} = []; % history of Sigma_1:n for M1
 Sigma{2} = []; % history of Sigma_1:n for M2
 Sigma{3} = []; % history of Sigma_1:n for M3
 Sigma{4} = []; % history of Sigma_1:n for M4
+lambdas = []; % history of lambdas
 
 % train
 %
@@ -125,11 +126,14 @@ for n = 1:N % for each trial
     SSigma_n{3} = Sigma_n{3} + tau^2 * eye(D + K); % 1 / certainty for prediction x * w in M3
     SSigma_n{4} = Sigma_n{1} + tau^2 * eye(K); % 1 / certainty for prediction c * w in M4
 
-    gain = @(x_n, SSigma_n) SSigma_n * x_n / (x_n' * SSigma_n * x_n + sigma_r^2);
+    lambda = @(x_n, SSigma_n) x_n' * SSigma_n * x_n + sigma_r^2;
+    gain = @(x_n, SSigma_n) SSigma_n * x_n / lambda(x_n, SSigma_n);
     g_n{1} = gain(x_n, SSigma_n{1});    
     g_n{2} = gain(xb_n, SSigma_n{2});    
     g_n{3} = gain(xx_n, SSigma_n{3}); 
     g_n{4} = gain(c_n, SSigma_n{4});
+    
+    lambdas = [lambdas; lambda(x_n, SSigma_n{1}), lambda(xb_n, SSigma_n{2}), lambda(xx_n, SSigma_n{3}), lambda(c_n, SSigma_n{4})];
 
     if DO_PRINT, fprintf('    g_ns = %.4f %.4f %.4f | %.4f %4.f %.4f | %.4f %.4f %.4f %.4f %.4f %.4f\n', g_n{1}, g_n{2}, g_n{3}); end
 
