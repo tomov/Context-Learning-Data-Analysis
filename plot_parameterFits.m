@@ -15,10 +15,10 @@ fit_params_filename = fullfile('results', 'fit_params_results.mat');
 if exist(fit_params_filename, 'file') ~= 2
     fprintf('Could not find saved fit param results in %s; recomputing...\n', fit_params_filename);
     [results, results_options, mfit_datas] = fit_params();
-    save(fit_params_filename, 'results', 'results_options', 'mfit_datas', '-v7.3');
+    save(fit_params_filename, 'results', 'results_options');
 else
     fprintf('Loading fit param results from %s...\n', fit_params_filename);
-    load(fit_params_filename, 'results', 'results_options', 'mfit_datas');
+    load(fit_params_filename, 'results', 'results_options');
 end
 
 % Plot them in a table

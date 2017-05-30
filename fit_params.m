@@ -1,6 +1,14 @@
-function [results, results_options, mfit_datas] = fit_params()
+function [results, results_options, mfit_datas] = fit_params(isFmriDataRange, fixedEffectsRange, which_structuress, nstarts)
 
 % Fit the hyperparameters of the model based on behavioral data
+%
+% INPUT:
+% isFmriDataRange (optional) = fmri or pilot data or both, e.g. [0 1]
+% fixedEffectsRange (optional) fixed or random effects or both, e.g. [0 1]
+% which_structuress (optional) = cell array of bitmasks for structure
+%                                hypothesis spaces to fit, e.g. {[1 1 1 0], [1 0 0 0]}
+% nstarts (optional) = how many starts for mfit_optimize for each model
+%                      version
 %
 % OUTPUT: 
 % results = struct array with resulting parameter fits for each version of
@@ -11,13 +19,36 @@ function [results, results_options, mfit_datas] = fit_params()
 % mfit_datas = the data struct passed to mfit_optimize for each version of
 %              the model
 
-results_ord = 0; % ordinal = which version of the model we're fitting now
+% set some default parameters
+%
+if nargin < 1 || isempty(isFmriDataRange)
+    % Do pilot and fMRI subjects
+    %
+    isFmriDataRange = [0 1];
+end
+if nargin < 2 || isempty(fixedEffectsRange)
+    % Do both fixed and random effects
+    %
+    fixedEffectsRange = [1 0];
+end
+if nargin < 3 || isempty(which_structuress)
+    % hypothesis spaces of causal sturctures to fit
+    %
+    which_structuress = {[1 1 1 0], [1 0 0 0], [0 1 0 0], [0 0 1 0], [1 1 0 0], [1 0 1 0], [0 1 1 0]};    
+end
+if nargin < 4 || isempty(nstarts)
+    % number of random parameter initializations 
+    %
+    nstarts = 5;
+end
+
 
 tic
 
 % fit behavioral (0) or fMRI (1) data
 %
-for isFmriData = [0 1]
+results_ord = 0; % ordinal = which version of the model we're fitting now
+for isFmriData = isFmriDataRange
     
     options = struct; % options for current result
     options.isFmriData = isFmriData;
@@ -32,7 +63,7 @@ for isFmriData = [0 1]
     % fixed effects = have one "supersubject" and fit one set of parameters for her, 
     % random effects = fit each individual subject separately with her own set of parameters
     %
-    for fixedEffects = [1 0]
+    for fixedEffects = fixedEffectsRange
         
         options.fixedEffects = fixedEffects;
         
@@ -66,10 +97,6 @@ for isFmriData = [0 1]
             end
         end
         
-        % hypothesis spaces of causal sturctures to fit
-        %
-        which_structuress = {[1 1 1 0], [1 0 0 0], [0 1 0 0], [0 0 1 0], [1 1 0 0], [1 0 1 0], [0 1 1 0]}; 
-        
         for which_structures = which_structuress
             which_structures = which_structures{1};
             
@@ -86,7 +113,7 @@ for isFmriData = [0 1]
             param(1).name = 'prior variance';
             param(1).logpdf = @(x) 1;  % log density function for prior
             param(1).lb = 0; % lower bound
-            param(1).ub = 1; % upper bound TODO more?
+            param(1).ub = 5; % upper bound TODO more?
 
             param(2).name = 'inverse softmax temperature'; 
             param(2).logpdf = @(x) 1;  % log density function for prior
@@ -103,7 +130,6 @@ for isFmriData = [0 1]
             
             % run optimization
             %
-            nstarts = 5;    % number of random parameter initializations 
             results_ord = results_ord + 1;
             fprintf('\nFitting #%d with options:\n', results_ord);
             disp(options);

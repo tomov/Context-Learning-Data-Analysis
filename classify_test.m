@@ -13,7 +13,7 @@ disp(method);
 [inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, trials, subjs, mask, predict_what, z_score);
 
 [~, maskname, ~] = fileparts(mask);
-outFilename = fullfile('classifier', ['classify_test_', method, '_', maskname, '_', predict_what, '_', z_score, '_', random_string()]);
+outFilename = fullfile('classifier', ['classify_test_', method, '_', maskname, '_', predict_what, '_', z_score, '_', random_string(), '.mat']);
 
 switch method
     

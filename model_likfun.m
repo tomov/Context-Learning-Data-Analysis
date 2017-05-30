@@ -21,7 +21,7 @@ function total_loglik = model_likfun(data, metadata, params, which_structures, w
 
 % First simulate the subjects with the causal structure model
 %
-simulated = simulate_subjects(data, metadata, params, which_structures, which_rows);
+simulated = simulate_subjects(data, metadata, params, which_structures, which_rows, false);
 
 % Exclude timeouts & training trials (optional)
 %

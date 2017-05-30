@@ -1,4 +1,4 @@
-function simulated = simulate_subjects(data, metadata, params, which_structures, which_rows)
+function simulated = simulate_subjects(data, metadata, params, which_structures, which_rows, DO_PRINT)
 
 % Simulate the subjects using the causal structure learning model, 
 % given their stimulus sequences
@@ -15,6 +15,7 @@ function simulated = simulate_subjects(data, metadata, params, which_structures,
 %                    e.g. [1 1 1 0] = M1, M2, M3
 % which_rows (optional) = binary mask saying which rows from the data to
 %                         use. If not supplied, assumes all rows are used.
+% DO_PRINT (optional) = print output
 %
 
 if nargin < 5 || isempty(which_rows)
@@ -22,6 +23,9 @@ if nargin < 5 || isempty(which_rows)
 else
     % make sure to still ignore rows that are not good
     which_rows = data.which_rows & which_rows;
+end
+if nargin < 6 || isempty(DO_PRINT)
+    DO_PRINT = true;
 end
 
 simulated.keys = {}; % equivalent to response.keys but for the model (i.e. the responses)
@@ -64,7 +68,7 @@ for who = metadata.subjects
     else
         subject_params = params(s_id, :);
     end
-    fprintf('Simulating subj %s with params [%f %f]\n', who{1}, subject_params);
+    if DO_PRINT, fprintf('Simulating subj %s with params [%f %f]\n', who{1}, subject_params); end
     
     % Simulate each run separately
     %

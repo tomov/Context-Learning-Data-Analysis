@@ -65,7 +65,7 @@ function multi = context_create_multi(glmodel, subj, run)
     else
         % All models frmo 127 onwards use the random effects parameter fit on the fMRI data 
         %
-        load(fullfile('results', 'fit_params_results_BAD.mat'), 'results', 'results_options');
+        load(fullfile('results', 'fit_params_results.mat'), 'results', 'results_options');
         result = results(22);
         options = results_options(22);
         assert(options.isFmriData == true);
@@ -85,6 +85,7 @@ function multi = context_create_multi(glmodel, subj, run)
     likelihoods = simulated.likelihoods(which_train, :);
     new_values = simulated.new_values(which_train, :);
     new_valuess = simulated.new_valuess(which_train, :);
+    lambdas = simulated.lambdas(which_train, :);
     
     % calculate entropy
     % exclude M4 which has P = 0
@@ -3290,11 +3291,10 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.pmod(1).param{1} = (outcomes' - values').^2;
             multi.pmod(1).poly{1} = 1; % first order        
 
-            % const @ trial onset (trials 1..20)
-            % 
             multi.names{2} = 'trial_onset';
             multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
+            
             
         % Squared PE 2 = new expected outcome - expected outcome @ feedback time
         %            
@@ -3307,11 +3307,104 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.pmod(1).param{1} = (new_values' - values').^2;
             multi.pmod(1).poly{1} = 1; % first order        
 
-            % const @ trial onset (trials 1..20)
-            % 
             multi.names{2} = 'trial_onset';
             multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
+            
+        % M1 posterior
+        %            
+        case 130
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num,data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+            
+            multi.pmod(1).name{1} = 'M1_posterior';
+            multi.pmod(1).param{1} = P(:, 1)';
+            multi.pmod(1).poly{1} = 1; % first order        
+
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+
+
+        % M2 posterior
+        %            
+        case 131
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num,data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+            
+            multi.pmod(1).name{1} = 'M2_posterior';
+            multi.pmod(1).param{1} = P(:, 2)';
+            multi.pmod(1).poly{1} = 1; % first order        
+
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+            
+
+        % M3 posterior
+        %            
+        case 132
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num,data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+            
+            multi.pmod(1).name{1} = 'M3_posterior';
+            multi.pmod(1).param{1} = P(:, 2)';
+            multi.pmod(1).poly{1} = 1; % first order        
+
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+            
+            
+        % M1 reliability or precision = 1/lambda
+        %            
+        case 133
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num,data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+            
+            multi.pmod(1).name{1} = 'M1_reliability';
+            multi.pmod(1).param{1} = 1./lambdas(:, 1)';
+            multi.pmod(1).poly{1} = 1; % first order        
+
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+            
+        % M2 reliability or precision = 1/lambda
+        %            
+        case 134
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num,data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+            
+            multi.pmod(1).name{1} = 'M2_reliability';
+            multi.pmod(1).param{1} = 1./lambdas(:, 2)';
+            multi.pmod(1).poly{1} = 1; % first order        
+
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+            
+
+        % M3 reliability or precision = 1/lambda
+        %            
+        case 135
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num,data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+            
+            multi.pmod(1).name{1} = 'M3_reliability';
+            multi.pmod(1).param{1} = 1./lambdas(:, 3)';
+            multi.pmod(1).poly{1} = 1; % first order        
+
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+            
             
             
         otherwise
