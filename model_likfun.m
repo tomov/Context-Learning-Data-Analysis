@@ -11,9 +11,12 @@ function total_loglik = model_likfun(data, metadata, params, which_structures, w
 %          with the parameters for each subject
 % which_structures = which causal structures to use, as a logical vector,
 %                    e.g. [1 1 1 0] = M1, M2, M3
-% which_rows = binary mask saying which rows from the data to use. For
-%              fixed effects, this will include all subjects. For random
-%              effects, it will include one subject at a time.
+% which_rows = binary mask saying which rows from the data to use. When
+%              using it with mfit_optimize, for fixed effects, this will 
+%              include all subjects. For random effects, it will include one
+%              subject at a time. This is not necessary if using it outside
+%              mfit_optimize; just pass the set of all parameters for
+%              random effects.
 
 
 % First simulate the subjects with the causal structure model

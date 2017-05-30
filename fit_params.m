@@ -1,4 +1,4 @@
-function [results, results_options, mfit_data] = fit_params()
+function [results, results_options, mfit_datas] = fit_params()
 
 % Fit the hyperparameters of the model based on behavioral data
 %
@@ -8,6 +8,8 @@ function [results, results_options, mfit_data] = fit_params()
 % results_options = options for the particular version of the model, e.g.
 %           was it random effects vs. fixed effects, or was it fmri data or
 %           pilot data
+% mfit_datas = the data struct passed to mfit_optimize for each version of
+%              the model
 
 results_ord = 0; % ordinal = which version of the model we're fitting now
 
@@ -56,7 +58,7 @@ for isFmriData = [0 1]
             % each subject
             %
             subj_idx = 0;
-            for who = metadata.subjects
+            for who = metadata.subjects % only include "good" subjects
                 subj_idx = subj_idx + 1;
                 mfit_data(subj_idx).which_rows = strcmp(data.participant, who);
                 % # of data points
@@ -108,6 +110,7 @@ for isFmriData = [0 1]
             
             results(results_ord) = mfit_optimize(likfun, param, mfit_data, nstarts);
             results_options(results_ord) = options;
+            mfit_datas{results_ord} = mfit_data;
 
             fprintf('  BIC = %.4f, AIC = %.4f, params = \n', results(results_ord).bic, results(results_ord).aic);
             disp(results(results_ord).x);
