@@ -51,7 +51,7 @@ predict = @(V_n) 1 ./ (1 + exp(-2 * inv_softmax_temp * V_n + inv_softmax_temp));
 %
 N = size(x, 1); % # of trials
 D = size(x, 2); % # of stimuli
-K = 2;          % # of contexts
+K = 3;          % # of contexts
 
 if DO_PRINT
     fprintf('train N = %d, D = %d, K = %d\n', N, D, K);
@@ -207,12 +207,12 @@ for n = 1:N % for each trial
     end
    
     P = [P; P_n];
-    %{
-    ww{1} = [ww{1}; ww_n{1}(1:2)'];
-    ww{2} = [ww{2}; reshape(ww_n{2}(1:3,1:2), [1 6])];
-    ww{3} = [ww{3}; ww_n{3}([1:2 4:5])'];
-    ww{4} = [ww{4}; ww_n{4}(1:2)'];
     
+    ww{1} = [ww{1}; ww_n{1}(1:1)'];
+    ww{2} = [ww{2}; reshape(ww_n{2}(1,1:2), [1 2])];
+    ww{3} = [ww{3}; ww_n{3}([1:3])'];
+    ww{4} = [ww{4}; ww_n{4}(1:2)'];
+    %{
     Sigma{1} = [Sigma{1}; Sigma_n{1}(eye(3) == 1)'];
     Sigma{2} = [Sigma{2}; Sigma_n{2}(eye(4) == 1)'];
     Sigma{3} = [Sigma{3}; [Sigma_n{3}(eye(6) == 1)', reshape(Sigma_n{3}([1:2 4:5], [1:2 4:5]), 16, 1)']];

@@ -29,9 +29,9 @@ simulated = simulate_subjects(data, metadata, params, which_structures);
 
 next_subplot_idx = 1; % so you can reorder them by simply rearranging the code
 
-s_id = 0;
+s_ord = 0;
 for who = metadata.subjects
-    s_id = s_id + 1;
+    s_ord = s_ord + 1;
 
     for run = 1:metadata.runsPerSubject
 
@@ -50,7 +50,7 @@ for who = metadata.subjects
         set(gca, 'YTick', []);
 
         if run == 1
-            ylabel(num2str(s_id));
+            ylabel(num2str(s_ord));
         end
         if strcmp(who{1}, metadata.subjects{end})
             xlabel('trial');

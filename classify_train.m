@@ -1,4 +1,4 @@
-function [classifier] = classify_train(method, runs, trials, subjs, mask, predict_what, z_score)
+function [classifier, inputs, targets, outputs, which_rows] = classify_train(method, runs, trials, subjs, mask, predict_what, z_score)
 % Train classifier to predict stuff based on neural activity at trial onset
 % returns a fitObj that you can pass to glmnetPredict
 % or a petternnet net that you can use e.g. like net(inputs)
@@ -151,10 +151,7 @@ end
 
 toc
 
-% Save everything
+% Save everything except for inputs (too big)
 %
-if size(inputs, 2) > 5000
-    clear inputs; % too big
-end
 fprintf('SAVING to %s\n', outFilename);
-save(outFilename);
+save(outFilename,'-regexp','^(?!(inputs)$).');

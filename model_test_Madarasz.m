@@ -21,7 +21,7 @@ inv_softmax_temp = params(2);
 %
 N = size(x, 1); % # of trials
 D = size(x, 2); % # of stimuli
-K = 2;          % # of contexts
+K = 3;          % # of contexts
 %fprintf('test N = %d, D = %d, K = %d\n', N, D, K);
 
 % predict

@@ -112,10 +112,7 @@ for who = metadata.subjects
             simulated.ww4(which_train, :) = ww{4};
             simulated.values(which_train, :) = values;
             simulated.valuess(which_train, :) = valuess;
-            logs = log2(P) - log2(Q); 
-            logs(isnan(logs)) = 0; % lim_{x->0} x log(x) = 0
-            surprise = sum(P .* logs, 2);
-            surprise(isnan(surprise)) = 0; % weird things happen when P --> 0, e.g. we get -Infs
+            surprise = KL_divergence(P, Q);
             simulated.surprise(which_train, :) = surprise;
             simulated.likelihoods(which_train, :) = likelihoods;
             simulated.new_values(which_train, :) = new_values;
