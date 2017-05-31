@@ -113,7 +113,7 @@ for isFmriData = isFmriDataRange
             param(1).name = 'prior variance';
             param(1).logpdf = @(x) 1;  % log density function for prior
             param(1).lb = 0; % lower bound
-            param(1).ub = 20; % upper bound TODO more?
+            param(1).ub = 100; % upper bound TODO more?
 
             param(2).name = 'inverse softmax temperature'; 
             param(2).logpdf = @(x) 1;  % log density function for prior

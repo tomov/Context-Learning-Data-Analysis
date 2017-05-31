@@ -16,7 +16,7 @@ end
 
 % Load the parameters from the mfit_optimize results
 %
-load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts.mat'), 'results', 'results_options');
+load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts_20_prior.mat'), 'results', 'results_options');
 params = results(1).x;
 options = results_options(1);
 disp('Using parameters:');
