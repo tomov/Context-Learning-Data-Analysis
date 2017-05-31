@@ -60,20 +60,23 @@ function multi = context_create_multi(glmodel, subj, run)
         inv_softmax_temp = 2.0064;
         params = [prior_variance inv_softmax_temp];
         which_structures = [1 1 1 0];
-        
-        simulated = simulate_subjects(data, metadata, params, which_structures, which_rows);
     else
         % All models frmo 127 onwards use the random effects parameter fit on the fMRI data 
         %
-        load(fullfile('results', 'fit_params_results.mat'), 'results', 'results_options');
-        result = results(22);
-        options = results_options(22);
+        load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts.mat'), 'results', 'results_options');
+        params = results(1).x;
+        options = results_options(1);
+        disp('Using parameters:');
+        disp(params);
+        disp('generated with options:');
+        disp(options);
         assert(options.isFmriData == true);
         assert(~options.fixedEffects);
         assert(isequal(options.which_structures, [1 1 1 0]));
-
-        simulated = simulate_subjects(data, metadata, result.x, options.which_structures, which_rows);        
+        which_structures = options.which_structures;
     end
+    
+    simulated = simulate_subjects(data, metadata, params, which_structures, which_rows);        
     
     % get the data for training trials on this run only
     %

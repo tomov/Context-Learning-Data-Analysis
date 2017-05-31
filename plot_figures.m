@@ -14,6 +14,20 @@ else
     [data, metadata] = load_data(fullfile('data', 'pilot.csv'), false);
 end
 
+% Load the parameters from the mfit_optimize results
+%
+load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts.mat'), 'results', 'results_options');
+params = results(1).x;
+options = results_options(1);
+disp('Using parameters:');
+disp(params);
+disp('generated with options:');
+disp(options);
+%assert(options.isFmriData == true);
+%assert(~options.fixedEffects);
+assert(isequal(options.which_structures, [1 1 1 0]));
+        
+
 % Plot figure according to plotname
 %
 switch plotname
@@ -23,33 +37,20 @@ switch plotname
         plot_sanity(data, metadata);
         
     case 'behavior'
-        figure;
-        
-        %plot_behavior(data, metadata);
-        %plot_behavior(data, metadata, [0.1249 2.0064], [1 1 1 0]);
-        
-        load(fullfile('results', 'fit_params_results.mat'), 'results', 'results_options');
-        result = results(22);
-        options = results_options(22);
-        %assert(options.isFmriData == true);
-        %assert(~options.fixedEffects);
-        assert(isequal(options.which_structures, [1 1 1 0]));
-        
-        plot_behavior(data, metadata, result.x, options.which_structures);
-
+        figure;        
+        plot_behavior(data, metadata, params, options.which_structures);
 
     case 'posteriors'
+        figure;        
+        plot_posteriors(data, metadata, params, options.which_structures);
+        
+    case 'reliabilities'
         figure;
+        plot_reliabilities(data, metadata, params, options.which_structures);
         
-        load(fullfile('results', 'fit_params_results.mat'), 'results', 'results_options');
-        result = results(22);
-        options = results_options(22);
-        %assert(options.isFmriData == true);
-        %assert(~options.fixedEffects);
-        assert(isequal(options.which_structures, [1 1 1 0]));
-        
-        plot_posteriors(data, metadata, result.x, options.which_structures);
-        
+    case 'surprise'
+        figure;
+        plot_surprise(data, metadata, params, options.which_structures);
         
     case 'parameter_fits'
         % Compare different hyperparameters

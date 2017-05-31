@@ -1,6 +1,6 @@
-function plot_posteriors(data, metadata, params, which_structures)
+function plot_reliabilities(data, metadata, params, which_structures)
 
-% Plot the posteriors of the model given subject data. For all subjects and
+% Plot the reliabilities (1/lambda) of the model given subject data. For all subjects and
 % all runs separately.
 % 
 % INPUT 
@@ -36,7 +36,7 @@ for who = metadata.subjects
     for run = 1:metadata.runsPerSubject
 
         which = data.which_rows & data.isTrain & strcmp(who, data.participant) & data.runId == run;
-        P = simulated.P(data.which_rows & data.isTrain & strcmp(who, data.participant) & data.runId == run, logical(which_structures));
+        reliabilities = 1 ./ simulated.lambdas(data.which_rows & data.isTrain & strcmp(who, data.participant) & data.runId == run, logical(which_structures));
         
         condition = data.contextRole(which);
         condition = condition{1};
@@ -44,8 +44,8 @@ for who = metadata.subjects
         subplot(metadata.N, metadata.runsPerSubject, next_subplot_idx);
         next_subplot_idx = next_subplot_idx + 1;
 
-        plot(P, '-', 'LineWidth', 2);
-        text(6, 0.5, condition);
+        plot(reliabilities, '-', 'LineWidth', 2);
+        text(6, mean(ylim), condition);
         set(gca, 'XTick', []);
         set(gca, 'YTick', []);
 

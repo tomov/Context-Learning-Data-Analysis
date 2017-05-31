@@ -1,6 +1,6 @@
-function plot_posteriors(data, metadata, params, which_structures)
+function plot_surprise(data, metadata, params, which_structures)
 
-% Plot the posteriors of the model given subject data. For all subjects and
+% Plot the KL divergence of the model given subject data. For all subjects and
 % all runs separately.
 % 
 % INPUT 
@@ -36,7 +36,7 @@ for who = metadata.subjects
     for run = 1:metadata.runsPerSubject
 
         which = data.which_rows & data.isTrain & strcmp(who, data.participant) & data.runId == run;
-        P = simulated.P(data.which_rows & data.isTrain & strcmp(who, data.participant) & data.runId == run, logical(which_structures));
+        surprise = simulated.surprise(data.which_rows & data.isTrain & strcmp(who, data.participant) & data.runId == run);
         
         condition = data.contextRole(which);
         condition = condition{1};
@@ -44,24 +44,18 @@ for who = metadata.subjects
         subplot(metadata.N, metadata.runsPerSubject, next_subplot_idx);
         next_subplot_idx = next_subplot_idx + 1;
 
-        plot(P, '-', 'LineWidth', 2);
-        text(6, 0.5, condition);
+        plot(surprise, '-', 'LineWidth', 2);
+        text(6, mean(ylim), condition);
         set(gca, 'XTick', []);
         set(gca, 'YTick', []);
 
-        Ms = {}; % only include models we care about
-        if which_structures(1), Ms = [Ms, {'M1'}]; end
-        if which_structures(2), Ms = [Ms, {'M2'}]; end
-        if which_structures(3), Ms = [Ms, {'M3'}]; end
-        if which_structures(4), Ms = [Ms, {'M4'}]; end
-        
         if run == 1
             ylabel(num2str(s_id));
         end
         if strcmp(who{1}, metadata.subjects{end})
             xlabel('trial');
             if run == metadata.runsPerSubject
-                legend(Ms);
+                legend({'D_{KL}'});
             end
         end
         if strcmp(who{1}, metadata.subjects{1})
