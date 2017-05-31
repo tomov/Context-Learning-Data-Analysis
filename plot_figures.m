@@ -54,8 +54,7 @@ switch plotname
         
     case 'parameter_fits'
         % Compare different hyperparameters
-        %
-        
+        %        
         fit_params_summary_filename = fullfile('results', 'fit_params_summary.csv');
         if exist(fit_params_summary_filename, 'file') ~= 2
             T = plot_parameterFits();
@@ -65,6 +64,11 @@ switch plotname
             T = readtable(fit_params_summary_filename, 'ReadRowNames', true);
         end        
         disp(T);
+        
+    case 'classifier_vs_posterior'
+        assert(isequal(options.which_structures, [1 1 1 0]));
+        
+        plot_classifierVsPosterior(data, metadata, params, options.which_structures);
 
     otherwise
         assert(false, 'invalid plotname -- should be one of the above');
