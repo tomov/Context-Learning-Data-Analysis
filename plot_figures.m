@@ -68,7 +68,13 @@ switch plotname
     case 'classifier_vs_posterior'
         assert(isequal(options.which_structures, [1 1 1 0]));
         
-        plot_classifierVsPosterior(data, metadata, params, options.which_structures);
+        figure;
+        T = plot_classifierVsPosterior(data, metadata, params, options.which_structures);
+        disp(T);
+        
+    case 'classifier_predictions'        
+        figure;
+        plot_classifierPredictions(data, metadata, fullfile('masks', 'hippocampus.nii'));
 
     otherwise
         assert(false, 'invalid plotname -- should be one of the above');
