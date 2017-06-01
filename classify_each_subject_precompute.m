@@ -1,6 +1,6 @@
-% Batch run classify_single_subject for multiple masks & other parameters
+% Batch run classify_each_subject for multiple masks & other parameters
 % potentially in order to precompute & save the results
-% similar to classify_single_subject.sh
+% similar to classify_each_subject.sh
 %
 
 masks = {fullfile('masks', 'hippocampus.nii'), ...
@@ -13,7 +13,7 @@ masks = {fullfile('masks', 'hippocampus.nii'), ...
          fullfile('masks', 'visual.nii'), ...
          fullfile('masks', 'motor.nii'), ...
          fullfile('masks', 'sensory.nii')};
-z_scores = {'z-none'};
+z_scores = {'z-run'};
 
 % Run computation for each mask
 %
@@ -23,6 +23,6 @@ for mask = masks
     for z_score = z_scores
         z_score = z_score{1};
         
-        classify_single_subject(mask, z_score); 
+        classify_each_subject(mask, z_score); 
     end
 end

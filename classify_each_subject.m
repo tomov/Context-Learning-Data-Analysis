@@ -1,4 +1,4 @@
-function [classifiers, all_targets, all_outputs] = classify_single_subject(mask, z_score)
+function [classifiers, all_targets, all_outputs] = classify_each_subject(mask, z_score)
 
 % Train a separate classifier for each subject to predict the run condition
 % based on neural activation.

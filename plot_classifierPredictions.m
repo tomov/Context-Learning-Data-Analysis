@@ -11,7 +11,7 @@ z_score = 'z-run';
 % trials are here, not just a subset of them, so we can refer to rows in all_targets
 % and all_outputs using logical vectors from data)
 %
-[classifiers, all_targets, all_outputs] = classify_single_subject(mask, z_score);
+[classifiers, all_targets, all_outputs] = classify_each_subject(mask, z_score);
 
 % We assume that all good subjects are included an no others
 %
