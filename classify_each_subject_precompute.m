@@ -13,7 +13,7 @@ masks = {fullfile('masks', 'hippocampus.nii'), ...
          fullfile('masks', 'visual.nii'), ...
          fullfile('masks', 'motor.nii'), ...
          fullfile('masks', 'sensory.nii')};
-z_scores = {'z-run'};
+z_scores = {'z-none'};
 
 % Run computation for each mask
 %
@@ -23,6 +23,7 @@ for mask = masks
     for z_score = z_scores
         z_score = z_score{1};
         
-        classify_each_subject(mask, z_score); 
+        classify_each_subject_CV(mask, z_score);
+        %classify_each_subject(mask, z_score); 
     end
 end

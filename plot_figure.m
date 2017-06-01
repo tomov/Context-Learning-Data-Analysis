@@ -1,4 +1,4 @@
-function plot_figures(plotname, isFmriData)
+function plot_figure(plotname, isFmriData)
 
 % set default params
 %
@@ -28,7 +28,6 @@ assert(options.isFmriData == true);
 assert(~options.fixedEffects);
 assert(isequal(options.which_structures, [1 1 1 0]));
         
-
 % Plot figure according to plotname
 %
 switch plotname
