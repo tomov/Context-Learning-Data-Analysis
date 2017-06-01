@@ -16,15 +16,16 @@ end
 
 % Load the parameters from the mfit_optimize results
 %
-load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts_100_prior.mat'), 'results', 'results_options');
+load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts_5_prior.mat'), 'results', 'results_options');
 params = results(1).x;
 options = results_options(1);
 disp('Using parameters:');
 disp(params);
 disp('generated with options:');
 disp(options);
-%assert(options.isFmriData == true);
-%assert(~options.fixedEffects);
+% safeguards
+assert(options.isFmriData == true);
+assert(~options.fixedEffects);
 assert(isequal(options.which_structures, [1 1 1 0]));
         
 
@@ -51,6 +52,10 @@ switch plotname
     case 'surprise'
         figure;
         plot_surprise(data, metadata, params, options.which_structures);
+        
+    case 'prediction_error'
+        figure;
+        plot_PE(data, metadata, params, options.which_structures);
         
     case 'parameter_fits'
         % Compare different hyperparameters

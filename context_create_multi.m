@@ -44,6 +44,13 @@ function multi = context_create_multi(glmodel, subj, run)
     assert(sum(which_test) == metadata.testTrialsPerRun);
     assert(sum(which_rows) == metadata.trialsPerRun);
     
+    % ...never mind what the thing above said;
+    % we only support good subjects here now
+    %
+    assert(ismember(subj, getGoodSubjects()));
+    
+
+    
     % condition = context role for the run
     %
     condition = data.contextRole(which_train);
@@ -3415,5 +3422,4 @@ function multi = context_create_multi(glmodel, subj, run)
             
     end % end of switch statement
 
-    save(fullfile('temp', 'context_create_multi.mat'));
 end 

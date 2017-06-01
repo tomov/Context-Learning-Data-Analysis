@@ -4,7 +4,7 @@
 #
 
 methods=( "cvglmnet" "patternnet" )
-masknames=( "hippocampus" "ofc" "striatum" "vmpfc" "bg" "pallidum" "visual" "motor" "sensory" )
+masknames=( "hippocampus" "ofc" "striatum" "vmpfc" "bg" "pallidum" "visual" "v1" "motor" "sensory" )
 runs_to_leaveout=(1 2 3 4 5 6 7 8 9)
 z_scores=( "z-none" "z-run" "z-run-voxel" )
 predict_what="condition"

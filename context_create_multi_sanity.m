@@ -3,6 +3,8 @@ function context_create_multi_sanity(glmodels, subjs, runs)
 % Sanity test context_create_multi.m before shipping to NCF by running
 % through the GLMs and generating multi structures with differnet subjects
 % / runs
+% I would suggest also trying subjects that are "bad" (not in
+% getGoodSubjects()), e.g. #9
 %
 % INPUT:
 % glms = glmodels to test, e.g. 1:20

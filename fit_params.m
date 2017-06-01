@@ -113,7 +113,7 @@ for isFmriData = isFmriDataRange
             param(1).name = 'prior variance';
             param(1).logpdf = @(x) 1;  % log density function for prior
             param(1).lb = 0; % lower bound
-            param(1).ub = 10000; % upper bound TODO more?
+            param(1).ub = 10; % upper bound TODO more?
 
             param(2).name = 'inverse softmax temperature'; 
             param(2).logpdf = @(x) 1;  % log density function for prior
@@ -126,6 +126,7 @@ for isFmriData = isFmriDataRange
             % to simulate by passing a bitmask which includes only rows for
             % this subject / those subjects
             %
+            assert(isequal(mfit_data.which_rows | data.which_rows, data.which_rows)); % make sure we're not including "bad" subjects
             likfun = @(params, mfit_data) model_likfun(data, metadata, params, which_structures, mfit_data.which_rows, false);
             
             % run optimization

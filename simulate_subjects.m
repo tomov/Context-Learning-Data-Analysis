@@ -21,12 +21,16 @@ function simulated = simulate_subjects(data, metadata, params, which_structures,
 if nargin < 5 || isempty(which_rows)
     which_rows = data.which_rows; % use all rows by default
 else
-    % make sure to still ignore rows that are not good
-    which_rows = data.which_rows & which_rows;
+    %warning('simulate_subjects: including rows that potentially contain "bad" subjects (%d total)', sum(which_rows));
+    % never mind, we cannot include not good subjects -- we're iterating
+    % over good subjects only b/c we've only fit parameters to them
+    %
+    assert(isequal(which_rows | data.which_rows, data.which_rows)); % make sure only good subjects are included
 end
 if nargin < 6 || isempty(DO_PRINT)
     DO_PRINT = true;
 end
+
 
 simulated.keys = {}; % equivalent to response.keys but for the model (i.e. the responses)
 simulated.pred = []; % the choice probability (not the actual choice) for each trial
@@ -75,6 +79,7 @@ for who = metadata.subjects
     for condition = unique(data.contextRole)'
         which_runs = which_rows & strcmp(data.participant, who) & strcmp(data.contextRole, condition);
         runs = unique(data.runId(which_runs))';
+        
         for run = runs
             which_train = which_runs & data.isTrain & data.runId == run;
             which_test = which_runs & ~data.isTrain & data.runId == run;

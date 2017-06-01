@@ -16,6 +16,7 @@ masks = {fullfile('masks', 'hippocampus.nii'), ...
          fullfile('masks', 'bg.nii'), ...
          fullfile('masks', 'pallidum.nii'), ...
          fullfile('masks', 'visual.nii'), ...
+         fullfile('masks', 'v1.nii'), ...
          fullfile('masks', 'motor.nii'), ...
          fullfile('masks', 'sensory.nii')};
 z_score = 'z-run';
@@ -33,7 +34,7 @@ simulated = simulate_subjects(data, metadata, params, which_structures);
 % results table
 %
 table_rowNames = {};
-table_colNames = {'acc', 'KL_P_Q', 'KL_U_Q', 'KL_p', 'Bhat_P_Q', 'Bhat_U_Q', 'Bhat_p','Hell_P_Q', 'Hell_U_Q', 'Hell_p'};
+table_colNames = {'acc', 'MCVE', 'KL_P_Q', 'KL_U_Q', 'KL_p', 'Bhat_P_Q', 'Bhat_U_Q', 'Bhat_p','Hell_P_Q', 'Hell_U_Q', 'Hell_p'};
 table = [];
 
 next_subplot_idx = 1;
@@ -56,6 +57,7 @@ for mask = masks
     which_subjects = ~cellfun(@isempty, classifiers);
     assert(isequal(metadata.allSubjects(which_subjects), metadata.subjects));
     which_rows = data.which_rows & data.isTrain; % only look at training trials
+    subjects = find(which_subjects);
     
     %
     % Plots
@@ -101,6 +103,19 @@ for mask = masks
     accuracy = classify_get_accuracy(all_outputs(which_rows, :), all_targets(which_rows, :));
     fprintf('Success rate for %s is %.2f%%\n', maskname, accuracy);
 
+    % Compute mean cross-validated error for lambda within 1 standard error
+    % of the minimum lambda, averaged across subjects
+    %
+    MCVEs = [];
+    for subj_id = subjects
+        c = classifiers{subj_id};
+        MCVE = c.cvm(find(c.lambda == c.lambda_1se));
+        MCVEs = [MCVEs, MCVE];
+    end
+    accuracy = classify_get_accuracy(all_outputs(which_rows, :), all_targets(which_rows, :));
+    fprintf('mean mean cross-validated error %s is %.2f\n', maskname, mean(MCVEs));
+
+    
     % Distributions we're comparing
     %
     P = simulated.P(which_rows, which_structures); % posterior from model
@@ -129,12 +144,14 @@ for mask = masks
     Hell_Q_unif = Hellinger_distance(Q, unif);
     [~, Hell_p] = ttest2(Hell_P_Q, Hell_Q_unif);
     
-    row = [accuracy, ...
+    row = [accuracy, mean(MCVEs)...
            mean(KL_P_Q), mean(KL_unif_Q), KL_p, ...
            mean(Bhat_P_Q), mean(Bhat_Q_unif), Bhat_p, ...
            mean(Hell_P_Q), mean(Hell_Q_unif), Hell_p];
     table = [table; row];
     table_rowNames = [table_rowNames, {maskname}];
+    
+    save(fullfile('classifier', ['classifierVsPosterior_', maskname, '_', z_score, '.mat']));
 end
 
 T = array2table(table, 'RowNames', table_rowNames, 'VariableNames', table_colNames);

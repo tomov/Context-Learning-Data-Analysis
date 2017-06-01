@@ -8,7 +8,7 @@ method = 'cvglmnet';
 %z_score = 'z-run'; -- passed as argument
 predict_what = 'condition';
 runs = [1:9];
-trials = [1:24];
+trials = [1:20];
 
 % assumes we're working with all good subjects
 %
