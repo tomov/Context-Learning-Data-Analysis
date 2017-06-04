@@ -16,17 +16,18 @@ end
 
 % Load the parameters from the mfit_optimize results
 %
-load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts_5_prior.mat'), 'results', 'results_options');
-params = results(1).x;
-options = results_options(1);
+%load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts_5_prior.mat'), 'results', 'results_options');
+load(fullfile('results', 'fit_params_results.mat'), 'results', 'results_options');
+params = results(2).x;
+options = results_options(2);
 disp('Using parameters:');
 disp(params);
 disp('generated with options:');
 disp(options);
 % safeguards
-assert(options.isFmriData == true);
-assert(~options.fixedEffects);
-assert(isequal(options.which_structures, [1 1 1 0]));
+%assert(options.isFmriData == true);
+%assert(~options.fixedEffects);
+%assert(isequal(options.which_structures, [1 1 1 0]));
         
 % Plot figure according to plotname
 %

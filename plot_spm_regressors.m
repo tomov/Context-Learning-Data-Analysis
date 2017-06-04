@@ -10,7 +10,7 @@ include_motion = false;
 
 multi = EXPT.create_multi(glmodel, subj, run);
 
-lkasjflaksjflasjkfd
+%lkasjflaksjflasjkfd
 % TODO broken -- don't save stuff in context_create_multi.mat; breaks
 % ccnl_fmri_glm...
 load(fullfile('context_create_multi.mat')); % WARNING WARNING WARNING: MASSIVE COUPLING. This relies on context_create_multi saving its state into this file. I just don't wanna copy-paste or abstract away the code that load the data from there

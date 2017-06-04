@@ -5,9 +5,11 @@ function show_figure(figure_name)
 % figure_name = which figure to show, e.g. Figure_3A
 %
 
-sem = @(x) std(x) / sqrt(length(x));
+% set nicer colors
+C = linspecer(3);
+set(0,'DefaultAxesColorOrder',C)
 
-filename = fullfile('temp', ['show_figure_', figure_name, '.mat']);
+filename = 'show_figure.mat';
 
 % Try to load cached figure data
 %
@@ -21,13 +23,20 @@ if exist(filename, 'file') ~= 2
     load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts_5_prior.mat'), 'results', 'results_options');
     params = results(1).x;
     options = results_options(1);
+    
+    % OVERRIDE -- use pilot params as before
+    %
+    params = [0.1249 2.0064];
+    options.isFmriData = false;
+    options.fixedEffects = true;
+    
     disp('Using parameters:');
     disp(params);
     disp('generated with options:');
     disp(options);
     % safeguards
-    assert(options.isFmriData == true);
-    assert(~options.fixedEffects);
+    %assert(options.isFmriData == true);
+    %assert(~options.fixedEffects);
     assert(isequal(options.which_structures, [1 1 1 0]));
     which_structures = logical([1 1 1 0]);
 
@@ -36,27 +45,23 @@ if exist(filename, 'file') ~= 2
     simulated = simulate_subjects(data, metadata, params, which_structures);
     
     fprintf('Saving data to %s\n', filename);
-    save(filename); % cache to file
+    save(filename, 'data', 'metadata', 'simulated', 'results', 'params', 'options', 'which_structures'); % cache to file
 else
     fprintf('Loading data from %s\n', filename);
-    load(filename); % load from file
+    load(filename, 'data', 'metadata', 'simulated', 'results', 'params', 'options', 'which_structures');
 end
 
 % Plot figure(s)
 %
 switch figure_name
     
-    % TODO SAM use subplots -- you need to give editor a separate PDF for
-    % each fiure
-    % TODO linspecr.m -- nicer color map (don't have to use it)
-    %
     case 'Figure_3'
         
         %
         % Figure 3A: Posterior probabilities over structures in each condition
         %
         
-        handle = figure;
+        figure;
         %set(handle, 'Position', [500, 500, 450, 200])
         
         subplot(2, 1, 1);
@@ -73,14 +78,14 @@ switch figure_name
         xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
         ylabel('Posterior probability');
         legend({'M1', 'M2', 'M3'}, 'Position', [0.15 0.3 1 1]);
-    
+        ylim([0 1.1]);
+        set(gca,'fontsize',13);    
+        
         %
         % Figure 3B: Choice probabilities on test trials for model vs. humans
         %
         
         subplot(2, 1, 2);
-        
-        % TODO SAM also mytitle.m -- easier to plot left-oriented panel titles
         
         % Choice probabilities for model
         %
@@ -103,6 +108,8 @@ switch figure_name
         for condition = metadata.contextRoles
             which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
             
+            % TODO For within-subject errors, you don't want to average standard errors. You apply wse to the subjects x condition x test-trial array.
+            
             x1c1 = []; x1c3 = []; x3c1 = []; x3c3 = [];
             for who = metadata.subjects
                 x1c1 = [x1c1, data.chose_sick(which_rows & data.cueId == 0 & data.contextId == 0 & strcmp(data.participant, who))];
@@ -119,11 +126,10 @@ switch figure_name
             [x1c3_sems, x1c3_means] = wse(x1c3);
             [x3c1_sems, x3c1_means] = wse(x3c1);
             [x3c3_sems, x3c3_means] = wse(x3c3);
-            
+
             human_means = [human_means; mean([x1c1_means' x1c3_means' x3c1_means' x3c3_means'])];
             human_sems = [human_sems; mean([x1c1_sems' x1c3_sems' x3c1_sems' x3c3_sems'])];
         end
-        save('test.mat');
         
         % Plot model choices probabilities
         %
@@ -142,22 +148,129 @@ switch figure_name
         % Plot human choices
         %
         hold on;
-        errorbar(xs, human_means, human_sems, 'o', 'LineWidth', 2);
+        errorbar(xs, human_means, human_sems, 'o', 'LineWidth', 2, 'Color', [0 0 0]);
         hold off;
         xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
         ylabel('Choice probability');
-        legend({'x_1c_1', 'x_1c_3', 'x_3c_1', 'x_3c_3'}, 'Position', [0.07 -0.12 1 1]);
-    
+        legend({'x_1c_1', 'x_1c_3', 'x_3c_1', 'x_3c_3'}, 'Position', [0.07 -0.095 1 1]);
+        ylim([0 1.1]);
+        set(gca,'fontsize',13);
+        
+        
+    case 'Figure_3_stats'        
+        
+        %
+        % Correlate model with subject choices
+        %
+        
+        s = simulated.pred(data.which_rows);
+        d = data.chose_sick(data.which_rows);
+        [r, p] = corrcoef([s, d]);
+        r = r(1,2);
+        p = p(1,2);
+        fprintf('Correlation between model and humans (ALL TRIALS): r = %f, p = %f\n', r, p);
+        
+        s = simulated.pred(data.which_rows & ~data.isTrain);
+        d = data.chose_sick(data.which_rows & ~data.isTrain);
+        [r, p] = corrcoef([s, d]);
+        r = r(1,2);
+        p = p(1,2);
+        fprintf('Correlation between model and humans (TEST TRIALS): r = %f, p = %f\n', r, p);
+        
+        total_loglik = model_likfun(data, metadata, params, which_structures, data.which_rows, false);
+        fprintf('Total log likelihood = %f\n', total_loglik);
 
+        %
+        % Correlate single-causal-structure models with human data
+        %
+        
+        results_idxs = [2 3 4];
+        which_structuress = {[1 0 0 0], [0 1 0 0], [0 0 1 0]};
+        structure_names = {'M_1', 'M_2', 'M_3'};
+        
+        for i = 1:3
+            load(fullfile('results', 'fit_params_results.mat'), 'results', 'results_options');
+            params = results(results_idxs(i)).x;
+            options = results_options(results_idxs(i));
+            %assert(options.isFmriData == true);
+            %assert(~options.fixedEffects);
+            assert(isequal(options.which_structures, which_structuress{i}));
+
+            simulated = simulate_subjects(data, metadata, params, which_structuress{i});
+
+            s = simulated.pred(data.which_rows);
+            d = data.chose_sick(data.which_rows);
+            [r, p] = corrcoef([s, d]);
+            r = r(1,2);
+            p = p(1,2);
+
+            s_test = simulated.pred(data.which_rows & ~data.isTrain);
+            d_test = data.chose_sick(data.which_rows & ~data.isTrain);
+            [r_test, p_test] = corrcoef([s_test, d_test]);
+            r_test = r_test(1,2);
+            p_test = p_test(1,2);
+            
+            fprintf('$r = %.4f$ for all trials ($r = %.4f$ for the test trials) for $%s$\n', r, r_test, structure_names{i});            
+
+            total_loglik = model_likfun(data, metadata, params, which_structuress{i}, data.which_rows, false);
+            fprintf('Total log likelihood for %s = %f\n', structure_names{i}, total_loglik);
+        end
+        
+        
+        
     case 'Figure_4A'
         % Slices showing KL divergence activations [use the model with the error regressor]
         %
-        ccnl_view(contextExpt(), 123, 'surprise - wrong');
+        ccnl_view(context_expt(), 123, 'surprise');
         
+
+    case 'Figure_4A_stats'        
         
-    case 'Figure_4B'     
-        % TODO plot fischer Z transform of fischer_all_rs
         %
+        % Correlate D_KL and wrong answers
+        %
+        s = simulated.surprise(data.which_rows & data.isTrain);
+        model_keys = simulated.keys(data.which_rows & data.isTrain);
+        corr_ans = data.corrAns(data.which_rows & data.isTrain);
+        model_corr = strcmp(model_keys, corr_ans);
+        d = ~model_corr;
+        [r, p] = corrcoef([s, d]);
+        r = r(1,2);
+        p = p(1,2);
+        fprintf('Correlation D_KL and model errors (TRAINING TRIALS): r = %f, p = %f\n', r, p);
+        
+        s = simulated.surprise(data.which_rows & data.isTrain);
+        d = ~data.response.corr(data.which_rows & data.isTrain);
+        [r, p] = corrcoef([s, d]);
+        r = r(1,2);
+        p = p(1,2);
+        fprintf('Correlation D_KL and human errors (TRAINING TRIALS): r = %f, p = %f\n', r, p);
+                
+        
+    case 'Figure_4B'
+        % Plot fisher Z-transformed correlation coefficients between
+        % per-run log likelihood of subject test choices and AG beta
+        %
+        
+        load('kl_analysis.mat'); % as output by kl_structure_learning.m
+
+        figure;
+        
+        assert(isequal(rois{1}, 'Angular_R'));
+        rs = fisher_all_rs(1,:);
+        [rs, subj_ids] = sort(rs);
+        
+        bar(rs);
+        set(gca, 'XTick', 1:1:20);
+        xticklabels(subj_ids);
+        xlabel('Subject #');
+        ylabel('Fisher z-transformed correlation coefficient');
+        xlim([0 21]);
+        set(gca,'fontsize',13);
+        
+        
+        
+    case 'Figure_4B_OLD'     
         
         % Plot showing the least-squares lines relating AG KL beta to the structure learning effect, one line per subject, plus a thicker line showing the average linear relationship.    
         %

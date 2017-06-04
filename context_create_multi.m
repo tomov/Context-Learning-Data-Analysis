@@ -59,7 +59,7 @@ function multi = context_create_multi(glmodel, subj, run)
     % Run model on training trials
     %
     
-    if glmodel < 127
+    if glmodel < 127 || glmodel == 137
         % All models before 127 use the fixed effects parameter fit with the pilot
         % data
         %
@@ -3361,7 +3361,7 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.durations{1} = zeros(size(data.contextRole(which_train)));
             
             multi.pmod(1).name{1} = 'M3_posterior';
-            multi.pmod(1).param{1} = P(:, 2)';
+            multi.pmod(1).param{1} = P(:, 3)';
             multi.pmod(1).poly{1} = 1; % first order        
 
             multi.names{2} = 'trial_onset';
@@ -3415,6 +3415,65 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
             
+        % main effect @ trial onset (all trials)
+        %
+        case 136
+            multi.names{1} = 'feedback_onset';
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_rows))';
+            multi.durations{1} = zeros(size(data.contextRole(which_rows)));
+            
+            multi.names{2} = condition;
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_rows))';
+            multi.durations{2} = zeros(size(data.contextRole(which_rows)));
+            
+
+        % exactly the same as 123 -- sanity check the new code
+        %
+        case 137
+            which_error = which_train & ~data.response.corr;
+            
+            priors = which_structures / sum(which_structures);
+            Q = [priors; P(1:end-1,:)];
+            logs = log2(P) - log2(Q); 
+            logs(isnan(logs)) = 0; % lim_{x->0} x log(x) = 0
+            surprise = sum(P .* logs, 2);
+            surprise(isnan(surprise)) = 0; % weird things happen when P --> 0, e.g. we get -Infs
+
+            multi.names{1} = 'feedback';
+            multi.onsets{1} = cellfun(@str2num,data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+            
+            multi.pmod(1).name{1} = 'surprise';
+            multi.pmod(1).param{1} = surprise';
+            multi.pmod(1).poly{1} = 1; % first order        
+
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+            
+            % correct vs. wrong (0/1) @ feedback / outcome onset (WRONG trials 1..20)
+            % 
+            if sum(which_error) > 0
+                multi.names{3} = 'wrong';
+                multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
+                multi.durations{3} = zeros(size(data.contextRole(which_error)));
+            end
+        
+            
+        % null GLM @ trial onset (all trials)
+        %
+        case 138
+            multi.names{1} = 'feedback_onset';
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_rows))';
+            multi.durations{1} = zeros(size(data.contextRole(which_rows)));
+            
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_rows))';
+            multi.durations{2} = zeros(size(data.contextRole(which_rows)));
+            
+
             
             
         otherwise
@@ -3422,4 +3481,5 @@ function multi = context_create_multi(glmodel, subj, run)
             
     end % end of switch statement
 
+   % save('context_create_multi.mat'); % <-- DON'T DO IT! breaks on NCF...
 end 
