@@ -87,5 +87,5 @@ end
 
 % Save everything except for inputs (too big)
 %
-fprintf('SAVING to %s\n', outFilename);
-save(outFilename,'-regexp','^(?!(inputs)$).');
+%fprintf('SAVING to %s\n', outFilename);
+%save(outFilename,'-regexp','^(?!(inputs)$).');

@@ -22,12 +22,12 @@ function [inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, t
 % which_rows = which trials of the subject data do these inputs correspond
 %              to
 
-fprintf('classify_get_inputs_and_targets\n');
-disp(runs)
-disp(trials)
-disp(mask)
-disp(subjs)
-disp(predict_what);
+%fprintf('classify_get_inputs_and_targets\n');
+%disp(runs)
+%disp(trials)
+%disp(mask)
+%disp(subjs)
+%disp(predict_what);
 
 % Load the subject behavioral data
 %

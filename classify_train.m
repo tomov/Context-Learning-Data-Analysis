@@ -1,10 +1,17 @@
-function [classifier, inputs, targets, outputs, which_rows] = classify_train(method, runs, trials, subjs, mask, predict_what, z_score)
+function [classifier, inputs, targets, outputs, which_rows] = classify_train(method, runs, trials, subjs, mask, predict_what, z_score, foldid)
 % Train classifier to predict stuff based on neural activity at trial onset
 % returns a fitObj that you can pass to glmnetPredict
 % or a petternnet net that you can use e.g. like net(inputs)
 % for params descriptions, see classify_get_inputs_and_targets
 %
 % method = 'cvglmnet', 'glmnet', 'patternnet'
+
+if nargin < 8
+    % can optionally pass the folds for cvglmnet. If none are passed, uses the default
+    % folds that cvglmnet creates
+    %
+    foldid = [];
+end
 
 rng('shuffle');
 
@@ -132,10 +139,18 @@ switch method
         opts.lambda_min = 0.00000001; % as a fraction of lambda_max which is derived from the data; default = 0.0001
         options = glmnetSet(opts);
 
+        % each run is a separate fold TODO rm
+        %
+        %{
+        [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
+        foldid = data.runId(which_rows);
+        foldid = arrayfun(@(x) find(x == runs), foldid);
+        %}
+        
         % x = inputs
         % y = targets
         %
-        CVfit = cvglmnet(inputs, targets, 'multinomial', options, 'deviance');
+        CVfit = cvglmnet(inputs, targets, 'multinomial', options, 'deviance', [], foldid, true, true);
         disp(CVfit);
 
         outputs = cvglmnetPredict(CVfit, inputs, CVfit.lambda_1se, 'response');
@@ -153,5 +168,5 @@ toc
 
 % Save everything except for inputs (too big)
 %
-fprintf('SAVING to %s\n', outFilename);
-save(outFilename,'-regexp','^(?!(inputs)$).');
+%fprintf('SAVING to %s\n', outFilename);
+%save(outFilename,'-regexp','^(?!(inputs)$).');

@@ -103,12 +103,9 @@ switch figure_name
 
         % Choice probabilities for human subjects
         %
-        human_means = [];
-        human_sems = [];
+        human_choices = [];        
         for condition = metadata.contextRoles
             which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
-            
-            % TODO For within-subject errors, you don't want to average standard errors. You apply wse to the subjects x condition x test-trial array.
             
             x1c1 = []; x1c3 = []; x3c1 = []; x3c3 = [];
             for who = metadata.subjects
@@ -120,16 +117,12 @@ switch figure_name
             assert(isequal(size(x1c1), [metadata.runsPerContext metadata.N]));
             assert(isequal(size(x1c3), [metadata.runsPerContext metadata.N]));
             assert(isequal(size(x3c1), [metadata.runsPerContext metadata.N]));
-            assert(isequal(size(x3c3), [metadata.runsPerContext metadata.N]));            
+            assert(isequal(size(x3c3), [metadata.runsPerContext metadata.N]));
             
-            [x1c1_sems, x1c1_means] = wse(x1c1);
-            [x1c3_sems, x1c3_means] = wse(x1c3);
-            [x3c1_sems, x3c1_means] = wse(x3c1);
-            [x3c3_sems, x3c3_means] = wse(x3c3);
-
-            human_means = [human_means; mean([x1c1_means' x1c3_means' x3c1_means' x3c3_means'])];
-            human_sems = [human_sems; mean([x1c1_sems' x1c3_sems' x3c1_sems' x3c3_sems'])];
+            human_choices = [human_choices; mean(x1c1); mean(x1c3); mean(x3c1); mean(x3c3)];
         end
+        
+        [human_sems, human_means] = wse(human_choices');
         
         % Plot model choices probabilities
         %
@@ -221,7 +214,7 @@ switch figure_name
     case 'Figure_4A'
         % Slices showing KL divergence activations [use the model with the error regressor]
         %
-        ccnl_view(context_expt(), 123, 'surprise');
+        ccnl_view(context_expt(), 123, 'surprise - wrong');
         
 
     case 'Figure_4A_stats'        

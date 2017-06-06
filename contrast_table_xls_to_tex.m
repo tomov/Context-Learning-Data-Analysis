@@ -43,8 +43,8 @@ ROIs = {'Precentral gyrus',  'Precentral' ;
 'Fusiform gyrus',  'Fusiform' ;
 'Temporal pole: superior temporal gyrus',  'Temporal_Pole_Sup' ;
 'Temporal pole: middle temporal gyrus',  'Temporal_Pole_Mid' ;
-'Anterior cingulate & paracingulate gyri',  'Cingulate_Ant' ;
-'Middle cingulate & paracingulate gyri',  'Cingulate_Mid' ;
+'Anterior cingulate \& paracingulate gyri',  'Cingulate_Ant' ;
+'Middle cingulate \& paracingulate gyri',  'Cingulate_Mid' ;
 'Posterior cingulate gyrus',  'Cingulate_Post' ;
 'Hippocampus',  'Hippocampus';
 'Parahippocampal gyrus',  'ParaHippocampal' ;
@@ -72,6 +72,9 @@ for i=1:rows
     end
     if isempty(roi)
         roi = roi_label;
+    else
+        s = strsplit(roi_label, '_');
+        roi = [roi, ' (', s{end}, ')'];
     end
     fprintf('%s & %s & %d & %.3f & %d %d %d \\\\\n', txt{i,1}, roi, num(i,1), num(i,2), num(i,3), num(i,4), num(i,5));
 end

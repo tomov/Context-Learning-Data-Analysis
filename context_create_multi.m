@@ -146,6 +146,8 @@ function multi = context_create_multi(glmodel, subj, run)
         %           modulatory - additive
         %           
         %
+        % compare 1 (feedback) with 140 (trial onset) with 141 (null)
+        %
         case 1 % <------------- GOOD
             % context role @ feedback/outcome onset
             % 
@@ -3415,12 +3417,13 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
             
-        % main effect @ trial onset (all trials)
+        % main effect @ trial onset
+        % compare 141 (feedback) with 136 (trial onset) with 138 (null)
         %
         case 136
             multi.names{1} = 'feedback_onset';
-            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_rows))';
-            multi.durations{1} = zeros(size(data.contextRole(which_rows)));
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
             
             multi.names{2} = condition;
             multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_rows))';
@@ -3462,18 +3465,101 @@ function multi = context_create_multi(glmodel, subj, run)
             end
         
             
-        % null GLM @ trial onset (all trials)
+        % null GLM @ trial onset
+        % compare 141 (feedback) with 136 (trial onset) with 138 (null)
+        % result: 'feedback_onset - trial_onset' NICE BILATERAL
+        %          HIPPOCAMPUS!!!
         %
         case 138
             multi.names{1} = 'feedback_onset';
-            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_rows))';
-            multi.durations{1} = zeros(size(data.contextRole(which_rows)));
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
             
             multi.names{2} = 'trial_onset';
             multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_rows))';
             multi.durations{2} = zeros(size(data.contextRole(which_rows)));
             
 
+        % null GLM @ trial onset (TRAINING trials only)
+        % compare 1 (feedback) with 140 (trial onset) with 139 (null)
+        %
+        case 139
+            multi.names{1} = 'feedback_onset';
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+            
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+            
+            
+        % main effect @ trial onset (TRAINING trials only)
+        % compare 1 (feedback) with 140 (trial onset) with 139 (null)
+        %
+        case 140
+            multi.names{1} = 'feedback_onset';
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+            
+            multi.names{2} = condition;
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+            
+        % main effect @ feedback onset
+        % compare 141 (feedback) with 136 (trial onset) with 138 (null)
+        %
+        case 141
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+            
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_rows))';
+            multi.durations{2} = zeros(size(data.contextRole(which_rows)));
+            
+            
+        % correct vs wrong @ feedback
+        %
+        case 142
+            which_error = which_train & ~data.response.corr;
+            which_correct = which_train & ~which_error;
+            assert(sum(which_error) + sum(which_correct) == 20);
+            
+            multi.names{1} = 'trial_onset';
+            multi.onsets{1} = cellfun(@str2num, data.actualChoiceOnset(which_rows))';
+            multi.durations{1} = zeros(size(data.contextRole(which_rows)));
+
+            multi.names{2} = 'correct';
+            multi.onsets{2} = cellfun(@str2num,data.actualFeedbackOnset(which_correct))';
+            multi.durations{2} = zeros(size(data.contextRole(which_correct)));
+            
+            if sum(which_error) > 0
+                multi.names{3} = 'wrong';
+                multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
+                multi.durations{3} = zeros(size(data.contextRole(which_error)));
+            end
+        
+        % For each trial, have a trial_onset regressor and a feedback regressor (training trials only)
+        % it's for the classifier 
+        %
+        case 143
+            idx = 0;
+
+            trial_onsets = data.actualChoiceOnset(which_rows);
+            for t=1:metadata.trialsPerRun
+                idx = idx + 1;
+                multi.names{idx} = ['trial_onset_', num2str(t)];
+                multi.onsets{idx} = [str2double(trial_onsets(t))];
+                multi.durations{idx} = [0];
+            end
+            
+            feedback_onsets = data.actualFeedbackOnset(which_train);
+            for t=1:metadata.trainingTrialsPerRun
+                idx = idx + 1;
+                multi.names{idx} = ['feedback_onset_', num2str(t)];
+                multi.onsets{idx} = [str2double(feedback_onsets(t))];
+                multi.durations{idx} = [0];
+            end
             
             
         otherwise
@@ -3481,5 +3567,5 @@ function multi = context_create_multi(glmodel, subj, run)
             
     end % end of switch statement
 
-   % save('context_create_multi.mat'); % <-- DON'T DO IT! breaks on NCF...
+   %save('context_create_multi.mat'); % <-- DON'T DO IT! breaks on NCF...
 end 
