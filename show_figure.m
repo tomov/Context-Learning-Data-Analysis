@@ -141,13 +141,31 @@ switch figure_name
         % Plot human choices
         %
         hold on;
-        errorbar(xs, human_means, human_sems, 'o', 'LineWidth', 2, 'Color', [0 0 0]);
+        errorbar(xs, human_means, human_sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+        % the markers in the errorbar plot are misaligned from the error
+        % bars -- this hack adjusts them
+        xs_adjust = xs;
+        xs_adjust(1) = xs_adjust(1) + 0.0035;
+        xs_adjust(2) = xs_adjust(2) + 0.003;
+        xs_adjust(3) = xs_adjust(3) + 0.003;
+        xs_adjust(4) = xs_adjust(4) + 0.0025;
+        xs_adjust(5) = xs_adjust(5) + 0.004;
+        xs_adjust(6) = xs_adjust(6) + 0.004;
+        xs_adjust(7) = xs_adjust(7) + 0.0025;
+        xs_adjust(8) = xs_adjust(8) + 0.0025;
+        xs_adjust(9) = xs_adjust(9) + 0.003;
+        xs_adjust(10) = xs_adjust(10) + 0.004;
+        xs_adjust(11) = xs_adjust(11) + 0.003;
+        xs_adjust(12) = xs_adjust(12) + 0.0025;
+        plot(xs_adjust, human_means, 'o', 'MarkerSize', 5, 'MarkerFaceColor', [0 0 0], 'Color', [0 0 0]);
         hold off;
         xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
         ylabel('Choice probability');
         legend({'x_1c_1', 'x_1c_3', 'x_3c_1', 'x_3c_3'}, 'Position', [0.07 -0.095 1 1]);
         ylim([0 1.1]);
         set(gca,'fontsize',13);
+        
+        %print(gcf, 'untitled.pdf', '-dpdf', '-bestfit');
         
         
     case 'Figure_3_stats'        
