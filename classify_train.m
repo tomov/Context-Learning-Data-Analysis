@@ -20,6 +20,8 @@ disp(method);
 
 [inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, trials, subjs, mask, predict_what, z_score);
 
+assert(isempty(foldid) || numel(foldid) == sum(which_rows));
+
 [~, maskname, ~] = fileparts(mask);
 outFilename = fullfile('classifier', ['classify_train_', method, '_', maskname, '_', predict_what, '_', z_score, '_', random_string(), '.mat']);
 

@@ -240,14 +240,22 @@ switch figure_name
         fprintf('Correlation D_KL and human errors (TRAINING TRIALS): r = %f, p = %f\n', r, p);
                 
         
-    case 'Figure_4B'
+    case 'Figure_4'
+        figure;
+        
+        % Plot saved brain activation map from Figure 4A
+        %
+        subplot(1, 2, 1);
+        
+        imshow('images/kl-minus-error.png');
+        
         % Plot fisher Z-transformed correlation coefficients between
         % per-run log likelihood of subject test choices and AG beta
         %
         
         load('kl_analysis.mat'); % as output by kl_structure_learning.m
 
-        figure;
+        subplot(1, 2, 2);
         
         assert(isequal(rois{1}, 'Angular_R'));
         rs = fisher_all_rs(1,:);
@@ -255,13 +263,17 @@ switch figure_name
         
         bar(rs);
         set(gca, 'XTick', 1:1:20);
-        xticklabels(subj_ids);
-        xlabel('Subject #');
+        %xticklabels(subj_ids);
+        xticklabels({[]});
+        
+        xlabel('Subject');
         ylabel('Fisher z-transformed correlation coefficient');
         xlim([0 21]);
-        set(gca,'fontsize',13);
+        ylim([-0.75 1.1]);
+        %set(gca,'fontsize',13);
         
-        
+        %print(gcf, 'Figure_4B.png', '-dpng', '-r300');
+        %print(gcf, 'images/fmri-results.pdf', '-dpdf', '-bestfit');
         
     case 'Figure_4B_OLD'     
         
