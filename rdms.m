@@ -36,7 +36,7 @@ neural_idx = 0;
 
 hippocampus_mask = load_mask('masks/hippocampus.nii');
 hippocampus_betas = get_betas_submask(hippocampus_mask, whole_brain_trial_onset_betas);
-[hippocampusRDMs, avgHippocampusRDM] = compute_rdms(ofc_betas, 'cosine', data, metadata, which_rows);
+[hippocampusRDMs, avgHippocampusRDM] = compute_rdms(hippocampus_betas, 'cosine', data, metadata, which_rows);
 neural_idx = neural_idx + 1;
 Neural(neural_idx).RDM = avgHippocampusRDM;
 Neural(neural_idx).name = 'hippocampus';
@@ -132,7 +132,7 @@ Neural(neural_idx).color = [0 1 0];
 
 % show the neural RDMs
 % 
-showRDMs(Neural, 2);
+showRDMs(Neural, 1);
 
 %
 % Compute the Model RDMs
@@ -235,4 +235,4 @@ showRDMs(Model, 2);
 userOptions.RDMcorrelationType= 'Spearman';
 userOptions.analysisName = 'blah';
 userOptions.rootPath = '~/Downloads/'; % TODO how to turn off saving the figure?
-pairwiseCorrelateRDMs({Neural, Model}, userOptions, struct('figureNumber', 1,'fileName',[]));
+corrMat = pairwiseCorrelateRDMs({Neural, Model}, userOptions, struct('figureNumber', 3,'fileName',[]));
