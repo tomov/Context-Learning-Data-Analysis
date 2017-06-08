@@ -1,12 +1,21 @@
-function [subjectRDMs, avgSubjectRDM, concatSubjectRDMs] = load_rdms_trial_onset(mask, distance_measure, data, metadata)
+function [subjectRDMs, avgSubjectRDM, concatSubjectRDMs] = get_rdms(mask, distance_measure, regressor_prefix, data, metadata)
 
-% Load all subject RDMs for trial_onset events for a given mask and
+% Compute all subject RDMs for trial_onset events for a given mask and
 % distance measure. Load from disk if already computed, otherwise compute
 % and save on disk.
+
+% INPUT:
+% mask = path to .nii file with the mask, e.g. 'masks/hippocampus.nii'
+% distance_measure = distance argument to pdist, e.g. 'correlation' or
+%                    'cosine' or 'euclidean'
+% regressor_prefix = 'trial_onset' or 'feedback_onset'; assumes regressor
+%                    names are of the form {regressor prefix}_{trial id}
+% data, metadata = subject behavioral data as output by load_data
+%
 %
 
 [~, maskname, ~] = fileparts(mask);
-rdms_filename = fullfile('rdms', ['rdms_trial_onset_', maskname, '_', distance_measure, '.mat']);
+rdms_filename = fullfile('rdms', ['rdms_', regressor_prefix, '_', maskname, '_', distance_measure, '.mat']);
 
 if exist(rdms_filename, 'file') ~= 2
     fprintf('Computing RDMs from disk and saving them to %s\n', rdms_filename);
@@ -15,7 +24,7 @@ if exist(rdms_filename, 'file') ~= 2
     
     % Load the neural data
     %
-    betas = load_betas_trial_onset(mask, data, metadata);
+    betas = get_betas(mask, regressor_prefix, data, metadata);
 
     % Compute the single-subject RDMs
     %

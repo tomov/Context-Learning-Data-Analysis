@@ -60,6 +60,8 @@ end
 
 % all_rois = containers.Map(roi_names, roi_idxs);
 
+% Optionally flip to a negative mask
+%
 if ~negative
     % normal
     which = ismember(atlas.img, my_idxs);
@@ -70,8 +72,9 @@ end
 atlas.img(~which) = 0; % remove all regions we don't care about
 atlas.img(which) = 1; % make our regions uniform
 
-
-save_untouch_nii(atlas, filename); % save the mask
+% Save the mask
+%
+save_untouch_nii(atlas, filename);
 
 % Cross-register with the mean structural image to make sure the mask
 % actually makes sense

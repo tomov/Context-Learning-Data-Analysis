@@ -24,7 +24,7 @@ for mask = masks
 
     % Load the RDMs for that mask
     %
-    [subjectRDMs, avgSubjectRDM, concatSubjectRDMs] = load_rdms_trial_onset(mask, distance_measure, data, metadata);
+    [subjectRDMs, avgSubjectRDM, concatSubjectRDMs] = get_rdms(mask, distance_measure, data, metadata);
     
     % Display the RDMs
     %

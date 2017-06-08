@@ -36,7 +36,7 @@ subjects = metadata.allSubjects;
 
 % Load the neural data
 %
-betas = load_betas_trial_onset(mask, data, metadata);
+betas = get_betas(mask, 'trial_onset', data, metadata);
 
 % condition = context role labels
 %

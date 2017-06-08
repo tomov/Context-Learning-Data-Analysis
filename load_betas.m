@@ -15,6 +15,8 @@ function betas = load_betas(mask, regressor_prefix, data, metadata)
 %         row in data.
 %
 
+assert(ismember(regressor_prefix, {'trial_onset', 'feedback_onset'}));
+
 EXPT = context_expt();
 glmodel = 143; % this is the one that has a regressor for each trial onset
 subjs = getGoodSubjects();

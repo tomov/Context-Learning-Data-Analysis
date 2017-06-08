@@ -1,4 +1,4 @@
-function mask = load_mask(mask)
+function [mask, Vmask, Ymask] = load_mask(mask)
 % Load a .nii file as a SPM mask
 %
 Vmask = spm_vol(mask);
