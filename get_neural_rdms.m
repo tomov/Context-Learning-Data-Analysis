@@ -21,7 +21,7 @@ if exist(rdms_filename, 'file') ~= 2
     fprintf('Computing RDMs from disk and saving them to %s\n', rdms_filename);
 
     betas = get_betas(mask, regressor_prefix, data, metadata);
-    subjectRDMs = compute_rdms(betas, distance_measure, data, metadata);
+    subjectRDMs = compute_rdms(betas, distance_measure, data, metadata, data.which_rows);
 
     save(rdms_filename, 'subjectRDMs', '-v7.3');
 else

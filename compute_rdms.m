@@ -1,4 +1,4 @@
-function [subjectRDMs, avgSubjectRDM] = compute_rdms(features, distance_measure, regressor_prefix, data, metadata)
+function [subjectRDMs, avgSubjectRDM] = compute_rdms(features, distance_measure, data, metadata, which_rows)
 
 % Compute all subject RDMs from a given set of features and distance measure.
 %
@@ -10,12 +10,15 @@ function [subjectRDMs, avgSubjectRDM] = compute_rdms(features, distance_measure,
 % distance_measure = distance argument to pdist, e.g. 'correlation' or
 %                    'cosine' or 'euclidean'
 % data, metadata = subject behavioral data as output by load_data
+% which_rows = which rows to include (make sure that all subjects get the
+%              same # of rows)
 %
 
 % Compute the single-subject RDMs
 %
-subjectRDMs = nan(metadata.runsPerSubject * metadata.trialsPerRun, metadata.runsPerSubject * metadata.trialsPerRun, metadata.N);
-which_rows = data.which_rows;
+assert(mod(sum(which_rows), metadata.N) == 0, 'Each subject should have the same number of trials');
+trialsPerSubject = sum(which_rows) / metadata.N;
+subjectRDMs = nan(trialsPerSubject, trialsPerSubject, metadata.N);
 
 subj_idx = 0;
 for who = metadata.subjects
