@@ -5,6 +5,8 @@
 %
 hippocampus = {'Hippocampus'};
 ofc = {'OFCmed', 'OFCant', 'OFCpost', 'OFClat'};
+med_ofc = {'OFCmed'};
+rectus = {'Rectus'};
 vmpfc = {'Rectus', 'Frontal_Sup_Medial', 'Frontal_Med_Orb', 'Cingulate_Ant', 'OFCmed'};
 striatum = {'Caudate', 'Putamen'};
 pallidum = {'Pallidum'};
@@ -19,7 +21,7 @@ dl_sup_front = {'Frontal_Sup_2'};
 
 % Must be equal to the variable names with the AAL2 labels
 %
-rois = {'hippocampus', 'ofc', 'vmpfc', 'striatum', 'pallidum', 'bg', ...
+rois = {'hippocampus', 'ofc', 'med_ofc', 'rectus', 'vmpfc', 'striatum', 'pallidum', 'bg', ...
         'v1', 'm1', 's1', 'fusiform', 'angular', 'mid_front', 'dl_sup_front'};
 
 % Create the masks
