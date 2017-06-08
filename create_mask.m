@@ -30,6 +30,9 @@ group_mask_filename = fullfile('masks', 'mask.nii'); % the subject group-level m
 % Load the AAL2 mapping from label index to label name
 %
 aal2_labels = xml2struct(aal2_labels_filename);
+
+% Make sure all the passed labels are real
+%
 x = {};
 for i = 1:numel(aal2_labels.atlas.data.label)
     label = aal2_labels.atlas.data.label{i}.name.Text;

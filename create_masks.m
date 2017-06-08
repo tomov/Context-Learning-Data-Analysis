@@ -4,35 +4,23 @@
 % The ROI AAL2 labels (we make them bilateral later)
 %
 hippocampus = {'Hippocampus'};
-
-ofc = {'Frontal_Med_Orb', 'Frontal_Inf_Orb_2', 'Rectus', ...
-       'OFCmed', 'OFCant', 'OFCpost', 'OFClat', 'Olfactory'};
-       
-vmpfc = {'Frontal_Med_Orb_L', 'Frontal_Med_Orb_R', ...
-              'Rectus_L', 'Rectus_R'};
-          
-striatum = {'Caudate_L', 'Caudate_R', ...
-                 'Putamen_L', 'Putamen_R'};
-             
-pallidum = {'Pallidum_L', 'Pallidum_R'};
-
+ofc = {'OFCmed', 'OFCant', 'OFCpost', 'OFClat'};
+vmpfc = {'Rectus', 'Frontal_Sup_Medial', 'Frontal_Med_Orb', 'Cingulate_Ant', 'OFCmed'};
+striatum = {'Caudate', 'Putamen'};
+pallidum = {'Pallidum'};
 bg = [striatum, pallidum];
-
-occipital = {'Occipital_Sup_L', 'Occipital_Sup_R', ...
-                  'Occipital_Mid_L', 'Occipital_Mid_R', ...
-                  'Occipital_Inf_L', 'Occipital_Inf_R'};
-              
-v1 = {'Calcarine_L', 'Calcarine_R', 'Cuneus_L', 'Cuneus_R', ...
-               'Lingual_L', 'Lingual_R'};
-           
-visual = [v1, occipital];
-
-m1 = {'Precentral_L', 'Precentral_R'};
-s1 = {'Postcentral_L', 'Postcentral_R'};
+v1 = {'Calcarine'};
+m1 = {'Precentral'};
+s1 = {'Postcentral'};
+fusiform = {'Fusiform'};
+angular = {'Angular'};
+mid_front = {'Frontal_Mid_2'};
+dl_sup_front = {'Frontal_Sup_2'};
 
 % Must be equal to the variable names with the AAL2 labels
 %
-rois = {'hippocampus', 'ofc'};
+rois = {'hippocampus', 'ofc', 'vmpfc', 'striatum', 'pallidum', 'bg', ...
+        'v1', 'm1', 's1', 'fusiform', 'angular', 'mid_front', 'dl_sup_front'};
 
 % Create the masks
 %
