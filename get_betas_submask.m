@@ -13,6 +13,13 @@ function betas = get_betas_submask(my_mask, betas)
 % OUTPUT:
 % betas = [nTimePoints x mVoxels] matrix where mVoxels = # voxels in
 %         my_mask
+%
+% EXAMPLES:
+% [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
+% whole_brain_betas = get_betas('masks/mask.nii', 'trial_onset', data, metadata);
+% hippo_mask = load_mask('masks/hippocampus.nii');
+% hippo_betas = get_betas_submask(hippo_mask, whole_brain_betas);
+%
 
 % Load the subject group-level mask
 %

@@ -1,6 +1,6 @@
-function [subjectRDMs, avgSubjectRDM, concatSubjectRDMs] = get_rdms(mask, distance_measure, regressor_prefix, data, metadata)
+function [subjectRDMs, avgSubjectRDM, concatSubjectRDMs] = get_neural_rdms(mask, distance_measure, regressor_prefix, data, metadata)
 
-% Compute all subject RDMs for trial_onset events for a given mask and
+% Compute all subject RDMs for trial_onset or feedback_onset events for a given mask and
 % distance measure. Load from disk if already computed, otherwise compute
 % and save on disk.
 
@@ -19,32 +19,15 @@ rdms_filename = fullfile('rdms', ['rdms_', regressor_prefix, '_', maskname, '_',
 
 if exist(rdms_filename, 'file') ~= 2
     fprintf('Computing RDMs from disk and saving them to %s\n', rdms_filename);
-    
-    which_rows = data.which_rows;
-    
-    % Load the neural data
-    %
-    betas = get_betas(mask, regressor_prefix, data, metadata);
 
-    % Compute the single-subject RDMs
-    %
-    subjectRDMs = nan(metadata.runsPerSubject * metadata.trialsPerRun, metadata.runsPerSubject * metadata.trialsPerRun, metadata.N);
-    
-    subj_idx = 0;
-    for who = metadata.subjects
-        subj_idx = subj_idx + 1;
-        who = who{1};
-        
-        which_subj_rows = which_rows & strcmp(data.participant, who);
-        subjectRDMs(:,:,subj_idx) = squareRDMs(pdist(betas(which_subj_rows, :), distance_measure));
-    end
-    
+    betas = get_betas(mask, regressor_prefix, data, metadata);
+    subjectRDMs = compute_rdms(betas, distance_measure, data, metadata);
+
     save(rdms_filename, 'subjectRDMs', '-v7.3');
 else
     fprintf('Loading precomputed RDMs from %s\n', rdms_filename);
     load(rdms_filename, 'subjectRDMs'); % crucial to load betas only
 end
-
 
 % Compute the average subject RDM
 % display with showRDMs(avgSubjectRDM, 1)

@@ -5,7 +5,7 @@
 %
 [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
 
-rois = {'mask', 'hippocampus', 'ofc', 'vmpfc', 'striatum', 'pallidum', 'bg', ...
+rois = {'hippocampus', 'ofc', 'vmpfc', 'striatum', 'pallidum', 'bg', ...
         'v1', 'm1', 's1', 'fusiform', 'angular', 'mid_front', 'dl_sup_front'};
 
 masks = cellfun(@(x) fullfile('masks', [x, '.nii']), rois, 'UniformOutput', false);
@@ -23,7 +23,7 @@ for mask = masks
 
             % Load the RDMs for that mask
             %
-            [subjectRDMs, avgSubjectRDM, concatSubjectRDMs] = get_rdms(mask, distance_measure, regressor_prefix, data, metadata);
+            [subjectRDMs, avgSubjectRDM, concatSubjectRDMs] = get_neural_rdms(mask, distance_measure, regressor_prefix, data, metadata);
 
             % Display the RDMs
             %
