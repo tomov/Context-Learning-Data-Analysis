@@ -36,21 +36,7 @@ subjects = metadata.allSubjects;
 
 % Load the neural data
 %
-[~, maskname, ~] = fileparts(mask);
-betas_filename = fullfile('betas', ['betas_trial_onset_', maskname, '.mat']);
-
-% Try to load the precomputed betas from the single mat file. If they
-% haven't been precomputed yet, load them and save them in a file for
-% future use
-%
-if exist(betas_filename, 'file') ~= 2
-    fprintf('Loading betas from disk and saving them to %s\n', betas_filename);
-    betas = load_betas_trial_onset(mask, data, metadata);
-    save(betas_filename, 'betas');
-else
-    fprintf('Loading precomputed betas from %s\n', betas_filename);
-    load(betas_filename, 'betas'); % crucial to load betas only
-end
+betas = load_betas_trial_onset(mask, data, metadata);
 
 % condition = context role labels
 %
