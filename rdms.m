@@ -5,30 +5,31 @@
 %
 [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
 
-masks = {fullfile('masks', 'mask.nii'), ...
-         fullfile('masks', 'hippocampus.nii'), ...
-         fullfile('masks', 'ofc.nii'), ...
-         fullfile('masks', 'striatum.nii'), ...
-         fullfile('masks', 'vmpfc.nii'), ...
-         fullfile('masks', 'bg.nii'), ...
-         fullfile('masks', 'pallidum.nii'), ...
-         fullfile('masks', 'v1.nii'), ...
-         fullfile('masks', 'visual.nii'), ...
-         fullfile('masks', 'motor.nii'), ...
-         fullfile('masks', 'sensory.nii')};
-     
-distance_measure = 'cosine';     
+rois = {'mask', 'hippocampus', 'ofc', 'vmpfc', 'striatum', 'pallidum', 'bg', ...
+        'v1', 'm1', 's1', 'fusiform', 'angular', 'mid_front', 'dl_sup_front'};
+
+masks = cellfun(@(x) fullfile('masks', [x, '.nii']), rois, 'UniformOutput', false);
+distance_measures = {'correlation', 'cosine', 'euclidean'};
+regressor_prefixes = {'trial_onset', 'feedback_onset'};
 
 for mask = masks
     mask = mask{1}
-
-    % Load the RDMs for that mask
-    %
-    [subjectRDMs, avgSubjectRDM, concatSubjectRDMs] = get_rdms(mask, distance_measure, data, metadata);
     
-    % Display the RDMs
-    %
-    %showRDMs(concatSubjectRDMs, 2);
-    showRDMs(avgSubjectRDM, 1);
+    for distance_measure = distance_measures
+        distance_measure = distance_measure{1}
+        
+        for regressor_prefix = regressor_prefixes
+            regressor_prefix = regressor_prefix{1}
+
+            % Load the RDMs for that mask
+            %
+            [subjectRDMs, avgSubjectRDM, concatSubjectRDMs] = get_rdms(mask, distance_measure, regressor_prefix, data, metadata);
+
+            % Display the RDMs
+            %
+            %showRDMs(concatSubjectRDMs, 2);
+            %showRDMs(avgSubjectRDM, 1);
+        end
+    end
 end
 

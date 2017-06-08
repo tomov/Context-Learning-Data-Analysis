@@ -21,7 +21,13 @@ EXPT = context_expt();
 glmodel = 143; % this is the one that has a regressor for each trial onset
 subjs = getGoodSubjects();
 runs = 1:metadata.runsPerSubject;
-trials = 1:metadata.trialsPerRun;
+
+if strcmp(regressor_prefix, 'trial_onset')
+    trials = 1:metadata.trialsPerRun;
+elseif strcmp(regressor_prefix, 'feedback_onset')
+    trials = 1:metadata.trainingTrialsPerRun;
+end
+    
 
 betas = [];
 
