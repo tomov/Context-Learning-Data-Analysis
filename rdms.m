@@ -466,6 +466,28 @@ Model(model_idx).RDM = avgCorrRDM;
 Model(model_idx).name = 'correct';
 Model(model_idx).color = [0 1 0];
 
+% RT
+%
+RT = data.response.rt;
+RT(data.timeout) = 3;
+[rtRDMs, avgRtRDM] = compute_rdms(RT, 'euclidean', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = rtRDMs;
+Model(model_idx).RDM = avgRtRDM;
+Model(model_idx).name = 'RT';
+Model(model_idx).color = [0 1 0];
+
+% Response
+%
+resp = double(strcmp(data.response.keys, 'left'));
+resp(data.timeout) = 2;
+[respRDMs, avgRespRDM] = compute_rdms(resp, @(x1, x2) x1 ~= x2, data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = respRDMs;
+Model(model_idx).RDM = avgRespRDM;
+Model(model_idx).name = 'Response';
+Model(model_idx).color = [0 1 0];
+
 % New value
 %
 [newValRDMs, avgNewValRDM] = compute_rdms(simulated.new_values, 'euclidean', data, metadata, which_rows);
@@ -649,6 +671,7 @@ end
 
 %% More visualization for within-subject analysis only
 %
+%{
 assert(within_subject);
 
 neural_idx = 18; % striatum_f
@@ -659,3 +682,4 @@ model_idx = 15;
 for ni = 1:numel(Neural)
     w(ni, model_idx, :, :)
 end
+%}
