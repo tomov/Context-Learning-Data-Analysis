@@ -545,17 +545,17 @@ userOptions.analysisName = 'blah';
 userOptions.rootPath = '~/Downloads/'; % TODO how to turn off saving the figure?
 corrMat = pairwiseCorrelateRDMs({Neural, Model}, userOptions, struct('figureNumber', 3,'fileName',[]));
 
-
 %% Within-subject / Between-subject RDM comparison
 % compare each neural and model RDMs for subject separately using
 % Spearman's rank coefficient, then find which ones are significant
 %
 tic;
 
+within_subject = true; % compute correlation for each run separately i.e. no comparisons of representations across runs
+all_vs_all = false; % compare neural vs. neural and model vs. model representations too
+
 trig = logical(triu(ones(metadata.runsPerSubject * metadata.trainingTrialsPerRun), 1)); % upper right triangle, excluding diagonal, for all runs
 run_trig = logical(triu(ones(metadata.trainingTrialsPerRun), 1)); % upper right triangle, excluding diagonal, for a single run
-
-within_subject = false;
 
 table_Rho = []; % average Spearman's rho for each ROI for each model
 table_H = []; % result of hypothesis test for each ROI for each model -- is the correlation significant?
@@ -564,29 +564,38 @@ table_P = []; % p-value of hypothesis test for each ROI for each model
 between_subject_rhos = nan(numel(Neural), numel(Model), metadata.N);
 within_subject_rhos = nan(numel(Neural), numel(Model), metadata.N, metadata.runsPerSubject);
 
-for neural_idx = 1:numel(Neural)
+if all_vs_all
+    all = [Neural, Model];
+    rows = all;
+    cols = all;
+else
+    rows = Neural;
+    cols = Model;
+end
+
+for row_idx = 1:numel(rows)
 
     models_subjs_rhos = []; % Spearman rhos: row = model, col = subject
-    for model_idx = 1:numel(Model)
+    for col_idx = 1:numel(cols)
 
         % Compute a Spearman's rank correlation for each subject separately
         %
         subjs_rhos = []; % Spearman rhos: col = subject, one rho per
         for subj = 1:metadata.N
-            model_RDM = Model(model_idx).RDMs(:,:,subj);
-            neural_RDM = Neural(neural_idx).RDMs(:,:,subj);
-            assert(isequal(size(model_RDM), size(neural_RDM)));
-            assert(isequal(size(trig), size(model_RDM)));
+            row_RDM = rows(row_idx).RDMs(:,:,subj);
+            col_RDM = cols(col_idx).RDMs(:,:,subj);
+            assert(isequal(size(row_RDM), size(col_RDM)));
+            assert(isequal(size(trig), size(row_RDM)));
 
             if ~within_subject
                 % Look at RDMs for all runs simultaneously
                 %
-                x = model_RDM(trig);
-                y = neural_RDM(trig);
+                x = row_RDM(trig);
+                y = col_RDM(trig);
                 subj_rho = corr(x, y, 'type', 'Spearman');
                 subjs_rhos = [subjs_rhos, subj_rho];
                 
-                between_subject_rhos(neural_idx, model_idx, subj) = subj_rho;
+                between_subject_rhos(row_idx, col_idx, subj) = subj_rho;
             else
                 % Look at RDM for each run separately
                 %
@@ -599,17 +608,17 @@ for neural_idx = 1:numel(Neural)
                 for run = 1:metadata.runsPerSubject
                     s = (run - 1) * metadata.trainingTrialsPerRun + 1;
                     e = run * metadata.trainingTrialsPerRun;
-                    model_subRDM = Model(model_idx).RDMs(s:e, s:e, subj);
-                    neural_subRDM = Neural(neural_idx).RDMs(s:e, s:e, subj);
-                    assert(isequal(size(model_subRDM), size(neural_subRDM)));
-                    assert(isequal(size(run_trig), size(model_subRDM)));
+                    row_subRDM = rows(row_idx).RDMs(s:e, s:e, subj);
+                    col_subRDM = cols(col_idx).RDMs(s:e, s:e, subj);
+                    assert(isequal(size(row_subRDM), size(col_subRDM)));
+                    assert(isequal(size(run_trig), size(row_subRDM)));
 
-                    x = model_subRDM(run_trig);
-                    y = neural_subRDM(run_trig);
+                    x = row_subRDM(run_trig);
+                    y = col_subRDM(run_trig);
                     run_rho = corr(x, y, 'type', 'Spearman');
                     runs_rhos = [runs_rhos, run_rho];
                     
-                    within_subject_rhos(neural_idx, model_idx, subj, run) = run_rho;
+                    within_subject_rhos(row_idx, col_idx, subj, run) = run_rho;
                 end
                 subj_rho = mean(runs_rhos); % subject rho = mean rho across runs TODO use WSE
                 subjs_rhos = [subjs_rhos, subj_rho];
@@ -629,9 +638,9 @@ for neural_idx = 1:numel(Neural)
 end
 
 
-Rho = array2table(table_Rho, 'RowNames', {Neural.name}, 'VariableNames', {Model.name});
-H = array2table(table_H, 'RowNames', {Neural.name}, 'VariableNames', {Model.name});
-P = array2table(table_P, 'RowNames', {Neural.name}, 'VariableNames', {Model.name});
+Rho = array2table(table_Rho, 'RowNames', {rows.name}, 'VariableNames', {cols.name});
+H = array2table(table_H, 'RowNames', {rows.name}, 'VariableNames', {cols.name});
+P = array2table(table_P, 'RowNames', {rows.name}, 'VariableNames', {cols.name});
 
 toc;
 
@@ -645,24 +654,32 @@ for i = 1:numel(tabs)
     figure;
     if i == 2
         t = tabs{i};
-        imagesc(log10(t));
+        if all_vs_all
+            imagesc(log10(t), [-18 0.1]);
+        else
+            imagesc(log10(t));
+        end    
         c = colorbar;
         y = get(c, 'Ytick');
         set(c, 'YTickLabel', arrayfun(@(x) ['10\^', num2str(x)], y, 'UniformOutput', false));
     else
-        imagesc(tabs{i});
+        if all_vs_all
+            imagesc(tabs{i}, [0 0.4]);
+        else
+            imagesc(tabs{i});
+        end
         %cols=colorScale([0 0.5 1; 0.5 0.5 0.5; 1 0 0],256);
         %colormap(cols); colorbar;
         colorbar;
     end
 
-    xticklabels({Model.name});
-    set(gca, 'xtick', 1:numel({Model.name}));
+    xticklabels({cols.name});
+    set(gca, 'xtick', 1:numel({cols.name}));
     xtickangle(60);
     xlabel('Neural model');
 
-    yticklabels({Neural.name})
-    set(gca, 'ytick', 1:numel({Neural.name}));
+    yticklabels({rows.name})
+    set(gca, 'ytick', 1:numel({rows.name}));
     ylabel('ROI_{event}, t = trial onset, f = feedback onset');
     
     title(titles{i});
