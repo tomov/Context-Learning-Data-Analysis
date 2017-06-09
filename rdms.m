@@ -168,6 +168,8 @@ end
 showRDMs(Neural, 1);
 
 
+
+
 %% ------------------ Compute the Model RDMs ----------------------
 %
 
@@ -175,6 +177,8 @@ simulated = simulate_subjects(data, metadata, params, which_structures);
 
 clear Model;
 model_idx = 0;
+
+tic;
 
 %
 % at trial onset
@@ -324,6 +328,16 @@ Model(model_idx).RDM = avgValRDM;
 Model(model_idx).name = 'value';
 Model(model_idx).color = [0 1 0];
 
+% log value^2
+%
+logVal2 = log((simulated.values + 0.001) .^ 2); % so we don't take log(0) or negative
+[logVal2RDMs, avgLog2ValRDM] = compute_rdms(logVal2, 'euclidean', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = logVal2RDMs;
+Model(model_idx).RDM = avgLog2ValRDM;
+Model(model_idx).name = 'logValueSquared';
+Model(model_idx).color = [0 1 0];
+
 % values -- normalized correlation (cosine) is not a good measure here
 %
 [valsRDMs, avgValsRDM] = compute_rdms(simulated.valuess(:, which_structures), 'euclidean', data, metadata, which_rows);
@@ -331,6 +345,16 @@ model_idx = model_idx + 1;
 Model(model_idx).RDMs = valsRDMs;
 Model(model_idx).RDM = avgValsRDM;
 Model(model_idx).name = 'values';
+Model(model_idx).color = [0 1 0];
+
+% log values^2 -- normalized correlation (cosine) is not a good measure here
+%
+logVals2 = log((simulated.valuess + 0.001) .^ 2); % so we don't take log(0) or negative
+[logVals2RDMs, avgLogVals2RDM] = compute_rdms(logVals2, 'cosine', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = logVals2RDMs;
+Model(model_idx).RDM = avgLogVals2RDM;
+Model(model_idx).name = 'logValuesSquared';
 Model(model_idx).color = [0 1 0];
 
 % weights -- normalized correlation (cosine) is not a good measure here
@@ -448,6 +472,16 @@ Model(model_idx).RDM = avgLikRDM;
 Model(model_idx).name = 'likelihood';
 Model(model_idx).color = [0 1 0];
 
+% log likelihoods
+%
+logLik = log(simulated.likelihoods(:, which_structures) + 0.001); % so we don't take log(0)
+[logLikRDMs, avgLogLikRDM] = compute_rdms(logLik, 'cosine', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = logLikRDMs;
+Model(model_idx).RDM = avgLogLikRDM;
+Model(model_idx).name = 'logLikelihood';
+Model(model_idx).color = [0 1 0];
+
 % Outcome
 %
 [outcomeRDMs, avgOutcomeRDM] = compute_rdms(data.outcome, @(x1, x2) x1 ~= x2, data, metadata, which_rows);
@@ -494,7 +528,17 @@ Model(model_idx).color = [0 1 0];
 model_idx = model_idx + 1;
 Model(model_idx).RDMs = newValRDMs;
 Model(model_idx).RDM = avgNewValRDM;
-Model(model_idx).name = 'new_value';
+Model(model_idx).name = 'newValue';
+Model(model_idx).color = [0 1 0];
+
+% Log New value
+%
+logNewVal2 = log((simulated.new_values + 0.001) .^ 2); % so we don't take log(0) or negative
+[logNewVal2RDMs, avgLogNewVal2RDM] = compute_rdms(logNewVal2, 'euclidean', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = logNewVal2RDMs;
+Model(model_idx).RDM = avgLogNewVal2RDM;
+Model(model_idx).name = 'logNewValueSquared';
 Model(model_idx).color = [0 1 0];
 
 % New values -- normalized correlation (cosine) is not a good measure here
@@ -503,7 +547,7 @@ Model(model_idx).color = [0 1 0];
 model_idx = model_idx + 1;
 Model(model_idx).RDMs = newValsRDMs;
 Model(model_idx).RDM = avgNewValsRDM;
-Model(model_idx).name = 'new_values';
+Model(model_idx).name = 'newValues';
 Model(model_idx).color = [0 1 0];
 
 % value PE = New value - old value
@@ -528,48 +572,69 @@ Model(model_idx).name = 'valPEs';
 Model(model_idx).color = [0 1 0];
 
 
-
 % show the model RDMs
 % 
 showRDMs(Model, 2);
+
+toc;
+
+
+
+
+
 
 %
 % Second-order similarity matrix from the RDMs
 % compare neural RDMs with the model RDMs
 %
 
-%% Compare the average RDMs only
+
+
+
+
+%% Compare the average RDMs only -- DON'T RUN THIS...
+% this is LAME -- look at the one below
 %
 userOptions.RDMcorrelationType= 'Spearman';
 userOptions.analysisName = 'blah';
 userOptions.rootPath = '~/Downloads/'; % TODO how to turn off saving the figure?
 corrMat = pairwiseCorrelateRDMs({Neural, Model}, userOptions, struct('figureNumber', 3,'fileName',[]));
 
-%% Within-subject / Between-subject RDM comparison
+
+%% Proper RDM comparison
 % compare each neural and model RDMs for subject separately using
 % Spearman's rank coefficient, then find which ones are significant
 %
 tic;
 
-within_subject = true; % compute correlation for each run separately i.e. no comparisons of representations across runs
+same_run_only = true; % compute correlation for each run separately i.e. no comparisons of representations across runs
 all_vs_all = false; % compare neural vs. neural and model vs. model representations too
 
-trig = logical(triu(ones(metadata.runsPerSubject * metadata.trainingTrialsPerRun), 1)); % upper right triangle, excluding diagonal, for all runs
-run_trig = logical(triu(ones(metadata.trainingTrialsPerRun), 1)); % upper right triangle, excluding diagonal, for a single run
+% upper right triangle, excluding diagonal, for all runs
+%
+cross_run_trig = logical(triu(ones(metadata.runsPerSubject * metadata.trainingTrialsPerRun), 1));
+
+% upper right triangle, excluding diagonal, for a single run
+%
+same_run_trig = false(metadata.runsPerSubject * metadata.trainingTrialsPerRun);
+for run = 1:metadata.runsPerSubject
+    s = (run - 1) * metadata.trainingTrialsPerRun + 1;
+    e = run * metadata.trainingTrialsPerRun;
+    same_run_trig(s:e,s:e) = logical(triu(ones(metadata.trainingTrialsPerRun), 1));
+end
 
 table_Rho = []; % average Spearman's rho for each ROI for each model
 table_H = []; % result of hypothesis test for each ROI for each model -- is the correlation significant?
 table_P = []; % p-value of hypothesis test for each ROI for each model
 
-between_subject_rhos = nan(numel(Neural), numel(Model), metadata.N);
-within_subject_rhos = nan(numel(Neural), numel(Model), metadata.N, metadata.runsPerSubject);
+all_subject_rhos = nan(numel(Neural), numel(Model), metadata.N);
 
 if all_vs_all
     all = [Neural, Model];
     rows = all;
     cols = all;
 else
-    rows = Neural;
+    rows = Neural; % order here is important for visualizations below
     cols = Model;
 end
 
@@ -585,44 +650,28 @@ for row_idx = 1:numel(rows)
             row_RDM = rows(row_idx).RDMs(:,:,subj);
             col_RDM = cols(col_idx).RDMs(:,:,subj);
             assert(isequal(size(row_RDM), size(col_RDM)));
-            assert(isequal(size(trig), size(row_RDM)));
+            assert(isequal(size(cross_run_trig), size(row_RDM)));
 
-            if ~within_subject
-                % Look at RDMs for all runs simultaneously
+            if same_run_only
+                % Look at RDMs for each run separately => same-run
+                % correlations only
                 %
-                x = row_RDM(trig);
-                y = col_RDM(trig);
-                subj_rho = corr(x, y, 'type', 'Spearman');
-                subjs_rhos = [subjs_rhos, subj_rho];
-                
-                between_subject_rhos(row_idx, col_idx, subj) = subj_rho;
+                x = row_RDM(same_run_trig);
+                y = col_RDM(same_run_trig);
+                assert(isequal(size(row_RDM), size(same_run_trig)));
             else
-                % Look at RDM for each run separately
+                % Look at RDMs for all runs simultaneously => includes
+                % cross-run correlations
                 %
-                % or for each run even?? how to you get WSE's otherwise?
-                % but it doesn't make sense for us b/c we have 1 condition per
-                % run => the RDMs will look similar across runs, even if the
-                % posteriors are actually different
-                %
-                runs_rhos = []; % one rho per run
-                for run = 1:metadata.runsPerSubject
-                    s = (run - 1) * metadata.trainingTrialsPerRun + 1;
-                    e = run * metadata.trainingTrialsPerRun;
-                    row_subRDM = rows(row_idx).RDMs(s:e, s:e, subj);
-                    col_subRDM = cols(col_idx).RDMs(s:e, s:e, subj);
-                    assert(isequal(size(row_subRDM), size(col_subRDM)));
-                    assert(isequal(size(run_trig), size(row_subRDM)));
-
-                    x = row_subRDM(run_trig);
-                    y = col_subRDM(run_trig);
-                    run_rho = corr(x, y, 'type', 'Spearman');
-                    runs_rhos = [runs_rhos, run_rho];
-                    
-                    within_subject_rhos(row_idx, col_idx, subj, run) = run_rho;
-                end
-                subj_rho = mean(runs_rhos); % subject rho = mean rho across runs TODO use WSE
-                subjs_rhos = [subjs_rhos, subj_rho];
+                x = row_RDM(cross_run_trig);
+                y = col_RDM(cross_run_trig);
+                assert(isequal(size(row_RDM), size(cross_run_trig)));
             end
+            assert(isequal(size(row_RDM), size(col_RDM)));
+            
+            subj_rho = corr(x, y, 'type', 'Spearman');
+            subjs_rhos = [subjs_rhos, subj_rho];
+            all_subject_rhos(row_idx, col_idx, subj) = subj_rho;            
         end
         models_subjs_rhos = [models_subjs_rhos; subjs_rhos];
     end
@@ -644,6 +693,13 @@ P = array2table(table_P, 'RowNames', {rows.name}, 'VariableNames', {cols.name});
 
 toc;
 
+
+
+
+
+
+
+
 %% Visualize analysis
 %
 
@@ -655,7 +711,7 @@ for i = 1:numel(tabs)
     if i == 2
         t = tabs{i};
         if all_vs_all
-            imagesc(log10(t), [-18 0.1]);
+            imagesc(log10(t), [-16 0.1]);
         else
             imagesc(log10(t));
         end    
@@ -678,7 +734,7 @@ for i = 1:numel(tabs)
     xtickangle(60);
     xlabel('Neural model');
 
-    yticklabels({rows.name})
+    yticklabels({rows.name});
     set(gca, 'ytick', 1:numel({rows.name}));
     ylabel('ROI_{event}, t = trial onset, f = feedback onset');
     
@@ -686,17 +742,168 @@ for i = 1:numel(tabs)
 end
 
 
-%% More visualization for within-subject analysis only
+
+%% More visualizations
 %
-%{
-assert(within_subject);
+assert(~all_vs_all); % only works for neural vs. model comparisons
 
-neural_idx = 18; % striatum_f
-w = atanh(within_subject_rhos);
-w = w - w(neural_idx,:,:,:);
+neural_idxs = [1, 5, 2, 3]; % ROIs to plot
+neural_idxs = [neural_idxs, neural_idxs + numel(Neural)/2];
 
-model_idx = 15;
-for ni = 1:numel(Neural)
-    w(ni, model_idx, :, :)
+model_idxs = [1:7, 18, 20, 26, 29, 30, 15, 35, 8];
+
+relative_to_time = false; % whether to do the analysis/plots relative to time
+
+all_subject_zs = atanh(all_subject_rhos); % Fisher z transform the rhos
+
+figure;
+
+for i = 1:numel(neural_idxs)
+    neural_idx = neural_idxs(i);
+    
+    % Get fisher z-transformed correlation coefficients
+    %
+    zs = squeeze(all_subject_zs(neural_idx, model_idxs, :));
+    
+    if relative_to_time
+        time_zs = squeeze(all_subject_zs(neural_idx, 8, :));
+        
+        % One-sample t-test against the time zs
+        %
+        [h, ps, ci, stats] = ttest(zs' - time_zs);
+        assert(numel(h) == numel(model_idxs));
+        
+        % plot the z's relative to time
+        %
+        zs = time_zs - zs;
+    else
+        % One-sample t-test them against 0
+        %
+        [h, ps, ci, stats] = ttest(zs');
+        assert(numel(h) == numel(model_idxs));
+    end
+    
+    % Compute SEs
+    %
+    %[sems, means] = wse(zs'); % WSE's
+    means = mean(zs, 2);
+    sems = (std(zs, [], 2) / sqrt(size(zs, 2)))'; % ...or just normal SEMs
+    assert(numel(sems) == numel(model_idxs));
+    
+    % Plot
+    %
+    subplot(numel(neural_idxs), 1, i);
+    
+    h = bar(means, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
+    xs = h(1).XData;
+    hold on;
+    errorbar(xs, means, sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+    hold off;
+    
+    set(gca, 'xtick', xs);
+    models = {Model(model_idxs).name};
+    if i == numel(neural_idxs)
+        xticklabels(models);
+        xtickangle(45);
+    else
+        labels = {};
+        for j = 1:numel(model_idxs)
+            labels{j} = sprintf('p < 10^{%d}', round(log10(ps(j))));
+        end
+        xticklabels(labels);
+    end
+ 
+    set(gca, 'ylim', [0 0.405]);
+    set(gca, 'ytick', mean(ylim));
+    yticklabels({Neural(neural_idx).name});
+    %ytickangle(30);
+    if i == 1
+        title('Fisher z-transformed Spearman rank correlation');
+    end
 end
-%}
+
+
+
+
+
+
+
+%% Chan et al. like bar plots for their models
+%
+assert(~all_vs_all); % only works for neural vs. model comparisons
+
+neural_idxs = [1:(numel(Neural) / 2)]; % ROIs to plot -- trial_onset
+%neural_idxs = [1:(numel(Neural) / 2)] + (numel(Neural) / 2); % ROIs to plot -- feedbac_onset
+model_idxs = [1:7, 28, 9, 10, 11, 8]; % models to plot -- Chan et al.
+relative_to_time = true; % whether to do the analysis/plots relative to time
+
+all_subject_zs = atanh(all_subject_rhos); % Fisher z transform the rhos
+
+figure;
+
+for i = 1:numel(model_idxs)
+    model_idx = model_idxs(i);
+    
+    % Get fisher z-transformed correlation coefficients
+    %
+    zs = squeeze(all_subject_zs(neural_idxs, model_idx, :));
+    
+    if relative_to_time
+        time_zs = squeeze(all_subject_zs(neural_idxs, 8, :));
+        
+        % Paired-sample t-test them against the time zs
+        %
+        [h, ps, ci, stats] = ttest(zs', time_zs');
+        assert(numel(h) == numel(neural_idxs));
+        
+        % plot the z's relative to time
+        %
+        zs = time_zs - zs;
+    else
+        % One-sample t-test them against 0
+        %
+        [h, ps, ci, stats] = ttest(zs');
+        assert(numel(h) == numel(neural_idxs));
+    end
+    
+    % Compute SEs
+    %
+    %[sems, means] = wse(zs'); % WSE's
+    means = mean(zs, 2);
+    sems = (std(zs, [], 2) / sqrt(size(zs, 2)))'; % ...or just normal SEMs
+    assert(numel(sems) == numel(neural_idxs));
+    
+    % Plot
+    %
+    subplot(numel(model_idxs), 1, i);
+    
+    h = bar(means, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
+    xs = h(1).XData;
+    hold on;
+    errorbar(xs, means, sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+    hold off;
+    
+    set(gca, 'xtick', xs);
+    rois = {Neural(neural_idxs).name};
+    if i == numel(model_idxs)
+        xticklabels(rois);
+        xtickangle(45);
+    else
+        labels = {};
+        for j = 1:numel(neural_idxs)
+            labels{j} = sprintf('p < 10^{%d}', round(log10(ps(j))));
+        end
+        xticklabels(labels);
+    end
+ 
+    set(gca, 'ylim', [0 0.405]);
+    set(gca, 'ytick', mean(ylim));
+    yticklabels({Model(model_idx).name});
+    %ytickangle(30);
+    if i == 1
+        title('Fisher z-transformed Spearman rank correlation');
+    end
+end
+
+
+
