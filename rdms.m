@@ -607,8 +607,9 @@ corrMat = pairwiseCorrelateRDMs({Neural, Model}, userOptions, struct('figureNumb
 %
 tic;
 
-same_run_only = true; % compute correlation for each run separately i.e. no comparisons of representations across runs
-all_vs_all = false; % compare neural vs. neural and model vs. model representations too
+same_run_only = true; % #KNOB compute correlation for each run separately i.e. no comparisons of representations across runs
+all_vs_all = false; % #KNOB compare neural vs. neural and model vs. model representations too
+control_for_time = true; % #KNOB do partial correlation controlling for the time model
 
 % upper right triangle, excluding diagonal, for all runs
 %
@@ -649,6 +650,8 @@ for row_idx = 1:numel(rows)
         for subj = 1:metadata.N
             row_RDM = rows(row_idx).RDMs(:,:,subj);
             col_RDM = cols(col_idx).RDMs(:,:,subj);
+            control_RDM = Model(8).RDMs(:,:,subj);
+            assert(strcmp(Model(8).name, 'time'));
             assert(isequal(size(row_RDM), size(col_RDM)));
             assert(isequal(size(cross_run_trig), size(row_RDM)));
 
@@ -658,6 +661,7 @@ for row_idx = 1:numel(rows)
                 %
                 x = row_RDM(same_run_trig);
                 y = col_RDM(same_run_trig);
+                z = control_RDM(same_run_trig);
                 assert(isequal(size(row_RDM), size(same_run_trig)));
             else
                 % Look at RDMs for all runs simultaneously => includes
@@ -665,12 +669,18 @@ for row_idx = 1:numel(rows)
                 %
                 x = row_RDM(cross_run_trig);
                 y = col_RDM(cross_run_trig);
+                z = control_RDM(cross_run_trig);
                 assert(isequal(size(row_RDM), size(cross_run_trig)));
             end
             assert(isequal(size(row_RDM), size(col_RDM)));
             
-            subj_rho = corr(x, y, 'type', 'Spearman');
-            subjs_rhos = [subjs_rhos, subj_rho];
+            if control_for_time
+                subj_rho = partialcorr(x, y, z, 'type', 'Spearman');
+                subjs_rhos = [subjs_rhos, subj_rho];
+            else
+                subj_rho = corr(x, y, 'type', 'Spearman');
+                subjs_rhos = [subjs_rhos, subj_rho];
+            end
             all_subject_rhos(row_idx, col_idx, subj) = subj_rho;            
         end
         models_subjs_rhos = [models_subjs_rhos; subjs_rhos];
@@ -752,7 +762,7 @@ neural_idxs = [neural_idxs, neural_idxs + numel(Neural)/2];
 
 model_idxs = [1:7, 18, 20, 26, 29, 30, 15, 35, 8];
 
-relative_to_time = false; % whether to do the analysis/plots relative to time
+relative_to_time = false; % #KNOB whether to do the analysis/plots relative to time
 
 all_subject_zs = atanh(all_subject_rhos); % Fisher z transform the rhos
 
@@ -813,7 +823,11 @@ for i = 1:numel(neural_idxs)
         xticklabels(labels);
     end
  
-    set(gca, 'ylim', [0 0.405]);
+    if ~control_for_time
+        set(gca, 'ylim', [0 0.405]);
+    else
+        set(gca, 'ylim', [-0.1 0.03]);
+    end
     set(gca, 'ytick', mean(ylim));
     yticklabels({Neural(neural_idx).name});
     %ytickangle(30);
@@ -828,14 +842,15 @@ end
 
 
 
-%% Chan et al. like bar plots for their models
+%% Chan et al.-like bar plots for their models
 %
 assert(~all_vs_all); % only works for neural vs. model comparisons
 
 neural_idxs = [1:(numel(Neural) / 2)]; % ROIs to plot -- trial_onset
-%neural_idxs = [1:(numel(Neural) / 2)] + (numel(Neural) / 2); % ROIs to plot -- feedbac_onset
+neural_idxs = [1:(numel(Neural) / 2)] + (numel(Neural) / 2); % ROIs to plot -- feedbac_onset
 model_idxs = [1:7, 28, 9, 10, 11, 8]; % models to plot -- Chan et al.
-relative_to_time = true; % whether to do the analysis/plots relative to time
+relative_to_time = false; % #KNOB whether to do the analysis/plots relative to time
+assert(~relative_to_time || ~control_for_time);
 
 all_subject_zs = atanh(all_subject_rhos); % Fisher z transform the rhos
 
@@ -896,7 +911,11 @@ for i = 1:numel(model_idxs)
         xticklabels(labels);
     end
  
-    set(gca, 'ylim', [0 0.405]);
+    if ~control_for_time
+        set(gca, 'ylim', [0 0.405]);
+    else
+        set(gca, 'ylim', [-0.2 0.05]);
+    end
     set(gca, 'ytick', mean(ylim));
     yticklabels({Model(model_idx).name});
     %ytickangle(30);
