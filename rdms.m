@@ -1,6 +1,9 @@
 % Compare RDMs from different ROIs with model RDMs
 %
 
+%% Load data
+%
+
 % Load behavior
 %
 [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
@@ -292,6 +295,26 @@ Model(model_idx).RDM = avgStimulusRDM;
 Model(model_idx).name = 'stimulus';
 Model(model_idx).color = [0 1 0];
 
+% run: 1 if same, 0 o/w
+%
+[runRDMs, avgRunRDM] = compute_rdms(data.runId, @(x1, x2) x1 ~= x2, data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = runRDMs;
+Model(model_idx).RDM = avgRunRDM;
+Model(model_idx).name = 'run';
+Model(model_idx).color = [0 1 0];
+
+% condition: 1 if same, 0 o/w
+%
+m = containers.Map(metadata.conditions, {1, 2, 3});
+cond = cellfun(@(x) m(x), data.condition);
+[condRDMs, avgCondRDM] = compute_rdms(cond, @(x1, x2) x1 ~= x2, data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = condRDMs;
+Model(model_idx).RDM = avgCondRDM;
+Model(model_idx).name = 'condition';
+Model(model_idx).color = [0 1 0];
+
 % value
 %
 [valRDMs, avgValRDM] = compute_rdms(simulated.values, 'euclidean', data, metadata, which_rows);
@@ -501,56 +524,84 @@ userOptions.rootPath = '~/Downloads/'; % TODO how to turn off saving the figure?
 corrMat = pairwiseCorrelateRDMs({Neural, Model}, userOptions, struct('figureNumber', 3,'fileName',[]));
 
 
-%% Within-subject RDM comparison
+%% Within-subject / Between-subject RDM comparison
 % compare each neural and model RDMs for subject separately using
 % Spearman's rank coefficient, then find which ones are significant
 %
-trig = logical(triu(ones(metadata.runsPerSubject * metadata.trainingTrialsPerRun), 1)); % upper right triangle, excluding diagonal                       
+tic;
+
+trig = logical(triu(ones(metadata.runsPerSubject * metadata.trainingTrialsPerRun), 1)); % upper right triangle, excluding diagonal, for all runs
+run_trig = logical(triu(ones(metadata.trainingTrialsPerRun), 1)); % upper right triangle, excluding diagonal, for a single run
+
+within_subject = false;
 
 table_Rho = []; % average Spearman's rho for each ROI for each model
 table_H = []; % result of hypothesis test for each ROI for each model -- is the correlation significant?
 table_P = []; % p-value of hypothesis test for each ROI for each model
+
+between_subject_rhos = nan(numel(Neural), numel(Model), metadata.N);
+within_subject_rhos = nan(numel(Neural), numel(Model), metadata.N, metadata.runsPerSubject);
+
 for neural_idx = 1:numel(Neural)
 
-    all_rhos = []; % Spearman rhos: row = model, col = subject
+    models_subjs_rhos = []; % Spearman rhos: row = model, col = subject
     for model_idx = 1:numel(Model)
 
         % Compute a Spearman's rank correlation for each subject separately
         %
-        rhos = [];
+        subjs_rhos = []; % Spearman rhos: col = subject, one rho per
         for subj = 1:metadata.N
             model_RDM = Model(model_idx).RDMs(:,:,subj);
             neural_RDM = Neural(neural_idx).RDMs(:,:,subj);
             assert(isequal(size(model_RDM), size(neural_RDM)));
             assert(isequal(size(trig), size(model_RDM)));
 
-            x = model_RDM(trig);
-            y = neural_RDM(trig);
-            rho = corr(x, y, 'type', 'Spearman');
-            rhos = [rhos, rho];
+            if ~within_subject
+                % Look at RDMs for all runs simultaneously
+                %
+                x = model_RDM(trig);
+                y = neural_RDM(trig);
+                subj_rho = corr(x, y, 'type', 'Spearman');
+                subjs_rhos = [subjs_rhos, subj_rho];
+                
+                between_subject_rhos(neural_idx, model_idx, subj) = subj_rho;
+            else
+                % Look at RDM for each run separately
+                %
+                % or for each run even?? how to you get WSE's otherwise?
+                % but it doesn't make sense for us b/c we have 1 condition per
+                % run => the RDMs will look similar across runs, even if the
+                % posteriors are actually different
+                %
+                runs_rhos = []; % one rho per run
+                for run = 1:metadata.runsPerSubject
+                    s = (run - 1) * metadata.trainingTrialsPerRun + 1;
+                    e = run * metadata.trainingTrialsPerRun;
+                    model_subRDM = Model(model_idx).RDMs(s:e, s:e, subj);
+                    neural_subRDM = Neural(neural_idx).RDMs(s:e, s:e, subj);
+                    assert(isequal(size(model_subRDM), size(neural_subRDM)));
+                    assert(isequal(size(run_trig), size(model_subRDM)));
 
-            % or for each run even?? how to you get WSE's otherwise?
-            % but it doesn't make sense for us b/c we have 1 condition per
-            % run => the RDMs will look similar across runs, even if the
-            % posteriors are actually different
-            %{
-            for run = 1:metadata.runsPerSubject
-                s = (run - 1) * metadata.trainingTrialsPerRun + 1;
-                e = run * metadata.trainingTrialsPerRun;
-                model_subRDM = Model(model_idx).RDMs(s:e, s:e, subj);
-                neural_subRDM = Neural(neural_idx).RDMs(s:e, s:e, subj);
+                    x = model_subRDM(run_trig);
+                    y = neural_subRDM(run_trig);
+                    run_rho = corr(x, y, 'type', 'Spearman');
+                    runs_rhos = [runs_rhos, run_rho];
+                    
+                    within_subject_rhos(neural_idx, model_idx, subj, run) = run_rho;
+                end
+                subj_rho = mean(runs_rhos); % subject rho = mean rho across runs TODO use WSE
+                subjs_rhos = [subjs_rhos, subj_rho];
             end
-            %}
         end
-        all_rhos = [all_rhos; rhos];
+        models_subjs_rhos = [models_subjs_rhos; subjs_rhos];
     end
     
     % Group-level analysis
     %
-    fisher_all_rhos = atanh(all_rhos);
-    [h, ps, ci, stats] = ttest(fisher_all_rhos');
+    fisher_models_rhos = atanh(models_subjs_rhos);
+    [h, ps, ci, stats] = ttest(fisher_models_rhos');
 
-    table_Rho = [table_Rho; mean(fisher_all_rhos')];
+    table_Rho = [table_Rho; mean(fisher_models_rhos')];
     table_H = [table_H; h];
     table_P = [table_P; ps];
 end
@@ -560,18 +611,51 @@ Rho = array2table(table_Rho, 'RowNames', {Neural.name}, 'VariableNames', {Model.
 H = array2table(table_H, 'RowNames', {Neural.name}, 'VariableNames', {Model.name});
 P = array2table(table_P, 'RowNames', {Neural.name}, 'VariableNames', {Model.name});
 
-%% Visualize within-subject analysis
+toc;
+
+%% Visualize analysis
 %
 
-figure;
-imagesc(table_Rho);
-cols=colorScale([0 0.5 1; 0.5 0.5 0.5; 1 0 0],256);
-colormap(cols); colorbar;
-colorbar;
+tabs = {table_Rho, table_P};
+titles = {'Representational similarity match (Spearman rank correlation)', 'P-value (one-sample t-test)'};
 
-xticklabels({Model.name});
-set(gca, 'xtick', 1:numel({Model.name}));
-xtickangle(60);
+for i = 1:numel(tabs)
+    figure;
+    if i == 2
+        t = tabs{i};
+        imagesc(log10(t));
+        c = colorbar;
+        y = get(c, 'Ytick');
+        set(c, 'YTickLabel', arrayfun(@(x) ['10\^', num2str(x)], y, 'UniformOutput', false));
+    else
+        imagesc(tabs{i});
+        %cols=colorScale([0 0.5 1; 0.5 0.5 0.5; 1 0 0],256);
+        %colormap(cols); colorbar;
+        colorbar;
+    end
 
-yticklabels({Neural.name})
-set(gca, 'ytick', 1:numel({Neural.name}));
+    xticklabels({Model.name});
+    set(gca, 'xtick', 1:numel({Model.name}));
+    xtickangle(60);
+    xlabel('Neural model');
+
+    yticklabels({Neural.name})
+    set(gca, 'ytick', 1:numel({Neural.name}));
+    ylabel('ROI_{event}, t = trial onset, f = feedback onset');
+    
+    title(titles{i});
+end
+
+
+%% More visualization for within-subject analysis only
+%
+assert(within_subject);
+
+neural_idx = 18; % striatum_f
+w = atanh(within_subject_rhos);
+w = w - w(neural_idx,:,:,:);
+
+model_idx = 15;
+for ni = 1:numel(Neural)
+    w(ni, model_idx, :, :)
+end
