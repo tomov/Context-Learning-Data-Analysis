@@ -757,10 +757,11 @@ end
 %
 assert(~all_vs_all); % only works for neural vs. model comparisons
 
-neural_idxs = [1, 5, 2, 3]; % ROIs to plot
-neural_idxs = [neural_idxs, neural_idxs + numel(Neural)/2];
+neural_idxs = [1, 5, 2, 3, 4]; % ROIs to plot at trial onset
+neural_idxs = [neural_idxs; neural_idxs + numel(Neural)/2]; % at feedback too
+neural_idxs = neural_idxs(:)';
 
-model_idxs = [1:7, 18, 20, 26, 29, 30, 15, 35, 8];
+model_idxs = [1:7, 18, 20, 26, 29, 30, 31, 32, 15, 35, 8];
 
 relative_to_time = false; % #KNOB whether to do the analysis/plots relative to time
 
@@ -802,7 +803,7 @@ for i = 1:numel(neural_idxs)
     
     % Plot
     %
-    subplot(numel(neural_idxs), 1, i);
+    subplot(numel(neural_idxs) + 1, 1, i);
     
     h = bar(means, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
     xs = h(1).XData;
@@ -812,16 +813,11 @@ for i = 1:numel(neural_idxs)
     
     set(gca, 'xtick', xs);
     models = {Model(model_idxs).name};
-    if i == numel(neural_idxs)
-        xticklabels(models);
-        xtickangle(45);
-    else
-        labels = {};
-        for j = 1:numel(model_idxs)
-            labels{j} = sprintf('p < 10^{%d}', round(log10(ps(j))));
-        end
-        xticklabels(labels);
+    labels = {};
+    for j = 1:numel(model_idxs)
+        labels{j} = sprintf('p < 10^{%d}', round(log10(ps(j))));
     end
+    xticklabels(labels);
  
     if ~control_for_time
         set(gca, 'ylim', [0 0.405]);
@@ -833,6 +829,13 @@ for i = 1:numel(neural_idxs)
     %ytickangle(30);
     if i == 1
         title('Fisher z-transformed Spearman rank correlation');
+    end
+    if i == numel(neural_idxs)
+        subplot(numel(neural_idxs) + 1, 1, i + 1);
+        h = bar(means * 0, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
+        set(gca, 'xtick', xs);
+        xticklabels(models);
+        xtickangle(45);
     end
 end
 
