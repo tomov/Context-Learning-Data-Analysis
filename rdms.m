@@ -24,157 +24,158 @@ which_structures = logical(options.which_structures);
 %
 which_rows = data.which_rows & data.isTrain;
 
+%% ------------------- Compute the neural RDMs ------------------
 %
-% Compute the neural RDMs
-%
-
-% Load neural data
-%
-%whole_brain_trial_onset_betas = get_betas('masks/mask.nii', 'trial_onset', data, metadata);
 
 % Normalized correlation for neural data for different ROIs
 %
 clear Neural;
 neural_idx = 0;
 
-hippocampus_mask = load_mask('masks/hippocampus.nii');
-hippocampus_betas = get_betas_submask(hippocampus_mask, whole_brain_trial_onset_betas);
-[hippocampusRDMs, avgHippocampusRDM] = compute_rdms(hippocampus_betas, 'cosine', data, metadata, which_rows);
-neural_idx = neural_idx + 1;
-Neural(neural_idx).RDMs = hippocampusRDMs;
-Neural(neural_idx).RDM = avgHippocampusRDM;
-Neural(neural_idx).name = 'hippocampus';
-Neural(neural_idx).color = [0 1 0];
+% for each ROI, take betas at both trial onset and feedback onset
+%
+for event = {'trial_onset', 'feedback_onset'}
+    event = event{1};
 
-ofc_mask = load_mask('masks/ofc.nii');
-ofc_betas = get_betas_submask(ofc_mask, whole_brain_trial_onset_betas);
-[ofcRDMs, avgOfcRDM] = compute_rdms(ofc_betas, 'cosine', data, metadata, which_rows);
-neural_idx = neural_idx + 1;
-Neural(neural_idx).RDMs = ofcRDMs;
-Neural(neural_idx).RDM = avgOfcRDM;
-Neural(neural_idx).name = 'OFC';
-Neural(neural_idx).color = [0 1 0];
+    % Load neural data
+    %
+    whole_brain_betas = get_betas('masks/mask.nii', event, data, metadata);
 
-med_ofc_mask = load_mask('masks/med_ofc.nii');
-med_ofc_betas = get_betas_submask(med_ofc_mask, whole_brain_trial_onset_betas);
-[medOfcRDMs, avgMedOfcRDM] = compute_rdms(med_ofc_betas, 'cosine', data, metadata, which_rows);
-neural_idx = neural_idx + 1;
-Neural(neural_idx).RDMs = medOfcRDMs;
-Neural(neural_idx).RDM = avgMedOfcRDM;
-Neural(neural_idx).name = 'mOFC';
-Neural(neural_idx).color = [0 1 0];
+    hippocampus_mask = load_mask('masks/hippocampus.nii');
+    hippocampus_betas = get_betas_submask(hippocampus_mask, whole_brain_betas);
+    [hippocampusRDMs, avgHippocampusRDM] = compute_rdms(hippocampus_betas, 'cosine', data, metadata, which_rows);
+    neural_idx = neural_idx + 1;
+    Neural(neural_idx).RDMs = hippocampusRDMs;
+    Neural(neural_idx).RDM = avgHippocampusRDM;
+    Neural(neural_idx).name = ['hippocampus', event(1)];
+    Neural(neural_idx).color = [0 1 0];
 
-rectus_mask = load_mask('masks/rectus.nii');
-rectus_betas = get_betas_submask(rectus_mask, whole_brain_trial_onset_betas);
-[rectusRDMs, avgRectusRDM] = compute_rdms(rectus_betas, 'cosine', data, metadata, which_rows);
-neural_idx = neural_idx + 1;
-Neural(neural_idx).RDMs = rectusRDMs;
-Neural(neural_idx).RDM = avgRectusRDM;
-Neural(neural_idx).name = 'Rectus';
-Neural(neural_idx).color = [0 1 0];
+    ofc_mask = load_mask('masks/ofc.nii');
+    ofc_betas = get_betas_submask(ofc_mask, whole_brain_betas);
+    [ofcRDMs, avgOfcRDM] = compute_rdms(ofc_betas, 'cosine', data, metadata, which_rows);
+    neural_idx = neural_idx + 1;
+    Neural(neural_idx).RDMs = ofcRDMs;
+    Neural(neural_idx).RDM = avgOfcRDM;
+    Neural(neural_idx).name = ['OFC_', event(1)];
+    Neural(neural_idx).color = [0 1 0];
 
-vmpfc_mask = load_mask('masks/vmpfc.nii');
-vmpfc_betas = get_betas_submask(vmpfc_mask, whole_brain_trial_onset_betas);
-[vmpfcRDMs, avgVmpfcRDM] = compute_rdms(vmpfc_betas, 'cosine', data, metadata, which_rows);
-neural_idx = neural_idx + 1;
-Neural(neural_idx).RDMs = vmpfcRDMs;
-Neural(neural_idx).RDM = avgVmpfcRDM;
-Neural(neural_idx).name = 'vmPFC';
-Neural(neural_idx).color = [0 1 0];
+    med_ofc_mask = load_mask('masks/med_ofc.nii');
+    med_ofc_betas = get_betas_submask(med_ofc_mask, whole_brain_betas);
+    [medOfcRDMs, avgMedOfcRDM] = compute_rdms(med_ofc_betas, 'cosine', data, metadata, which_rows);
+    neural_idx = neural_idx + 1;
+    Neural(neural_idx).RDMs = medOfcRDMs;
+    Neural(neural_idx).RDM = avgMedOfcRDM;
+    Neural(neural_idx).name = ['mOFC_', event(1)];
+    Neural(neural_idx).color = [0 1 0];
 
-striatum_mask = load_mask('masks/striatum.nii');
-striatum_betas = get_betas_submask(striatum_mask, whole_brain_trial_onset_betas);
-[striatumRDMs, avgStriatumRDM] = compute_rdms(striatum_betas, 'cosine', data, metadata, which_rows);
-neural_idx = neural_idx + 1;
-Neural(neural_idx).RDMs = striatumRDMs;
-Neural(neural_idx).RDM = avgStriatumRDM;
-Neural(neural_idx).name = 'Striatum';
-Neural(neural_idx).color = [0 1 0];
+    vmpfc_mask = load_mask('masks/vmpfc.nii');
+    vmpfc_betas = get_betas_submask(vmpfc_mask, whole_brain_betas);
+    [vmpfcRDMs, avgVmpfcRDM] = compute_rdms(vmpfc_betas, 'cosine', data, metadata, which_rows);
+    neural_idx = neural_idx + 1;
+    Neural(neural_idx).RDMs = vmpfcRDMs;
+    Neural(neural_idx).RDM = avgVmpfcRDM;
+    Neural(neural_idx).name = ['vmPFC_', event(1)];
+    Neural(neural_idx).color = [0 1 0];
 
-pallidum_mask = load_mask('masks/pallidum.nii');
-pallidum_betas = get_betas_submask(pallidum_mask, whole_brain_trial_onset_betas);
-[pallidumRDMs, avgPallidumRDM] = compute_rdms(pallidum_betas, 'cosine', data, metadata, which_rows);
-neural_idx = neural_idx + 1;
-Neural(neural_idx).RDMs = pallidumRDMs;
-Neural(neural_idx).RDM = avgPallidumRDM;
-Neural(neural_idx).name = 'Pallidum';
-Neural(neural_idx).color = [0 1 0];
+    striatum_mask = load_mask('masks/striatum.nii');
+    striatum_betas = get_betas_submask(striatum_mask, whole_brain_betas);
+    [striatumRDMs, avgStriatumRDM] = compute_rdms(striatum_betas, 'cosine', data, metadata, which_rows);
+    neural_idx = neural_idx + 1;
+    Neural(neural_idx).RDMs = striatumRDMs;
+    Neural(neural_idx).RDM = avgStriatumRDM;
+    Neural(neural_idx).name = ['Striatum_', event(1)];
+    Neural(neural_idx).color = [0 1 0];
 
-v1_mask = load_mask('masks/v1.nii');
-v1_betas = get_betas_submask(v1_mask, whole_brain_trial_onset_betas);
-[v1RDMs, avgV1RDM] = compute_rdms(v1_betas, 'cosine', data, metadata, which_rows);
-neural_idx = neural_idx + 1;
-Neural(neural_idx).RDMs = v1RDMs;
-Neural(neural_idx).RDM = avgV1RDM;
-Neural(neural_idx).name = 'V1';
-Neural(neural_idx).color = [0 1 0];
+    pallidum_mask = load_mask('masks/pallidum.nii');
+    pallidum_betas = get_betas_submask(pallidum_mask, whole_brain_betas);
+    [pallidumRDMs, avgPallidumRDM] = compute_rdms(pallidum_betas, 'cosine', data, metadata, which_rows);
+    neural_idx = neural_idx + 1;
+    Neural(neural_idx).RDMs = pallidumRDMs;
+    Neural(neural_idx).RDM = avgPallidumRDM;
+    Neural(neural_idx).name = ['Pallidum_', event(1)];
+    Neural(neural_idx).color = [0 1 0];
 
-m1_mask = load_mask('masks/m1.nii');
-m1_betas = get_betas_submask(m1_mask, whole_brain_trial_onset_betas);
-[m1RDMs, avgM1RDM] = compute_rdms(m1_betas, 'cosine', data, metadata, which_rows);
-neural_idx = neural_idx + 1;
-Neural(neural_idx).RDMs = m1RDMs;
-Neural(neural_idx).RDM = avgM1RDM;
-Neural(neural_idx).name = 'M1';
-Neural(neural_idx).color = [0 1 0];
+    v1_mask = load_mask('masks/v1.nii');
+    v1_betas = get_betas_submask(v1_mask, whole_brain_betas);
+    [v1RDMs, avgV1RDM] = compute_rdms(v1_betas, 'cosine', data, metadata, which_rows);
+    neural_idx = neural_idx + 1;
+    Neural(neural_idx).RDMs = v1RDMs;
+    Neural(neural_idx).RDM = avgV1RDM;
+    Neural(neural_idx).name = ['V1_', event(1)];
+    Neural(neural_idx).color = [0 1 0];
 
-s1_mask = load_mask('masks/s1.nii');
-s1_betas = get_betas_submask(s1_mask, whole_brain_trial_onset_betas);
-[s1RDMs, avgS1RDM] = compute_rdms(s1_betas, 'cosine', data, metadata, which_rows);
-neural_idx = neural_idx + 1;
-Neural(neural_idx).RDMs = s1RDMs;
-Neural(neural_idx).RDM = avgS1RDM;
-Neural(neural_idx).name = 'S1';
-Neural(neural_idx).color = [0 1 0];
+    m1_mask = load_mask('masks/m1.nii');
+    m1_betas = get_betas_submask(m1_mask, whole_brain_betas);
+    [m1RDMs, avgM1RDM] = compute_rdms(m1_betas, 'cosine', data, metadata, which_rows);
+    neural_idx = neural_idx + 1;
+    Neural(neural_idx).RDMs = m1RDMs;
+    Neural(neural_idx).RDM = avgM1RDM;
+    Neural(neural_idx).name = ['M1_', event(1)];
+    Neural(neural_idx).color = [0 1 0];
 
-fusiform_mask = load_mask('masks/fusiform.nii');
-fusiform_betas = get_betas_submask(fusiform_mask, whole_brain_trial_onset_betas);
-[fusiformRDMs, avgFusiformRDM] = compute_rdms(fusiform_betas, 'cosine', data, metadata, which_rows);
-neural_idx = neural_idx + 1;
-Neural(neural_idx).RDMs = fusiformRDMs;
-Neural(neural_idx).RDM = avgFusiformRDM;
-Neural(neural_idx).name = 'Fusiform';
-Neural(neural_idx).color = [0 1 0];
+    s1_mask = load_mask('masks/s1.nii');
+    s1_betas = get_betas_submask(s1_mask, whole_brain_betas);
+    [s1RDMs, avgS1RDM] = compute_rdms(s1_betas, 'cosine', data, metadata, which_rows);
+    neural_idx = neural_idx + 1;
+    Neural(neural_idx).RDMs = s1RDMs;
+    Neural(neural_idx).RDM = avgS1RDM;
+    Neural(neural_idx).name = ['S1_', event(1)];
+    Neural(neural_idx).color = [0 1 0];
 
-angular_mask = load_mask('masks/angular.nii');
-angular_betas = get_betas_submask(angular_mask, whole_brain_trial_onset_betas);
-[angularRDMs, avgAngularRDM] = compute_rdms(angular_betas, 'cosine', data, metadata, which_rows);
-neural_idx = neural_idx + 1;
-Neural(neural_idx).RDMs = angularRDMs;
-Neural(neural_idx).RDM = avgAngularRDM;
-Neural(neural_idx).name = 'Angular';
-Neural(neural_idx).color = [0 1 0];
+    fusiform_mask = load_mask('masks/fusiform.nii');
+    fusiform_betas = get_betas_submask(fusiform_mask, whole_brain_betas);
+    [fusiformRDMs, avgFusiformRDM] = compute_rdms(fusiform_betas, 'cosine', data, metadata, which_rows);
+    neural_idx = neural_idx + 1;
+    Neural(neural_idx).RDMs = fusiformRDMs;
+    Neural(neural_idx).RDM = avgFusiformRDM;
+    Neural(neural_idx).name = ['Fusiform_', event(1)];
+    Neural(neural_idx).color = [0 1 0];
 
-mid_front_mask = load_mask('masks/mid_front.nii');
-mid_front_betas = get_betas_submask(mid_front_mask, whole_brain_trial_onset_betas);
-[midFrontRDMs, avgMidFrontRDM] = compute_rdms(mid_front_betas, 'cosine', data, metadata, which_rows);
-neural_idx = neural_idx + 1;
-Neural(neural_idx).RDMs = midFrontRDMs;
-Neural(neural_idx).RDM = avgMidFrontRDM;
-Neural(neural_idx).name = 'MidFront';
-Neural(neural_idx).color = [0 1 0];
+    angular_mask = load_mask('masks/angular.nii');
+    angular_betas = get_betas_submask(angular_mask, whole_brain_betas);
+    [angularRDMs, avgAngularRDM] = compute_rdms(angular_betas, 'cosine', data, metadata, which_rows);
+    neural_idx = neural_idx + 1;
+    Neural(neural_idx).RDMs = angularRDMs;
+    Neural(neural_idx).RDM = avgAngularRDM;
+    Neural(neural_idx).name = ['Angular_', event(1)];
+    Neural(neural_idx).color = [0 1 0];
 
-dl_sup_front_mask = load_mask('masks/dl_sup_front.nii');
-dl_sup_front_betas = get_betas_submask(dl_sup_front_mask, whole_brain_trial_onset_betas);
-[dlSupFrontRDMs, avgDlSupFrontRDM] = compute_rdms(dl_sup_front_betas, 'cosine', data, metadata, which_rows);
-neural_idx = neural_idx + 1;
-Neural(neural_idx).RDMs = dlSupFrontRDMs;
-Neural(neural_idx).RDM = avgDlSupFrontRDM;
-Neural(neural_idx).name = 'dlSupFront';
-Neural(neural_idx).color = [0 1 0];
+    mid_front_mask = load_mask('masks/mid_front.nii');
+    mid_front_betas = get_betas_submask(mid_front_mask, whole_brain_betas);
+    [midFrontRDMs, avgMidFrontRDM] = compute_rdms(mid_front_betas, 'cosine', data, metadata, which_rows);
+    neural_idx = neural_idx + 1;
+    Neural(neural_idx).RDMs = midFrontRDMs;
+    Neural(neural_idx).RDM = avgMidFrontRDM;
+    Neural(neural_idx).name = ['MidFront_', event(1)];
+    Neural(neural_idx).color = [0 1 0];
+
+    dl_sup_front_mask = load_mask('masks/dl_sup_front.nii');
+    dl_sup_front_betas = get_betas_submask(dl_sup_front_mask, whole_brain_betas);
+    [dlSupFrontRDMs, avgDlSupFrontRDM] = compute_rdms(dl_sup_front_betas, 'cosine', data, metadata, which_rows);
+    neural_idx = neural_idx + 1;
+    Neural(neural_idx).RDMs = dlSupFrontRDMs;
+    Neural(neural_idx).RDM = avgDlSupFrontRDM;
+    Neural(neural_idx).name = ['dlSupFront_', event(1)];
+    Neural(neural_idx).color = [0 1 0];
+end
+
 
 % show the neural RDMs
 % 
 showRDMs(Neural, 1);
 
-%
-% Compute the Model RDMs
+
+%% ------------------ Compute the Model RDMs ----------------------
 %
 
 simulated = simulate_subjects(data, metadata, params, which_structures);
 
 clear Model;
 model_idx = 0;
+
+%
+% at trial onset
+%
 
 % Posterior: normalized correlation of posterior
 %
@@ -251,7 +252,6 @@ Model(model_idx).RDM = avgPosteriorMapOnlyRDM;
 Model(model_idx).name = 'posteriorMAPonly';
 Model(model_idx).color = [0 1 0];
 
-
 % Time = seconds since start of run: -abs(T1 - T2)
 %
 trial_onset = cellfun(@str2double, data.actualChoiceOnset);
@@ -262,6 +262,71 @@ Model(model_idx).RDM = avgTimeRDM;
 Model(model_idx).name = 'time';
 Model(model_idx).color = [0 1 0];
 
+% food image: 1 if same, 0 o/w
+%
+food = data.runId * 10 + data.cueId + 1;
+[foodRDMs, avgFoodRDM] = compute_rdms(food, @(x1, x2) x1 ~= x2, data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = foodRDMs;
+Model(model_idx).RDM = avgFoodRDM;
+Model(model_idx).name = 'food';
+Model(model_idx).color = [0 1 0];
+
+% restaurant name: 1 if same, 0 o/w
+%
+restaurant = data.runId * 10 + data.contextId + 1;
+[restaurantRDMs, avgRestaurantRDM] = compute_rdms(restaurant, @(x1, x2) x1 ~= x2, data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = restaurantRDMs;
+Model(model_idx).RDM = avgRestaurantRDM;
+Model(model_idx).name = 'restaurant';
+Model(model_idx).color = [0 1 0];
+
+% stimulus = food + restaurant: 1 if same, 0 o/w
+%
+stimulus = data.runId * 100 + (data.cueId + 1) * 10 + data.contextId + 1;
+[stimulusRDMs, avgStimulusRDM] = compute_rdms(stimulus, @(x1, x2) x1 ~= x2, data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = stimulusRDMs;
+Model(model_idx).RDM = avgStimulusRDM;
+Model(model_idx).name = 'stimulus';
+Model(model_idx).color = [0 1 0];
+
+% value
+%
+[valRDMs, avgValRDM] = compute_rdms(simulated.values, 'euclidean', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = valRDMs;
+Model(model_idx).RDM = avgValRDM;
+Model(model_idx).name = 'value';
+Model(model_idx).color = [0 1 0];
+
+% values -- normalized correlation (cosine) is not a good measure here
+%
+[valsRDMs, avgValsRDM] = compute_rdms(simulated.valuess(:, which_structures), 'euclidean', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = valsRDMs;
+Model(model_idx).RDM = avgValsRDM;
+Model(model_idx).name = 'values';
+Model(model_idx).color = [0 1 0];
+
+% weights -- normalized correlation (cosine) is not a good measure here
+%
+ww = [simulated.ww1 simulated.ww2 simulated.ww3];
+[weightsRDMs, avgWeightsRDM] = compute_rdms(ww, 'euclidean', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = weightsRDMs;
+Model(model_idx).RDM = avgWeightsRDM;
+Model(model_idx).name = 'weights';
+Model(model_idx).color = [0 1 0];
+
+
+
+%
+% at feedback onset
+%
+
+
 % D_KL: -abs(D1 - D2) 
 %
 [surpriseRDMs, avgSurpriseRDM] = compute_rdms(simulated.surprise, 'euclidean', data, metadata, which_rows);
@@ -271,7 +336,7 @@ Model(model_idx).RDM = avgSurpriseRDM;
 Model(model_idx).name = 'KL';
 Model(model_idx).color = [0 1 0];
 
-% log of D_KL: -abs(D1 - D2)
+% log(D_KL)
 %
 logSurprise = log(simulated.surprise + 0.001); % so we don't take log(0)
 [logSurpriseRDMs, avgLogSurpriseRDM] = compute_rdms(logSurprise, 'euclidean', data, metadata, which_rows);
@@ -279,7 +344,144 @@ model_idx = model_idx + 1;
 Model(model_idx).RDMs = logSurpriseRDMs;
 Model(model_idx).RDM = avgLogSurpriseRDM;
 Model(model_idx).name = 'logKL';
+
+% PE
+%
+PE = data.outcome - simulated.values;
+[peRDMs, avgPeRDM] = compute_rdms(PE, 'euclidean', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = peRDMs;
+Model(model_idx).RDM = avgPeRDM;
+Model(model_idx).name = 'PE';
 Model(model_idx).color = [0 1 0];
+
+% PEs -- normalized correlation (cosine) is not a good measure here
+%
+PEs = data.outcome - simulated.valuess;
+[pesRDMs, avgPesRDM] = compute_rdms(PEs, 'euclidean', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = pesRDMs;
+Model(model_idx).RDM = avgPesRDM;
+Model(model_idx).name = 'PEs';
+Model(model_idx).color = [0 1 0];
+
+% PE^2
+%
+PE2 = (data.outcome - simulated.values) .^ 2;
+[pe2RDMs, avgPe2RDM] = compute_rdms(PE2, 'euclidean', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = pe2RDMs;
+Model(model_idx).RDM = avgPe2RDM;
+Model(model_idx).name = 'PEsquared';
+Model(model_idx).color = [0 1 0];
+
+% log(PE^2)
+%
+logPE2 = log((data.outcome - simulated.values) .^ 2 + 0.001); % so we don't take log(0)
+[logPe2RDMs, avgLogPe2RDM] = compute_rdms(logPE2, 'euclidean', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = logPe2RDMs;
+Model(model_idx).RDM = avgLogPe2RDM;
+Model(model_idx).name = 'logPEsquared';
+Model(model_idx).color = [0 1 0];
+
+% PEs^2 -- normalized correlation (cosine) is not a good measure here
+%
+PEs2 = (data.outcome - simulated.valuess) .^ 2;
+[pes2RDMs, avgPes2RDM] = compute_rdms(PEs2, 'euclidean', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = pes2RDMs;
+Model(model_idx).RDM = avgPes2RDM;
+Model(model_idx).name = 'PEsSquared';
+Model(model_idx).color = [0 1 0];
+
+% log(PEs^2)
+%
+logPEs2 = log((data.outcome - simulated.valuess) .^ 2 + 0.001); % so we don't take log(0)
+[logPes2RDMs, avgLogPes2RDM] = compute_rdms(logPEs2, 'cosine', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = logPes2RDMs;
+Model(model_idx).RDM = avgLogPes2RDM;
+Model(model_idx).name = 'logPEsSquared';
+Model(model_idx).color = [0 1 0];
+
+% 1/lambdas = reliability = precision
+%
+reliability = 1 ./ simulated.lambdas(:, which_structures);
+[reliabilityRDMs, avgReliabilityRDM] = compute_rdms(reliability, 'cosine', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = reliabilityRDMs;
+Model(model_idx).RDM = avgReliabilityRDM;
+Model(model_idx).name = 'reliability';
+Model(model_idx).color = [0 1 0];
+
+% likelihoods
+%
+[likRDMs, avgLikRDM] = compute_rdms(simulated.likelihoods(:, which_structures), 'cosine', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = likRDMs;
+Model(model_idx).RDM = avgLikRDM;
+Model(model_idx).name = 'likelihood';
+Model(model_idx).color = [0 1 0];
+
+% Outcome
+%
+[outcomeRDMs, avgOutcomeRDM] = compute_rdms(data.outcome, @(x1, x2) x1 ~= x2, data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = outcomeRDMs;
+Model(model_idx).RDM = avgOutcomeRDM;
+Model(model_idx).name = 'outcome';
+Model(model_idx).color = [0 1 0];
+
+% Correct / wrong
+%
+[corrRDMs, avgCorrRDM] = compute_rdms(data.response.corr, @(x1, x2) x1 ~= x2, data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = corrRDMs;
+Model(model_idx).RDM = avgCorrRDM;
+Model(model_idx).name = 'correct';
+Model(model_idx).color = [0 1 0];
+
+% New value
+%
+[newValRDMs, avgNewValRDM] = compute_rdms(simulated.new_values, 'euclidean', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = newValRDMs;
+Model(model_idx).RDM = avgNewValRDM;
+Model(model_idx).name = 'new_value';
+Model(model_idx).color = [0 1 0];
+
+% New values -- normalized correlation (cosine) is not a good measure here
+%
+[newValsRDMs, avgNewValsRDM] = compute_rdms(simulated.new_valuess(:, which_structures), 'euclidean', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = newValsRDMs;
+Model(model_idx).RDM = avgNewValsRDM;
+Model(model_idx).name = 'new_values';
+Model(model_idx).color = [0 1 0];
+
+% value PE = New value - old value
+%
+valPE = simulated.new_values - simulated.values(1:end-4);
+[valPERDMs, avgValPERDM] = compute_rdms(valPE, 'euclidean', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = valPERDMs;
+Model(model_idx).RDM = avgValPERDM;
+Model(model_idx).name = 'valPE';
+Model(model_idx).color = [0 1 0];
+
+% value PEs = New values - old values
+% normalized correlation (cosine) is not a good measure here
+%
+valPEs = simulated.new_valuess(:, which_structures) - simulated.valuess(1:end-4, which_structures);
+[valPEsRDMs, avgValPEsRDM] = compute_rdms(valPEs, 'euclidean', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = valPEsRDMs;
+Model(model_idx).RDM = avgValPEsRDM;
+Model(model_idx).name = 'valPEs';
+Model(model_idx).color = [0 1 0];
+
+
 
 % show the model RDMs
 % 
@@ -298,7 +500,7 @@ userOptions.rootPath = '~/Downloads/'; % TODO how to turn off saving the figure?
 corrMat = pairwiseCorrelateRDMs({Neural, Model}, userOptions, struct('figureNumber', 3,'fileName',[]));
 
 
-%% Within-subject comparison
+%% Within-subject RDM comparison
 % compare each neural and model RDMs for subject separately using
 % Spearman's rank coefficient, then find which ones are significant
 %
@@ -325,6 +527,9 @@ for neural_idx = 1:numel(Neural)
             rhos = [rhos, rho];
 
             % or for each run even?? how to you get WSE's otherwise?
+            % but it doesn't make sense for us b/c we have 1 condition per
+            % run => the RDMs will look similar across runs, even if the
+            % posteriors are actually different
             %{
             for run = 1:metadata.runsPerSubject
                 s = (run - 1) * metadata.trainingTrialsPerRun + 1;

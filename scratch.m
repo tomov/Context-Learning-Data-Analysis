@@ -1,4 +1,14 @@
 
+x = struct();
+
+blah(x);
+
+function blah(x)
+x(1).a = 3;
+x(1).b = 4;
+end
+
+%{
 
 method = 'cvglmnet';
 mask = fullfile('masks', 'hippocampus.nii');
@@ -29,6 +39,7 @@ assert(max(foldid) == numel(subjs) * (metadata.runsPerSubject - 1));
 
 [test_inputs, test_targets, test_outputs, test_which_rows] = classify_test(method, classifier, leftout_run, trials, subjs, mask, predict_what, z_score);
 
+%}
 
 %{
 EXPT = context_expt();
