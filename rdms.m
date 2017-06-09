@@ -505,7 +505,7 @@ corrMat = pairwiseCorrelateRDMs({Neural, Model}, userOptions, struct('figureNumb
 % compare each neural and model RDMs for subject separately using
 % Spearman's rank coefficient, then find which ones are significant
 %
-trig = logical(triu(ones(20,20), 1)); % upper right triangle, excluding diagonal
+trig = logical(triu(ones(metadata.runsPerSubject * metadata.trainingTrialsPerRun), 1)); % upper right triangle, excluding diagonal                       
 
 table_Rho = []; % average Spearman's rho for each ROI for each model
 table_H = []; % result of hypothesis test for each ROI for each model -- is the correlation significant?
@@ -521,6 +521,8 @@ for neural_idx = 1:numel(Neural)
         for subj = 1:metadata.N
             model_RDM = Model(model_idx).RDMs(:,:,subj);
             neural_RDM = Neural(neural_idx).RDMs(:,:,subj);
+            assert(isequal(size(model_RDM), size(neural_RDM)));
+            assert(isequal(size(trig), size(model_RDM)));
 
             x = model_RDM(trig);
             y = neural_RDM(trig);
@@ -563,8 +565,8 @@ P = array2table(table_P, 'RowNames', {Neural.name}, 'VariableNames', {Model.name
 
 figure;
 imagesc(table_Rho);
-%cols=colorScale([0 0.5 1; 0.5 0.5 0.5; 1 0 0],256);
-%colormap(cols); colorbar;
+cols=colorScale([0 0.5 1; 0.5 0.5 0.5; 1 0 0],256);
+colormap(cols); colorbar;
 colorbar;
 
 xticklabels({Model.name});
