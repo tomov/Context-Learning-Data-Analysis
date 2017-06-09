@@ -47,7 +47,7 @@ for event = {'trial_onset', 'feedback_onset'}
     neural_idx = neural_idx + 1;
     Neural(neural_idx).RDMs = hippocampusRDMs;
     Neural(neural_idx).RDM = avgHippocampusRDM;
-    Neural(neural_idx).name = ['hippocampus', event(1)];
+    Neural(neural_idx).name = ['hippocampus_', event(1)];
     Neural(neural_idx).color = [0 1 0];
 
     ofc_mask = load_mask('masks/ofc.nii');
@@ -344,6 +344,7 @@ model_idx = model_idx + 1;
 Model(model_idx).RDMs = logSurpriseRDMs;
 Model(model_idx).RDM = avgLogSurpriseRDM;
 Model(model_idx).name = 'logKL';
+Model(model_idx).color = [0 1 0];
 
 % PE
 %
@@ -556,3 +557,19 @@ end
 Rho = array2table(table_Rho, 'RowNames', {Neural.name}, 'VariableNames', {Model.name});
 H = array2table(table_H, 'RowNames', {Neural.name}, 'VariableNames', {Model.name});
 P = array2table(table_P, 'RowNames', {Neural.name}, 'VariableNames', {Model.name});
+
+%% Visualize within-subject analysis
+%
+
+figure;
+imagesc(table_Rho);
+%cols=colorScale([0 0.5 1; 0.5 0.5 0.5; 1 0 0],256);
+%colormap(cols); colorbar;
+colorbar;
+
+xticklabels({Model.name});
+set(gca, 'xtick', 1:numel({Model.name}));
+xtickangle(60);
+
+yticklabels({Neural.name})
+set(gca, 'ytick', 1:numel({Neural.name}));
