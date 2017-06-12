@@ -59,8 +59,8 @@ function multi = context_create_multi(glmodel, subj, run)
     % Run model on training trials
     %
     
-    if glmodel < 127 || glmodel == 137
-        % All models before 127 use the fixed effects parameter fit with the pilot
+    if glmodel < 127 || glmodel >= 137
+        % Most models use the fixed effects parameter fit with the pilot
         % data
         %
         prior_variance = 0.1249;
@@ -68,7 +68,7 @@ function multi = context_create_multi(glmodel, subj, run)
         params = [prior_variance inv_softmax_temp];
         which_structures = [1 1 1 0];
     else
-        % All models frmo 127 onwards use the random effects parameter fit on the fMRI data 
+        % Only a small subset of the models use the random effects parameter fit on the fMRI data 
         %
         load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts.mat'), 'results', 'results_options');
         params = results(1).x;

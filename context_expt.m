@@ -23,7 +23,7 @@ function EXPT = context_expt(local)
     %
     if nargin < 1
         [~, name] = system('hostname');
-        if ~isempty(strfind(name, 'MacBook')) || ~isempty(strfind(name, 'memsql'))
+        if contains(name, 'momchil')
             % err on the side of falsely thinking it's NCF. Because locally
             % you will catch that mistake immediatley. On NCF, you will
             % catch it after you're already sent 100 jobs and they all
@@ -38,7 +38,7 @@ function EXPT = context_expt(local)
     % set main directory
     %
     if local
-        exptdir = '/Users/memsql/Dropbox/research/context/'; % local group level
+        exptdir = '/Users/momchil/Dropbox/research/context/'; % local group level
     else
         exptdir = '/ncf/gershman/Lab/ConLearn/'; % on CBS central server
     end

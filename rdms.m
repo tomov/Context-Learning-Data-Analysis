@@ -607,13 +607,28 @@ corrMat = pairwiseCorrelateRDMs({Neural, Model}, userOptions, struct('figureNumb
 %
 tic;
 
-same_run_only = true; % #KNOB compute correlation for each run separately i.e. no comparisons of representations across runs
+% KNOBS / analysis params
+same_run_only = false; % #KNOB compute correlation for each run separately i.e. no comparisons of representations across runs
 all_vs_all = false; % #KNOB compare neural vs. neural and model vs. model representations too
 control_for_time = true; % #KNOB do partial correlation controlling for the time model
+control_for_run = true; % #KNOB 
+
+% Models to control for
+%
+control_models = [];
+if control_for_time
+    control_models = [control_models, 8];
+    assert(isequal(Model(8).name, 'time'));
+end
+if control_for_run
+    control_models = [control_models, 12];
+    assert(isequal(Model(12).name, 'run'));
+end
 
 % upper right triangle, excluding diagonal, for all runs
 %
 cross_run_trig = logical(triu(ones(metadata.runsPerSubject * metadata.trainingTrialsPerRun), 1));
+cross_run_trig_control = repmat(cross_run_trig, 1, 1, numel(control_models));
 
 % upper right triangle, excluding diagonal, for a single run
 %
@@ -623,6 +638,8 @@ for run = 1:metadata.runsPerSubject
     e = run * metadata.trainingTrialsPerRun;
     same_run_trig(s:e,s:e) = logical(triu(ones(metadata.trainingTrialsPerRun), 1));
 end
+same_run_trig_control = repmat(same_run_trig, 1, 1, numel(control_models));
+
 
 table_Rho = []; % average Spearman's rho for each ROI for each model
 table_H = []; % result of hypothesis test for each ROI for each model -- is the correlation significant?
@@ -650,10 +667,13 @@ for row_idx = 1:numel(rows)
         for subj = 1:metadata.N
             row_RDM = rows(row_idx).RDMs(:,:,subj);
             col_RDM = cols(col_idx).RDMs(:,:,subj);
-            control_RDM = Model(8).RDMs(:,:,subj);
-            assert(strcmp(Model(8).name, 'time'));
+            control_RDMs = nan(size(row_RDM, 1), size(row_RDM, 2), numel(control_models));
+            for i = 1:numel(control_models) 
+                control_RDMs(:,:,i) = Model(control_models(i)).RDMs(:,:,subj);
+            end
             assert(isequal(size(row_RDM), size(col_RDM)));
             assert(isequal(size(cross_run_trig), size(row_RDM)));
+            assert(isequal(size(same_run_trig), size(row_RDM)));
 
             if same_run_only
                 % Look at RDMs for each run separately => same-run
@@ -661,20 +681,18 @@ for row_idx = 1:numel(rows)
                 %
                 x = row_RDM(same_run_trig);
                 y = col_RDM(same_run_trig);
-                z = control_RDM(same_run_trig);
-                assert(isequal(size(row_RDM), size(same_run_trig)));
+                z = control_RDMs(same_run_trig_control);
             else
                 % Look at RDMs for all runs simultaneously => includes
                 % cross-run correlations
                 %
                 x = row_RDM(cross_run_trig);
                 y = col_RDM(cross_run_trig);
-                z = control_RDM(cross_run_trig);
-                assert(isequal(size(row_RDM), size(cross_run_trig)));
+                z = control_RDMs(cross_run_trig_control);
             end
-            assert(isequal(size(row_RDM), size(col_RDM)));
             
-            if control_for_time
+            if numel(control_models) > 0
+                z = reshape(z, size(x, 1), numel(control_models));
                 subj_rho = partialcorr(x, y, z, 'type', 'Spearman');
                 subjs_rhos = [subjs_rhos, subj_rho];
             else
@@ -705,12 +723,8 @@ toc;
 
 
 
-
-
-
-
-
-%% Visualize analysis
+%% Visualize full analysis
+% Show full second-order RSA matrix with correlation coefficients + another one with the p-values
 %
 
 tabs = {table_Rho, table_P};
@@ -726,8 +740,8 @@ for i = 1:numel(tabs)
             imagesc(log10(t));
         end    
         c = colorbar;
-        y = get(c, 'Ytick');
-        set(c, 'YTickLabel', arrayfun(@(x) ['10\^', num2str(x)], y, 'UniformOutput', false));
+        yt = get(c, 'Ytick');
+        set(c, 'YTickLabel', arrayfun(@(x) ['10\^', num2str(x)], yt, 'UniformOutput', false));
     else
         if all_vs_all
             imagesc(tabs{i}, [0 0.4]);
@@ -753,7 +767,89 @@ end
 
 
 
-%% More visualizations
+%% Show the significant positive correlations
+%
+which = table_Rho > 0 & table_P < 0.0001;
+assert(~all_vs_all); % only works for neural vs. model comparisons
+
+all_subject_zs = atanh(all_subject_rhos); % Fisher z transform the rhos
+
+figure;
+
+plot_idx = 0;
+for row_idx = 1:numel(rows)
+    col_idxs = find(which(row_idx,:))';
+    
+    if isempty(col_idxs), continue; end
+
+    % Get fisher z-transformed correlation coefficients
+    %
+    zs = reshape(all_subject_zs(row_idx, col_idxs, :), [numel(col_idxs) size(all_subject_zs, 3)]);
+
+    % One-sample t-test them against 0
+    %
+    [h, ps, ci, stats] = ttest(zs');
+    assert(numel(h) == numel(col_idxs));
+
+    % Compute SEs
+    %
+    %[sems, means] = wse(zs'); % WSE's
+    means = mean(zs, 2);
+    sems = (std(zs, [], 2) / sqrt(size(zs, 2)))'; % normal SEMs
+    assert(numel(sems) == numel(col_idxs));
+    assert(numel(means) == numel(col_idxs));
+
+    % Plot
+    %
+    plot_idx = plot_idx + 1;
+    subplot(3, 7, plot_idx);
+
+    % Plot the bar graphs with error bars
+    %
+    h = bar(means, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
+    xs = h(1).XData;
+    hold on;
+    errorbar(xs, means, sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+    hold off;
+    
+    % Put the p-values
+    %
+    for i = 1:numel(col_idxs)
+        significance = @(p) repmat('*', 1, floor(-log10(p)) - 1);
+        stars = significance(ps(i));
+        text(xs(i) - length(stars) * 0.3 / 2, means(i) + sems(i) * 1.2, stars, 'Rotation', 0);
+    end
+
+    % Put the ROI / model names and figure title
+    %
+    set(gca, 'xtick', xs);
+    models = {Model(col_idxs).name};
+    labels = {};
+    for j = 1:numel(col_idxs)
+        labels{j} = sprintf('p < 10^{%d}', round(log10(ps(j))));
+    end
+    xticklabels(models);
+    xtickangle(45);
+
+    t = Neural(row_idx).name;
+    if t(end) == 'f'
+        t = [t(1:end-2), '_{feedback\_onset}'];
+    else
+        t = [t(1:end-2), '_{trial\_onset}'];
+    end
+    ylabel(t);
+    if plot_idx == 4
+        title('Fisher z-transformed Spearman rank correlation');
+    end
+end
+
+
+
+
+
+%% Interesting visualizations
+% show select neural / model pairs that I think are interesting, like bar
+% plots
 %
 assert(~all_vs_all); % only works for neural vs. model comparisons
 
@@ -764,6 +860,7 @@ neural_idxs = neural_idxs(:)';
 model_idxs = [1:7, 18, 20, 26, 29, 30, 31, 32, 15, 35, 8];
 
 relative_to_time = false; % #KNOB whether to do the analysis/plots relative to time
+assert(~relative_to_time || ~control_for_time);
 
 all_subject_zs = atanh(all_subject_rhos); % Fisher z transform the rhos
 
