@@ -572,6 +572,84 @@ Model(model_idx).name = 'valPEs';
 Model(model_idx).color = [0 1 0];
 
 
+% Prior: normalized correlation of prior
+%
+[priorRDMs, avgPriorRDM] = compute_rdms(simulated.Q(:, which_structures), 'cosine', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = priorRDMs;
+Model(model_idx).RDM = avgPriorRDM;
+Model(model_idx).name = 'prior';
+Model(model_idx).color = [0 1 0];
+
+% Prior-ranking: Spearman correlation of prior
+%
+Qrand = simulated.Q(:, which_structures);
+Qrand = Qrand + rand(size(Qrand)) * 0.000001; % to break the ties at trial 1
+[priorRankingRDMs, avgPriorRankingRDM] = compute_rdms(Qrand, 'spearman', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = priorRankingRDMs;
+Model(model_idx).RDM = avgPriorRankingRDM;
+Model(model_idx).name = 'priorRanking';
+Model(model_idx).color = [0 1 0];
+
+% Log prior: normalized correlation of log(prior)
+%
+logPrior = log(simulated.Q + 0.001); % so we don't take log(0);
+[logPriorRDMs, avgLogPriorRDM] = compute_rdms(logPrior(:, which_structures), 'cosine', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = logPriorRDMs;
+Model(model_idx).RDM = avgLogPriorRDM;
+Model(model_idx).name = 'logPrior';
+Model(model_idx).color = [0 1 0];
+
+% Entropy: -abs(H1 - H2) where H = entropy of prior
+%
+qEntropy = - sum(simulated.Q(:, which_structures) .* log(simulated.Q(:, which_structures)), 2);
+qEntropy(isnan(qEntropy)) = 0; % if a prior is 0, the qEntropy is 0
+[qEntropyRDMs, avgQEntropyRDM] = compute_rdms(qEntropy, 'euclidean', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = qEntropyRDMs;
+Model(model_idx).RDM = avgQEntropyRDM;
+Model(model_idx).name = 'qEntropy';
+Model(model_idx).color = [0 1 0];
+
+% MAQ = Maximum a priori: 1 if same structure, 0 o/w
+%
+[~, maq] = max(simulated.Q(:, which_structures), [], 2);
+[maqRDMs, avgMaqRDM] = compute_rdms(maq, @(x1, x2) x1 ~= x2, data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = maqRDMs;
+Model(model_idx).RDM = avgMaqRDM;
+Model(model_idx).name = 'MAQ';
+Model(model_idx).color = [0 1 0];
+
+% p(MAQ) = probability of MAQ structure: -abs(P1 - P2)
+%
+pMaq = max(simulated.Q(:, which_structures), [], 2);
+[pMaqRDMs, avgPMaqRDM] = compute_rdms(pMaq, 'euclidean', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = pMaqRDMs;
+Model(model_idx).RDM = avgPMaqRDM;
+Model(model_idx).name = 'pMAQ';
+Model(model_idx).color = [0 1 0];
+
+% Prior MAQ only = prior zerod for all structures except the MAQ:
+% normalized correlation
+%
+Q = simulated.Q(:, which_structures);
+[~, maq] = max(Q, [], 2);
+idx = sub2ind(size(Q), [1:size(Q,1)]', maq);
+Z = zeros(size(Q));
+Z(idx) = Q(idx);
+Q = Z;
+[priorMaqOnlyRDMs, avgPriorMaqOnlyRDM] = compute_rdms(Q, 'cosine', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = priorMaqOnlyRDMs;
+Model(model_idx).RDM = avgPriorMaqOnlyRDM;
+Model(model_idx).name = 'priorMAQonly';
+Model(model_idx).color = [0 1 0];
+
+
 % show the model RDMs
 % 
 showRDMs(Model, 2);
@@ -767,9 +845,10 @@ end
 
 
 
+
 %% Show the significant positive correlations
 %
-which = table_Rho > 0 & table_P < 0.0001;
+which = table_Rho > 0 & table_P < 0.01;
 assert(~all_vs_all); % only works for neural vs. model comparisons
 
 all_subject_zs = atanh(all_subject_rhos); % Fisher z transform the rhos
@@ -817,7 +896,7 @@ for row_idx = 1:numel(rows)
     for i = 1:numel(col_idxs)
         significance = @(p) repmat('*', 1, floor(-log10(p)) - 1);
         stars = significance(ps(i));
-        text(xs(i) - length(stars) * 0.3 / 2, means(i) + sems(i) * 1.2, stars, 'Rotation', 0);
+        text(xs(i) - length(stars) * 0.3 / 2, means(i) + sems(i) * 1.2, stars, 'Rotation', 45);
     end
 
     % Put the ROI / model names and figure title
@@ -829,7 +908,7 @@ for row_idx = 1:numel(rows)
         labels{j} = sprintf('p < 10^{%d}', round(log10(ps(j))));
     end
     xticklabels(models);
-    xtickangle(45);
+    xtickangle(55);
 
     t = Neural(row_idx).name;
     if t(end) == 'f'
