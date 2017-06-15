@@ -338,16 +338,18 @@ Model(model_idx).RDM = avgLog2ValRDM;
 Model(model_idx).name = 'logValueSquared';
 Model(model_idx).color = [0 1 0];
 
-% values -- normalized correlation (cosine) is not a good measure here
+% values
 %
-[valsRDMs, avgValsRDM] = compute_rdms(simulated.valuess(:, which_structures), 'euclidean', data, metadata, which_rows);
+values = simulated.valuess(:, which_structures);
+values = values + rand(size(values)) * 0.001; % so cosine metric works
+[valsRDMs, avgValsRDM] = compute_rdms(values, 'cosine', data, metadata, which_rows);
 model_idx = model_idx + 1;
 Model(model_idx).RDMs = valsRDMs;
 Model(model_idx).RDM = avgValsRDM;
 Model(model_idx).name = 'values';
 Model(model_idx).color = [0 1 0];
 
-% log values^2 -- normalized correlation (cosine) is not a good measure here
+% log values^2
 %
 logVals2 = log((simulated.valuess + 0.001) .^ 2); % so we don't take log(0) or negative
 [logVals2RDMs, avgLogVals2RDM] = compute_rdms(logVals2, 'cosine', data, metadata, which_rows);
@@ -357,14 +359,15 @@ Model(model_idx).RDM = avgLogVals2RDM;
 Model(model_idx).name = 'logValuesSquared';
 Model(model_idx).color = [0 1 0];
 
-% weights -- normalized correlation (cosine) is not a good measure here
+% weights before the update
 %
-ww = [simulated.ww1 simulated.ww2 simulated.ww3];
-[weightsRDMs, avgWeightsRDM] = compute_rdms(ww, 'euclidean', data, metadata, which_rows);
+ww_before = [simulated.ww1_before simulated.ww2_before simulated.ww3_before];
+ww_before = ww_before + rand(size(ww_before)) * 0.001; % so cosine metric works
+[weightsBeforeRDMs, avgWeightsBeforeRDM] = compute_rdms(ww_before, 'cosine', data, metadata, which_rows);
 model_idx = model_idx + 1;
-Model(model_idx).RDMs = weightsRDMs;
-Model(model_idx).RDM = avgWeightsRDM;
-Model(model_idx).name = 'weights';
+Model(model_idx).RDMs = weightsBeforeRDMs;
+Model(model_idx).RDM = avgWeightsBeforeRDM;
+Model(model_idx).name = 'weightsBefore';
 Model(model_idx).color = [0 1 0];
 
 
@@ -403,10 +406,11 @@ Model(model_idx).RDM = avgPeRDM;
 Model(model_idx).name = 'PE';
 Model(model_idx).color = [0 1 0];
 
-% PEs -- normalized correlation (cosine) is not a good measure here
+% PEs
 %
 PEs = data.outcome - simulated.valuess;
-[pesRDMs, avgPesRDM] = compute_rdms(PEs, 'euclidean', data, metadata, which_rows);
+PEs = PEs + rand(size(PEs)) * 0.001; % so cosine metric works
+[pesRDMs, avgPesRDM] = compute_rdms(PEs, 'cosine', data, metadata, which_rows);
 model_idx = model_idx + 1;
 Model(model_idx).RDMs = pesRDMs;
 Model(model_idx).RDM = avgPesRDM;
@@ -433,10 +437,11 @@ Model(model_idx).RDM = avgLogPe2RDM;
 Model(model_idx).name = 'logPEsquared';
 Model(model_idx).color = [0 1 0];
 
-% PEs^2 -- normalized correlation (cosine) is not a good measure here
+% PEs^2
 %
 PEs2 = (data.outcome - simulated.valuess) .^ 2;
-[pes2RDMs, avgPes2RDM] = compute_rdms(PEs2, 'euclidean', data, metadata, which_rows);
+PEs2 = PEs2 + rand(size(PEs2)); % so cosine metric works
+[pes2RDMs, avgPes2RDM] = compute_rdms(PEs2, 'cosine', data, metadata, which_rows);
 model_idx = model_idx + 1;
 Model(model_idx).RDMs = pes2RDMs;
 Model(model_idx).RDM = avgPes2RDM;
@@ -649,6 +654,17 @@ Model(model_idx).RDM = avgPriorMaqOnlyRDM;
 Model(model_idx).name = 'priorMAQonly';
 Model(model_idx).color = [0 1 0];
 
+% weights after the update
+%
+ww_after = [simulated.ww1_after simulated.ww2_after simulated.ww3_after];
+ww_after = ww_after + rand(size(ww_after)) * 0.001; % so cosine metric works
+[weightsAfterRDMs, avgWeightsAfterRDM] = compute_rdms(ww_after, 'cosine', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = weightsAfterRDMs;
+Model(model_idx).RDM = avgWeightsAfterRDM;
+Model(model_idx).name = 'weightsAfter';
+Model(model_idx).color = [0 1 0];
+
 
 % show the model RDMs
 % 
@@ -848,7 +864,13 @@ end
 
 %% Show the significant positive correlations
 %
-which = table_Rho > 0 & table_P < 0.01;
+bonferroni = false; % #KNOB -- whether to use Bonferroni correction for the p-values
+
+if bonferroni
+    which = table_Rho > 0 & table_P < 0.05 / numel(table_P); % Bonferroni correction
+else
+    which = table_Rho > 0 & table_P < 0.01;
+end
 assert(~all_vs_all); % only works for neural vs. model comparisons
 
 all_subject_zs = atanh(all_subject_rhos); % Fisher z transform the rhos
@@ -881,7 +903,11 @@ for row_idx = 1:numel(rows)
     % Plot
     %
     plot_idx = plot_idx + 1;
-    subplot(3, 7, plot_idx);
+    if bonferroni
+        subplot(2, 5, plot_idx);
+    else
+        subplot(3, 7, plot_idx);
+    end
 
     % Plot the bar graphs with error bars
     %
@@ -895,7 +921,11 @@ for row_idx = 1:numel(rows)
     %
     for i = 1:numel(col_idxs)
         significance = @(p) repmat('*', 1, floor(-log10(p)) - 1);
-        stars = significance(ps(i));
+        if bonferroni
+            stars = significance(ps(i) * numel(table_P)); % Bonferroni correction
+        else
+            stars = significance(ps(i));
+        end
         text(xs(i) - length(stars) * 0.3 / 2, means(i) + sems(i) * 1.2, stars, 'Rotation', 45);
     end
 

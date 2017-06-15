@@ -144,6 +144,9 @@ for mask = masks
     Hell_Q_unif = Hellinger_distance(Q, unif);
     [~, Hell_p] = ttest2(Hell_P_Q, Hell_Q_unif);
     
+    %TODO try triangular discrimination 
+    % http://www.sciencedirect.com/science/article/pii/S1053811910003915
+    
     row = [accuracy, mean(MCVEs)...
            mean(KL_P_Q), mean(KL_unif_Q), KL_p, ...
            mean(Bhat_P_Q), mean(Bhat_Q_unif), Bhat_p, ...

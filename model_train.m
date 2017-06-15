@@ -1,4 +1,4 @@
-function [choices, P_n, ww_n, P, ww, values, valuess, likelihoods, new_values, new_valuess, Sigma, lambdas] = model_train(x, k, r, params, which_structures, DO_PRINT)
+function [choices, P_n, ww_n, P, ww_after, values, valuess, likelihoods, new_values, new_valuess, Sigma, lambdas, ww_before] = model_train(x, k, r, params, which_structures, DO_PRINT)
 
 % Kalman filter to learn the context-cue-reward associations & posteriors
 % for each causal structure
@@ -72,10 +72,14 @@ P_n = P_n / sum(P_n);
 % Store history for plotting and analysis
 %
 P = []; % history of posterior P(M | h_1:n)
-ww{1} = []; % history of ww_1:n for M1
-ww{2} = []; % history of ww_1:n for M2
-ww{3} = []; % history of ww_1:n for M3
-ww{4} = []; % history of ww_1:n for M4
+ww_after{1} = []; % history of ww_1:n for M1
+ww_after{2} = []; % history of ww_1:n for M2
+ww_after{3} = []; % history of ww_1:n for M3
+ww_after{4} = []; % history of ww_1:n for M4
+ww_before{1} = []; % history of ww_1:n for M1 before the update
+ww_before{2} = []; % history of ww_1:n for M2 before the update
+ww_before{3} = []; % history of ww_1:n for M3 before the update
+ww_before{4} = []; % history of ww_1:n for M4 before the update
 choices = []; % history of choices
 values = []; % history of predicted outcomes, weighted sum across all models (causal structures)
 valuess = []; % history of predicted outcomes, one for each model (causal structure)
@@ -142,6 +146,11 @@ for n = 1:N % for each trial
     Sigma_n{3} = SSigma_n{3} - g_n{3} * xx_n' * SSigma_n{3};
     Sigma_n{4} = SSigma_n{4} - g_n{4} * c_n' * SSigma_n{4};
 
+    ww_before{1} = [ww_before{1}; ww_n{1}(1:2)'];
+    ww_before{2} = [ww_before{2}; reshape(ww_n{2}(1:3,1:2), [1 6])];
+    ww_before{3} = [ww_before{3}; ww_n{3}([1:2 4:5])'];
+    ww_before{4} = [ww_before{4}; ww_n{4}(1:2)'];
+
     ww_n{1} = ww_n{1} + g_n{1} * (r_n - ww_n{1}' * x_n);
     ww_n{2}(:,k_n) = ww_n{2}(:,k_n) + g_n{2} * (r_n - ww_n{2}(:,k_n)' * xb_n);
     ww_n{3} = ww_n{3} + g_n{3} * (r_n - ww_n{3}' * xx_n);
@@ -200,10 +209,10 @@ for n = 1:N % for each trial
     end
 
     P = [P; P_n];
-    ww{1} = [ww{1}; ww_n{1}(1:2)'];
-    ww{2} = [ww{2}; reshape(ww_n{2}(1:3,1:2), [1 6])];
-    ww{3} = [ww{3}; ww_n{3}([1:2 4:5])'];
-    ww{4} = [ww{4}; ww_n{4}(1:2)'];
+    ww_after{1} = [ww_after{1}; ww_n{1}(1:2)'];
+    ww_after{2} = [ww_after{2}; reshape(ww_n{2}(1:3,1:2), [1 6])];
+    ww_after{3} = [ww_after{3}; ww_n{3}([1:2 4:5])'];
+    ww_after{4} = [ww_after{4}; ww_n{4}(1:2)'];
     
     Sigma{1} = [Sigma{1}; Sigma_n{1}(eye(3) == 1)'];
     Sigma{2} = [Sigma{2}; Sigma_n{2}(eye(4) == 1)'];

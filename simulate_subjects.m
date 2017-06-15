@@ -44,10 +44,14 @@ simulated.Q2 = []; % prior Q(M2 | ...) at each trial
 simulated.Q3 = []; % prior Q(M3 | ...) at each trial
 simulated.Q4 = []; % prior Q(M4 | ...) at each trial
 simulated.Q = []; % concatenated priors
-simulated.ww1 = []; % weights for M1 
-simulated.ww2 = []; % weights for M2
-simulated.ww3 = []; % weights for M3
-simulated.ww4 = []; % weights for M4
+simulated.ww1_after = []; % weights for M1 after update
+simulated.ww2_after = []; % weights for M2 after update
+simulated.ww3_after = []; % weights for M3 after update
+simulated.ww4_after = []; % weights for M4 after update
+simulated.ww1_before = []; % weights for M1 before update 
+simulated.ww2_before = []; % weights for M2 before update
+simulated.ww3_before = []; % weights for M3 before update
+simulated.ww4_before = []; % weights for M4 before update
 simulated.values = []; % values at each trial
 simulated.valuess = []; % values for each sturcture at each trial
 simulated.surprise = []; % D_KL at each trial
@@ -96,7 +100,7 @@ for who = metadata.subjects
             % For a given run of a given subject, run the model on the same
             % sequence of stimuli and see what it does.
             %
-            [choices, P_n, ww_n, P, ww, values, valuess, likelihoods, new_values, new_valuess, Sigma, lambdas] = ...
+            [choices, P_n, ww_n, P, ww_after, values, valuess, likelihoods, new_values, new_valuess, Sigma, lambdas, ww_before] = ...
                 model_train(train_x, train_k, train_r, subject_params, which_structures, false);
 
             model_choices = choices > rand;
@@ -117,10 +121,14 @@ for who = metadata.subjects
             simulated.Q3(which_train) = Q(:,3);
             simulated.Q4(which_train) = Q(:,4);
             simulated.Q(which_train, :) = Q;
-            simulated.ww1(which_train, :) = ww{1};
-            simulated.ww2(which_train, :) = ww{2};
-            simulated.ww3(which_train, :) = ww{3};
-            simulated.ww4(which_train, :) = ww{4};
+            simulated.ww1_after(which_train, :) = ww_after{1};
+            simulated.ww2_after(which_train, :) = ww_after{2};
+            simulated.ww3_after(which_train, :) = ww_after{3};
+            simulated.ww4_after(which_train, :) = ww_after{4};
+            simulated.ww1_before(which_train, :) = ww_before{1};
+            simulated.ww2_before(which_train, :) = ww_before{2};
+            simulated.ww3_before(which_train, :) = ww_before{3};
+            simulated.ww4_before(which_train, :) = ww_before{4};
             simulated.values(which_train, :) = values;
             simulated.valuess(which_train, :) = valuess;
             surprise = KL_divergence(P, Q);
