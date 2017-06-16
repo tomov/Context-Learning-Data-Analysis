@@ -726,7 +726,8 @@ control_for_time = true; % #KNOB do partial correlation controlling for the time
 control_for_run = true; % #KNOB 
 linear_mixed_effects = true; % KNOB -- do the linear mixed effects (LME) model
 
-lme_neural_idxs = [1 2 5 11 12 14 15 18 24 25]; % which ROIs to consider for LME
+%lme_neural_idxs = [1 2 5 11 12 14 15 18 24 25]; % which ROIs to consider for LME
+lme_neural_idxs = 1:numel(Neural);
 lme_model_idxs = [1 3 18 39 41 46]; % which models to consider to LME
 
 assert(~linear_mixed_effects || ~all_vs_all); % can't do both
@@ -960,34 +961,67 @@ figure;
 
 plot_idx = 0;
 for row_idx = 1:numel(rows)
-    col_idxs = find(which(row_idx,:))';
-    
-    if isempty(col_idxs), continue; end
-
-    % Get fisher z-transformed correlation coefficients
+    % Some stats -- which correlations are significant?
     %
-    zs = reshape(all_subject_zs(row_idx, col_idxs, :), [numel(col_idxs) size(all_subject_zs, 3)]);
+    if linear_mixed_effects
+        % LMEs
+        %
+        col_idxs = [];
+        means = [];
+        sems = [];
+        ps = [];
+        for col_idx = 1:numel(cols)
+            if isempty(lmes{row_idx, col_idx}), continue; end
+            lme = lmes{row_idx, col_idx};
+            p = lme.Coefficients(2, 'pValue').pValue;
+            coef = lme.Coefficients(2, 'Estimate').Estimate;
+            if coef <= 0 || p >= 0.05, continue; end
+            
+            means = [means, coef];
+            sems = [sems, lme.Coefficients(2, 'SE').SE];
+            ps = [ps, p];
+            col_idxs = [col_idxs, col_idx];
+        end
+        
+        if isempty(col_idxs), continue; end
+        
+    else
+        % Run the t-tests manually with the Fisher z-transformed
+        % correlation coefficients
+        %
+        col_idxs = find(which(row_idx,:))';
 
-    % One-sample t-test them against 0
-    %
-    [h, ps, ci, stats] = ttest(zs');
-    assert(numel(h) == numel(col_idxs));
+        if isempty(col_idxs), continue; end
 
-    % Compute SEs
-    %
-    %[sems, means] = wse(zs'); % WSE's
-    means = mean(zs, 2);
-    sems = (std(zs, [], 2) / sqrt(size(zs, 2)))'; % normal SEMs
-    assert(numel(sems) == numel(col_idxs));
-    assert(numel(means) == numel(col_idxs));
+        % Get fisher z-transformed correlation coefficients
+        %
+        zs = reshape(all_subject_zs(row_idx, col_idxs, :), [numel(col_idxs) size(all_subject_zs, 3)]);
+
+        % One-sample t-test them against 0
+        %
+        [h, ps, ci, stats] = ttest(zs');
+        assert(numel(h) == numel(col_idxs));
+
+        % Compute SEs
+        %
+        %[sems, means] = wse(zs'); % WSE's
+        means = mean(zs, 2);
+        sems = (std(zs, [], 2) / sqrt(size(zs, 2)))'; % normal SEMs
+        assert(numel(sems) == numel(col_idxs));
+        assert(numel(means) == numel(col_idxs));
+    end
 
     % Plot
     %
     plot_idx = plot_idx + 1;
-    if bonferroni
-        subplot(2, 5, plot_idx);
+    if linear_mixed_effects
+        subplot(4, 7, plot_idx);
     else
-        subplot(3, 7, plot_idx);
+        if bonferroni
+            subplot(2, 5, plot_idx);
+        else
+            subplot(3, 7, plot_idx);
+        end
     end
 
     % Plot the bar graphs with error bars
