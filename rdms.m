@@ -361,7 +361,7 @@ Model(model_idx).color = [0 1 0];
 
 % weights before the update
 %
-ww_before = [simulated.ww1_before simulated.ww2_before simulated.ww3_before];
+ww_before = [simulated.ww_before{1} simulated.ww_before{2} simulated.ww_before{3}];
 ww_before = ww_before + rand(size(ww_before)) * 0.001; % so cosine metric works
 [weightsBeforeRDMs, avgWeightsBeforeRDM] = compute_rdms(ww_before, 'cosine', data, metadata, which_rows);
 model_idx = model_idx + 1;
@@ -656,7 +656,7 @@ Model(model_idx).color = [0 1 0];
 
 % weights after the update
 %
-ww_after = [simulated.ww1_after simulated.ww2_after simulated.ww3_after];
+ww_after = [simulated.ww_after{1} simulated.ww_after{2} simulated.ww_after{3}];
 ww_after = ww_after + rand(size(ww_after)) * 0.001; % so cosine metric works
 [weightsAfterRDMs, avgWeightsAfterRDM] = compute_rdms(ww_after, 'cosine', data, metadata, which_rows);
 model_idx = model_idx + 1;
@@ -978,7 +978,7 @@ for row_idx = 1:numel(rows)
             if coef <= 0 || p >= 0.05, continue; end
             
             means = [means, coef];
-            sems = [sems, lme.Coefficients(2, 'SE').SE];
+            sems = [sems, (lme.Coefficients(2, 'Upper').Upper - lme.Coefficients(2, 'Lower').Lower) / 2];
             ps = [ps, p];
             col_idxs = [col_idxs, col_idx];
         end

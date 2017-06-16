@@ -3563,6 +3563,7 @@ function multi = context_create_multi(glmodel, subj, run)
 
         % KL for structures vs. KL for weights
         % where do we do parameter estimation vs. causal inference
+        % result: KL_structures same as before, KL_weights all over the place (but see 145)
         %
         case 144
             which_error = which_train & ~data.response.corr;
@@ -3592,6 +3593,7 @@ function multi = context_create_multi(glmodel, subj, run)
        
         % KL for sturcts vs. KL for weights
         % same as 144 but with error regressor
+        % result: KL_structures same as before, KL_weights - wrong in right S1/M1 only
         %
         case 145
             which_error = which_train & ~data.response.corr;
@@ -3629,6 +3631,7 @@ function multi = context_create_multi(glmodel, subj, run)
         
         % KL for structures vs. KL for weights
         % same as 144 but swapped structure and weights
+        % result: KL_structures same as before, KL_weights all over the place (but see 147)
         %
         case 146
             which_error = which_train & ~data.response.corr;
@@ -3658,6 +3661,7 @@ function multi = context_create_multi(glmodel, subj, run)
        
         % KL for sturcts vs. KL for weights
         % same as 145 but swapped structure and weights
+        % result: KL_structures same as before, KL_weights - wrong in right S1/M1 only
         %
         case 147
             which_error = which_train & ~data.response.corr;
@@ -3692,11 +3696,102 @@ function multi = context_create_multi(glmodel, subj, run)
                 multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
                 multi.durations{3} = zeros(size(data.contextRole(which_error)));
             end
+        
+        % KL for weights for strucutre corresponding to condition
+        %
+        case 148
+            which_error = which_train & ~data.response.corr;
+
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            M = -1;
+            if strcmp(condition, 'irrelevant')
+                M = 1;
+            elseif strcmp(condition, 'modulatory')
+                M = 2;
+            else
+                assert(strcmp(condition, 'additive'));
+                M = 3;
+            end
+            ww_prior = simulated.ww_before{M}(which_train, :);
+            Sigma_prior = simulated.Sigma_before{M}(:,:,which_train);
+            ww_posterior = simulated.ww_after{M}(which_train, :);
+            Sigma_posterior = simulated.Sigma_after{M}(:,:,which_train);
+            KL_weights = KL_divergence_gauss(ww_posterior, Sigma_posterior, ww_prior, Sigma_prior);
+            assert(size(KL_weights, 1) == sum(which_train));
+            
+            multi.pmod(1).name{1} = 'KL_weights';
+            multi.pmod(1).param{1} = KL_weights';
+            multi.pmod(1).poly{1} = 1; % first order        
+
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+
+            % correct vs. wrong (0/1) @ feedback / outcome onset (WRONG trials 1..20)
+            % 
+            if sum(which_error) > 0
+                multi.names{3} = 'wrong';
+                multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
+                multi.durations{3} = zeros(size(data.contextRole(which_error)));
+            end
+            
+
+        % KL for weights for all conditions, not orthogonalized
+        %
+        case 149
+            which_error = which_train & ~data.response.corr;
+
+            multi.names{1} = 'feedback';
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize the feedback event
+
+            for M = 1:3
+                ww_prior = simulated.ww_before{M}(which_train, :);
+                Sigma_prior = simulated.Sigma_before{M}(:,:,which_train);
+                ww_posterior = simulated.ww_after{M}(which_train, :);
+                Sigma_posterior = simulated.Sigma_after{M}(:,:,which_train);
+                KL_weights = KL_divergence_gauss(ww_posterior, Sigma_posterior, ww_prior, Sigma_prior);
+                assert(size(KL_weights, 1) == sum(which_train));
+                
+                multi.pmod(1).name{M} = ['KL_weights_M', num2str(M)];
+                multi.pmod(1).param{M} = KL_weights';
+                multi.pmod(1).poly{M} = 1; % first order        
+            end
+
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+
+            % correct vs. wrong (0/1) @ feedback / outcome onset (WRONG trials 1..20)
+            % 
+            if sum(which_error) > 0
+                multi.names{3} = 'wrong';
+                multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
+                multi.durations{3} = zeros(size(data.contextRole(which_error)));
+            end
+            
+            
+            
+            
+            
+            
             
             
         otherwise
             assert(false, 'invalid glmodel -- should be one of the above');
             
+    
     end % end of switch statement
 
    %save('context_create_multi.mat'); % <-- DON'T DO IT! breaks on NCF...

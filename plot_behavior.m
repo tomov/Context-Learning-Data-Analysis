@@ -234,10 +234,10 @@ for condition = metadata.contextRoles
     for n = 1:metadata.trainingTrialsPerRun
         which = data.which_rows & data.isTrain & strcmp(data.contextRole, condition) & data.trialId == n;
 
-        ww1_n = simulated.ww1_after(which, :);
-        ww2_n = simulated.ww2_after(which, :);
-        ww3_n = simulated.ww3_after(which, :);
-        ww4_n = simulated.ww4_after(which, :);
+        ww1_n = simulated.ww_after{1}(which, :);
+        ww2_n = simulated.ww_after{2}(which, :);
+        ww3_n = simulated.ww_after{3}(which, :);
+        ww4_n = simulated.ww_after{4}(which, :);
 
         ww_n = []; % only include the weights from models we care about
         if which_structures(1), ww_n = [ww_n mean(ww1_n)]; end
