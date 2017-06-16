@@ -58,10 +58,14 @@ simulated.surprise = []; % D_KL at each trial
 simulated.likelihoods = []; % likelihoods for each causal structure
 simulated.new_values = []; % updated values AFTER the trial
 simulated.new_valuess = []; % updated values for each sturcture AFTER each trial
-simulated.Sigma1 = []; % Sigma for M1 at each trial
-simulated.Sigma2 = []; % Sigma for M2 at each trial
-simulated.Sigma3 = []; % Sigma for M3 at each trial
-simulated.Sigma4 = []; % Sigma for M4 at each trial
+simulated.Sigma1_after = []; % Sigma for M1 at each trial after update
+simulated.Sigma2_after = []; % Sigma for M2 at each trial after update
+simulated.Sigma3_after = []; % Sigma for M3 at each trial after update
+simulated.Sigma4_after = []; % Sigma for M4 at each trial after update
+simulated.Sigma1_before = []; % Sigma for M1 at each trial before update
+simulated.Sigma2_before = []; % Sigma for M2 at each trial before update
+simulated.Sigma3_before = []; % Sigma for M3 at each trial before update
+simulated.Sigma4_before = []; % Sigma for M4 at each trial before update
 simulated.lambdas = []; % lambdas at each trial
 
 % we either have the same params for all subjects (fixed effects)
@@ -100,7 +104,7 @@ for who = metadata.subjects
             % For a given run of a given subject, run the model on the same
             % sequence of stimuli and see what it does.
             %
-            [choices, P_n, ww_n, P, ww_after, values, valuess, likelihoods, new_values, new_valuess, Sigma, lambdas, ww_before] = ...
+            [choices, P_n, ww_n, P, ww_after, values, valuess, likelihoods, new_values, new_valuess, Sigma_after, lambdas, ww_before, Sigma_before] = ...
                 model_train(train_x, train_k, train_r, subject_params, which_structures, false);
 
             model_choices = choices > rand;
@@ -136,12 +140,14 @@ for who = metadata.subjects
             simulated.likelihoods(which_train, :) = likelihoods;
             simulated.new_values(which_train, :) = new_values;
             simulated.new_valuess(which_train, :) = new_valuess;
-            simulated.Sigma1(which_train, :) = Sigma{1};
-            simulated.Sigma2(which_train, :) = Sigma{2};
-            simulated.Sigma3(which_train, :) = Sigma{3};
-            simulated.Sigma4(which_train, :) = Sigma{4};
+            simulated.Sigma1_after(:, :, which_train) = Sigma_after{1};
+            simulated.Sigma2_after(:, :, which_train) = Sigma_after{2};
+            simulated.Sigma3_after(:, :, which_train) = Sigma_after{3};
+            simulated.Sigma1_before(:, :, which_train) = Sigma_before{1};
+            simulated.Sigma2_before(:, :, which_train) = Sigma_before{2};
+            simulated.Sigma3_before(:, :, which_train) = Sigma_before{3};
             simulated.lambdas(which_train, :) = lambdas;
-
+            
             % See what the model predicts for the test trials of that run
             %
             [test_choices, test_values, test_valuess] = ...
@@ -174,4 +180,6 @@ simulated.Q1 = simulated.Q1';
 simulated.Q2 = simulated.Q2';
 simulated.Q3 = simulated.Q3';
 simulated.Q4 = simulated.Q4';
+
+
 

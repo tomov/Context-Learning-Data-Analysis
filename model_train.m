@@ -1,4 +1,4 @@
-function [choices, P_n, ww_n, P, ww_after, values, valuess, likelihoods, new_values, new_valuess, Sigma, lambdas, ww_before] = model_train(x, k, r, params, which_structures, DO_PRINT)
+function [choices, P_n, ww_n, P, ww_after, values, valuess, likelihoods, new_values, new_valuess, Sigma_after, lambdas, ww_before, Sigma_before] = model_train(x, k, r, params, which_structures, DO_PRINT)
 
 % Kalman filter to learn the context-cue-reward associations & posteriors
 % for each causal structure
@@ -86,10 +86,14 @@ valuess = []; % history of predicted outcomes, one for each model (causal struct
 likelihoods = []; % history of likelihoods, one for each model (causal structure)
 new_values = []; % same as values but after the update (for the same stimulus)
 new_valuess = []; % same as valuess but after the update (for the same stimulus)
-Sigma{1} = []; % history of Sigma_1:n for M1
-Sigma{2} = []; % history of Sigma_1:n for M2
-Sigma{3} = []; % history of Sigma_1:n for M3
-Sigma{4} = []; % history of Sigma_1:n for M4
+Sigma_after{1} = zeros(2, 2, N); % history of Sigma_1:n for M1 after
+Sigma_after{2} = zeros(4, 4, N); % history of Sigma_1:n for M2 after
+Sigma_after{3} = zeros(4, 4, N); % history of Sigma_1:n for M3 after
+Sigma_after{4} = []; % history of Sigma_1:n for M4 after
+Sigma_before{1} = zeros(2, 2, N); % history of Sigma_1:n for M1 before
+Sigma_before{2} = zeros(4, 4, N); % history of Sigma_1:n for M2 before
+Sigma_before{3} = zeros(4, 4, N); % history of Sigma_1:n for M3 before
+Sigma_before{4} = []; % history of Sigma_1:n for M4 before
 lambdas = []; % history of lambdas
 
 % train
@@ -141,13 +145,18 @@ for n = 1:N % for each trial
 
     if DO_PRINT, fprintf('    g_ns = %.4f %.4f %.4f | %.4f %4.f %.4f | %.4f %.4f %.4f %.4f %.4f %.4f\n', g_n{1}, g_n{2}, g_n{3}); end
 
+    Sigma_before{1}(:,:,n) = Sigma_n{1}(1:2,1:2);
+    Sigma_before{2}(1:2,1:2,n) = Sigma_n{2}(1:2,1:2,1);
+    Sigma_before{2}(3:4,3:4,n) = Sigma_n{2}(1:2,1:2,2);
+    Sigma_before{3}(:,:,n) = Sigma_n{3}([1 2 4 5], [1 2 4 5]);
+
     Sigma_n{1} = SSigma_n{1} - g_n{1} * x_n' * SSigma_n{1};
     Sigma_n{2}(:,:,k_n) = SSigma_n{2} - g_n{2} * xb_n' * SSigma_n{2};
     Sigma_n{3} = SSigma_n{3} - g_n{3} * xx_n' * SSigma_n{3};
     Sigma_n{4} = SSigma_n{4} - g_n{4} * c_n' * SSigma_n{4};
 
     ww_before{1} = [ww_before{1}; ww_n{1}(1:2)'];
-    ww_before{2} = [ww_before{2}; reshape(ww_n{2}(1:3,1:2), [1 6])];
+    ww_before{2} = [ww_before{2}; reshape(ww_n{2}(1:2,1:2), [1 4])];
     ww_before{3} = [ww_before{3}; ww_n{3}([1:2 4:5])'];
     ww_before{4} = [ww_before{4}; ww_n{4}(1:2)'];
 
@@ -210,19 +219,20 @@ for n = 1:N % for each trial
 
     P = [P; P_n];
     ww_after{1} = [ww_after{1}; ww_n{1}(1:2)'];
-    ww_after{2} = [ww_after{2}; reshape(ww_n{2}(1:3,1:2), [1 6])];
+    ww_after{2} = [ww_after{2}; ww_n{2}(1:2,1)' ww_n{2}(1:2,2)'];
     ww_after{3} = [ww_after{3}; ww_n{3}([1:2 4:5])'];
     ww_after{4} = [ww_after{4}; ww_n{4}(1:2)'];
     
-    Sigma{1} = [Sigma{1}; Sigma_n{1}(eye(3) == 1)'];
-    Sigma{2} = [Sigma{2}; Sigma_n{2}(eye(4) == 1)'];
-    Sigma{3} = [Sigma{3}; [Sigma_n{3}(eye(6) == 1)', reshape(Sigma_n{3}([1:2 4:5], [1:2 4:5]), 16, 1)']];
-    Sigma{4} = [Sigma{4}; Sigma_n{4}(eye(3) == 1)'];
-
+    Sigma_after{1}(:,:,n) = Sigma_n{1}(1:2,1:2);
+    Sigma_after{2}(1:2,1:2,n) = Sigma_n{2}(1:2,1:2,1);
+    Sigma_after{2}(3:4,3:4,n) = Sigma_n{2}(1:2,1:2,2);
+    Sigma_after{3}(:,:,n) = Sigma_n{3}([1 2 4 5], [1 2 4 5]);
+    
     new_values = [new_values; value(x_n, xx_n, xb_n, k_n, c_n, ww_n, P_n)];
     new_valuess = [new_valuess; x_n' * ww_n{1}, xb_n' * ww_n{2}(:, k_n), xx_n' * ww_n{3}, c_n' * ww_n{4}];
     
  %   fprintf('            new Ps = %f %f %f\n', P(1), P(2), P(3));
 end
+
 
 assert(mean(sum(valuess(2:end,:) .* P(1:end-1,:), 2) == values(2:end)) == 1);

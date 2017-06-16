@@ -3560,6 +3560,62 @@ function multi = context_create_multi(glmodel, subj, run)
                 multi.onsets{idx} = [str2double(feedback_onsets(t))];
                 multi.durations{idx} = [0];
             end
+
+        % KL for posterior vs. KL for weights
+        % where do we do parameter estimation vs. causal inference
+        %
+        case 144
+            which_error = which_train & ~data.response.corr;
+            
+            % get KL for posterior
+            %
+            KL_posterior = simulated.surprise(which_train);
+           
+            % get KL for weights
+            %
+            ww_before = [simulated.ww1_before simulated.ww2_before simulated.ww3_before];
+            Sigma_before = nan(size(ww_before, 2), size(ww_before, 2), size(ww_before, 1));
+            for i = 1:size(simulated.Sigma1_before, 3)
+                Sigma_before(:,:,i) = blkdiag(simulated.Sigma1_before(:,:,i), simulated.Sigma2_before(:,:,i), simulated.Sigma3_before(:,:,i));
+            end
+            ww_after = [simulated.ww1_after simulated.ww2_after simulated.ww3_after];
+            Sigma_after = nan(size(ww_after, 2), size(ww_after, 2), size(ww_after, 1));
+            for i = 1:size(simulated.Sigma1_after, 3)
+                Sigma_after(:,:,i) = blkdiag(simulated.Sigma1_after(:,:,i), simulated.Sigma2_after(:,:,i), simulated.Sigma3_after(:,:,i));
+            end
+            KL_weights = KL_divergence_gauss(ww_after, Sigma_after, ww_before, Sigma_before);
+            KL_weights = KL_weights(which_train);
+
+            save('test.mat');
+
+            % put the regressors
+            %
+            multi.names{1} = 'feedback';
+            multi.onsets{1} = cellfun(@str2num,data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+            
+            multi.pmod(1).name{1} = 'KL_weights';
+            multi.pmod(1).param{1} = KL_weights';
+            multi.pmod(1).poly{1} = 1; % first order        
+
+            multi.pmod(1).name{2} = 'KL_posterior';
+            multi.pmod(1).param{2} = KL_posterior';
+            multi.pmod(1).poly{2} = 1; % first order        
+
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+            
+            % correct vs. wrong (0/1) @ feedback / outcome onset (WRONG trials 1..20)
+            % 
+            %if sum(which_error) > 0
+            %    multi.names{3} = 'wrong';
+            %    multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
+            %    multi.durations{3} = zeros(size(data.contextRole(which_error)));
+            %end
+        
             
             
         otherwise
