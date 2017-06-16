@@ -3570,7 +3570,34 @@ function multi = context_create_multi(glmodel, subj, run)
             KL_structures = simulated.surprise(which_train);
             KL_weights = simulated.KL_weights(which_train);
 
-            save('test.mat');
+            % put the regressors
+            %
+            multi.names{1} = 'feedback';
+            multi.onsets{1} = cellfun(@str2num,data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+            
+            multi.pmod(1).name{1} = 'KL_weights';
+            multi.pmod(1).param{1} = KL_weights';
+            multi.pmod(1).poly{1} = 1; % first order        
+
+            multi.pmod(1).name{2} = 'KL_structures';
+            multi.pmod(1).param{2} = KL_structures';
+            multi.pmod(1).poly{2} = 1; % first order        
+
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+       
+        % KL for sturcts vs. KL for weights
+        % same as 144 but with error regressor
+        %
+        case 145
+            which_error = which_train & ~data.response.corr;
+            
+            KL_structures = simulated.surprise(which_train);
+            KL_weights = simulated.KL_weights(which_train);
 
             % put the regressors
             %
@@ -3594,12 +3621,77 @@ function multi = context_create_multi(glmodel, subj, run)
             
             % correct vs. wrong (0/1) @ feedback / outcome onset (WRONG trials 1..20)
             % 
-            %if sum(which_error) > 0
-            %    multi.names{3} = 'wrong';
-            %    multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
-            %    multi.durations{3} = zeros(size(data.contextRole(which_error)));
-            %end
+            if sum(which_error) > 0
+                multi.names{3} = 'wrong';
+                multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
+                multi.durations{3} = zeros(size(data.contextRole(which_error)));
+            end
         
+        % KL for structures vs. KL for weights
+        % same as 144 but swapped structure and weights
+        %
+        case 146
+            which_error = which_train & ~data.response.corr;
+            
+            KL_structures = simulated.surprise(which_train);
+            KL_weights = simulated.KL_weights(which_train);
+
+            % put the regressors
+            %
+            multi.names{1} = 'feedback';
+            multi.onsets{1} = cellfun(@str2num,data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+            
+            multi.pmod(1).name{1} = 'KL_structures';
+            multi.pmod(1).param{1} = KL_structures';
+            multi.pmod(1).poly{1} = 1; % first order        
+
+            multi.pmod(1).name{2} = 'KL_weights';
+            multi.pmod(1).param{2} = KL_weights';
+            multi.pmod(1).poly{2} = 1; % first order        
+
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+       
+        % KL for sturcts vs. KL for weights
+        % same as 145 but swapped structure and weights
+        %
+        case 147
+            which_error = which_train & ~data.response.corr;
+            
+            KL_structures = simulated.surprise(which_train);
+            KL_weights = simulated.KL_weights(which_train);
+
+            % put the regressors
+            %
+            multi.names{1} = 'feedback';
+            multi.onsets{1} = cellfun(@str2num,data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+            
+            multi.pmod(1).name{1} = 'KL_structures';
+            multi.pmod(1).param{1} = KL_structures';
+            multi.pmod(1).poly{1} = 1; % first order        
+
+            multi.pmod(1).name{2} = 'KL_weights';
+            multi.pmod(1).param{2} = KL_weights';
+            multi.pmod(1).poly{2} = 1; % first order        
+
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+            
+            % correct vs. wrong (0/1) @ feedback / outcome onset (WRONG trials 1..20)
+            % 
+            if sum(which_error) > 0
+                multi.names{3} = 'wrong';
+                multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
+                multi.durations{3} = zeros(size(data.contextRole(which_error)));
+            end
             
             
         otherwise

@@ -677,12 +677,17 @@ toc;
 
 
 
+
+
+
+
+
+
+
 %
 % Second-order similarity matrix from the RDMs
 % compare neural RDMs with the model RDMs
 %
-
-
 
 
 
@@ -693,6 +698,19 @@ userOptions.RDMcorrelationType= 'Spearman';
 userOptions.analysisName = 'blah';
 userOptions.rootPath = '~/Downloads/'; % TODO how to turn off saving the figure?
 corrMat = pairwiseCorrelateRDMs({Neural, Model}, userOptions, struct('figureNumber', 3,'fileName',[]));
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 %% Proper RDM comparison
@@ -706,6 +724,12 @@ same_run_only = false; % #KNOB compute correlation for each run separately i.e. 
 all_vs_all = false; % #KNOB compare neural vs. neural and model vs. model representations too
 control_for_time = true; % #KNOB do partial correlation controlling for the time model
 control_for_run = true; % #KNOB 
+linear_mixed_effects = true; % KNOB -- do the linear mixed effects (LME) model
+
+lme_neural_idxs = [1 2 5 11 12 14 15 18 24 25]; % which ROIs to consider for LME
+lme_model_idxs = [1 3 18 39 41 46]; % which models to consider to LME
+
+assert(~linear_mixed_effects || ~all_vs_all); % can't do both
 
 % Models to control for
 %
@@ -746,19 +770,30 @@ if all_vs_all
     rows = all;
     cols = all;
 else
-    rows = Neural; % order here is important for visualizations below
+    rows = Neural; % order here is important for visualizations below and for linear_mixed_effects
     cols = Model;
 end
+
+lmes = {};
 
 for row_idx = 1:numel(rows)
 
     models_subjs_rhos = []; % Spearman rhos: row = model, col = subject
     for col_idx = 1:numel(cols)
 
+        if linear_mixed_effects && ismember(row_idx, lme_neural_idxs) && ismember(col_idx, lme_model_idxs)
+            lme_neural = [];
+            lme_model = [];
+            lme_ids = [];
+            lme_controls = [];
+        end
+
         % Compute a Spearman's rank correlation for each subject separately
         %
         subjs_rhos = []; % Spearman rhos: col = subject, one rho per
         for subj = 1:metadata.N
+            % get the RDMs to correlate
+            %
             row_RDM = rows(row_idx).RDMs(:,:,subj);
             col_RDM = cols(col_idx).RDMs(:,:,subj);
             control_RDMs = nan(size(row_RDM, 1), size(row_RDM, 2), numel(control_models));
@@ -769,6 +804,8 @@ for row_idx = 1:numel(rows)
             assert(isequal(size(cross_run_trig), size(row_RDM)));
             assert(isequal(size(same_run_trig), size(row_RDM)));
 
+            % get the appropriate entries from the RDMs
+            %
             if same_run_only
                 % Look at RDMs for each run separately => same-run
                 % correlations only
@@ -784,7 +821,9 @@ for row_idx = 1:numel(rows)
                 y = col_RDM(cross_run_trig);
                 z = control_RDMs(cross_run_trig_control);
             end
-            
+           
+            % compute the correlations
+            %
             if numel(control_models) > 0
                 z = reshape(z, size(x, 1), numel(control_models));
                 subj_rho = partialcorr(x, y, z, 'type', 'Spearman');
@@ -794,8 +833,28 @@ for row_idx = 1:numel(rows)
                 subjs_rhos = [subjs_rhos, subj_rho];
             end
             all_subject_rhos(row_idx, col_idx, subj) = subj_rho;            
+
+            % if we're doing LMEs
+            %
+            if linear_mixed_effects && ismember(row_idx, lme_neural_idxs) && ismember(col_idx, lme_model_idxs)
+                lme_neural = [lme_neural; x];
+                lme_model = [lme_model; y];
+                lme_ids = [lme_ids; ones(size(x,1),1) * subj];
+                lme_controls = [lme_controls; z];
+            end
         end
-        models_subjs_rhos = [models_subjs_rhos; subjs_rhos];
+        models_subjs_rhos = [models_subjs_rhos; subjs_rhos]; % for group-level analysis
+
+        % if we're doing LMEs
+        %
+        if linear_mixed_effects && ismember(row_idx, lme_neural_idxs) && ismember(col_idx, lme_model_idxs)
+            assert(isequal(control_models, [8 12])); % time & run
+            tbl = array2table([lme_neural, lme_model, lme_ids, lme_controls], 'VariableNames', {'Neural', 'Model', 'Subject', 'Time', 'Run'});
+            formula = 'Neural ~ Model + Run + Time + (Model|Subject) + (Run-1|Subject) + (Time|Subject)';
+            fprintf('LME for %s vs. %s: %s\n', rows(row_idx).name, cols(col_idx).name, formula);
+            lme = fitlme(tbl, formula);
+            lmes{row_idx, col_idx} = lme;
+        end
     end
     
     % Group-level analysis
@@ -814,6 +873,19 @@ H = array2table(table_H, 'RowNames', {rows.name}, 'VariableNames', {cols.name});
 P = array2table(table_P, 'RowNames', {rows.name}, 'VariableNames', {cols.name});
 
 toc;
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -858,6 +930,15 @@ for i = 1:numel(tabs)
     
     title(titles{i});
 end
+
+
+
+
+
+
+
+
+
 
 
 
@@ -956,6 +1037,14 @@ end
 
 
 
+
+
+
+
+
+
+
+
 %% Interesting visualizations
 % show select neural / model pairs that I think are interesting, like bar
 % plots
@@ -1044,6 +1133,11 @@ for i = 1:numel(neural_idxs)
         xtickangle(45);
     end
 end
+
+
+
+
+
 
 
 

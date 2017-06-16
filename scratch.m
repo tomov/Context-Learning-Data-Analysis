@@ -1,12 +1,4 @@
 
-x = struct();
-
-blah(x);
-
-function blah(x)
-x(1).a = 3;
-x(1).b = 4;
-end
 
 %{
 
