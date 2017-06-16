@@ -54,7 +54,8 @@ simulated.ww3_before = []; % weights for M3 before update
 simulated.ww4_before = []; % weights for M4 before update
 simulated.values = []; % values at each trial
 simulated.valuess = []; % values for each sturcture at each trial
-simulated.surprise = []; % D_KL at each trial
+simulated.surprise = []; % D_KL at each trial for the posterior
+simulated.KL_weights = []; % D_KL at each trial for the weights
 simulated.likelihoods = []; % likelihoods for each causal structure
 simulated.new_values = []; % updated values AFTER the trial
 simulated.new_valuess = []; % updated values for each sturcture AFTER each trial
@@ -147,7 +148,7 @@ for who = metadata.subjects
             simulated.Sigma2_before(:, :, which_train) = Sigma_before{2};
             simulated.Sigma3_before(:, :, which_train) = Sigma_before{3};
             simulated.lambdas(which_train, :) = lambdas;
-            
+
             % See what the model predicts for the test trials of that run
             %
             [test_choices, test_values, test_valuess] = ...
@@ -166,6 +167,21 @@ for who = metadata.subjects
             %
             resp = data.response.keys(which_train);
             human_choices = strcmp(resp, 'left'); % sick == 1            
+
+            % compute the KL divergence for the weights
+            %
+            ww_prior = [ww_before{1} ww_before{2} ww_before{3}];
+            Sigma_prior = nan(size(ww_prior, 2), size(ww_prior, 2), size(ww_prior, 1));
+            for i = 1:size(Sigma_prior, 3)
+                Sigma_prior(:,:,i) = blkdiag(Sigma_before{1}(:,:,i), Sigma_before{2}(:,:,i), Sigma_before{3}(:,:,i));
+            end
+            ww_posterior = [ww_after{1} ww_after{2} ww_after{3}];
+            Sigma_posterior = nan(size(ww_posterior, 2), size(ww_posterior, 2), size(ww_posterior, 1));
+            for i = 1:size(Sigma_posterior, 3)
+                Sigma_posterior(:,:,i) = blkdiag(Sigma_after{1}(:,:,i), Sigma_after{2}(:,:,i), Sigma_after{3}(:,:,i));
+            end
+            simulated.KL_weights(which_train, :) = KL_divergence_gauss(ww_posterior, Sigma_posterior, ww_prior, Sigma_prior);
+
         end
     end
 end
@@ -180,6 +196,7 @@ simulated.Q1 = simulated.Q1';
 simulated.Q2 = simulated.Q2';
 simulated.Q3 = simulated.Q3';
 simulated.Q4 = simulated.Q4';
+
 
 
 

@@ -3561,30 +3561,14 @@ function multi = context_create_multi(glmodel, subj, run)
                 multi.durations{idx} = [0];
             end
 
-        % KL for posterior vs. KL for weights
+        % KL for structures vs. KL for weights
         % where do we do parameter estimation vs. causal inference
         %
         case 144
             which_error = which_train & ~data.response.corr;
             
-            % get KL for posterior
-            %
-            KL_posterior = simulated.surprise(which_train);
-           
-            % get KL for weights
-            %
-            ww_before = [simulated.ww1_before simulated.ww2_before simulated.ww3_before];
-            Sigma_before = nan(size(ww_before, 2), size(ww_before, 2), size(ww_before, 1));
-            for i = 1:size(simulated.Sigma1_before, 3)
-                Sigma_before(:,:,i) = blkdiag(simulated.Sigma1_before(:,:,i), simulated.Sigma2_before(:,:,i), simulated.Sigma3_before(:,:,i));
-            end
-            ww_after = [simulated.ww1_after simulated.ww2_after simulated.ww3_after];
-            Sigma_after = nan(size(ww_after, 2), size(ww_after, 2), size(ww_after, 1));
-            for i = 1:size(simulated.Sigma1_after, 3)
-                Sigma_after(:,:,i) = blkdiag(simulated.Sigma1_after(:,:,i), simulated.Sigma2_after(:,:,i), simulated.Sigma3_after(:,:,i));
-            end
-            KL_weights = KL_divergence_gauss(ww_after, Sigma_after, ww_before, Sigma_before);
-            KL_weights = KL_weights(which_train);
+            KL_structures = simulated.surprise(which_train);
+            KL_weights = simulated.KL_weights(which_train);
 
             save('test.mat');
 
@@ -3598,8 +3582,8 @@ function multi = context_create_multi(glmodel, subj, run)
             multi.pmod(1).param{1} = KL_weights';
             multi.pmod(1).poly{1} = 1; % first order        
 
-            multi.pmod(1).name{2} = 'KL_posterior';
-            multi.pmod(1).param{2} = KL_posterior';
+            multi.pmod(1).name{2} = 'KL_structures';
+            multi.pmod(1).param{2} = KL_structures';
             multi.pmod(1).poly{2} = 1; % first order        
 
             % const @ trial onset (trials 1..20)
