@@ -1,3 +1,6 @@
+% TODO refactor
+%
+
 % run after kl_divergence_analysis.m 
 %kl_divergence_analysis
 
@@ -245,7 +248,7 @@ xlabel('voxel');
 title('Betas from ccnl_view(EXPT, 123, ''surprise - wrong'')', 'Interpreter', 'none');
 
 
-%% within-subject analysis
+%% within-subject analysis (t-tests over Fisher transformed correlations)
 %
 % In the within-subject analysis, you would split the pairs into N lists and report the average 
 % correlation across subjects
@@ -357,6 +360,116 @@ xticklabels([strrep(rois, '_', '\_'), repmat({'random'}, 1, numel(rand_vox_x))])
 xtickangle(60);
 xlabel('voxel');
 %title('KL betas correlated with structure learning effect: within-subject analysis', 'Interpreter', 'none');
+
+
+
+
+
+
+
+
+%% within-subject analysis using a linear mixed effects model
+%
+lmes = {};
+means = [];
+sems = [];
+ps = [];
+
+for roi = 1:size(kl_betas, 3)
+    kl_betas_roi = kl_betas(:, :, roi);
+
+    lme_liks = [];
+    lme_betas = [];
+    lme_ids = [];
+
+    for subj_idx = 1:n_subjects
+        %x = structure_learnings(:, subj_idx); % !!!  <-- not good with timeouts
+        x = test_liks(:, subj_idx);        
+        y = kl_betas_roi(:, subj_idx);
+        
+        %x = zscore(x);
+        %y = zscore(y);
+        
+        lme_liks = [lme_liks; x];
+        lme_betas = [lme_betas; y];
+        lme_ids = [lme_ids; ones(size(x,1),1) * subj_idx];
+    end
+
+    tbl = array2table([lme_betas, lme_liks, lme_ids], 'VariableNames', {'Beta', 'Likelihood', 'Subject'});
+    formula = 'Beta ~ Likelihood + (Likelihood|Subject)';
+    lme = fitlme(tbl, formula);
+    lmes{roi} = lme;
+
+    p = lme.Coefficients(2, 'pValue').pValue;
+    coef = lme.Coefficients(2, 'Estimate').Estimate;
+    means = [means; coef];
+    sems = [sems; (lme.Coefficients(2, 'Upper').Upper - lme.Coefficients(2, 'Lower').Lower) / 2];
+    ps = [ps; p];
+end
+
+figure;
+
+% plot correlation coefficients
+%
+subplot(3, 1, 1);
+
+h = bar(means, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
+xs = h(1).XData;
+hold on;
+errorbar(xs, means, sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+hold off;
+
+set(gca, 'xtick', xs);
+ylabel('Fixed effect');
+xticklabels([strrep(rois, '_', '\_'), repmat({'random'}, 1, numel(rand_vox_x))]);
+xtickangle(60);
+xlabel('voxel');
+title('KL betas correlated with structure learning effect: LME analysis', 'Interpreter', 'none');
+
+% plot p-values
+%
+subplot(3, 1, 2);
+
+h = bar(ps, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
+xs = h(1).XData;
+hold on;
+plot([0 max(xs) + 1],[0.05 0.05],'k--');
+hold off;
+
+set(gca, 'xtick', xs);
+ylabel('p-value');
+xticklabels([strrep(rois, '_', '\_'), repmat({'random'}, 1, numel(rand_vox_x))]);
+xtickangle(60);
+xlabel('voxel');
+
+% plot random effects for AG
+%
+subplot(3, 1, 3);
+
+lme = lmes{1};
+assert(isequal(rois{1}, 'Angular_R'));
+
+[randMeans, ~, randStats] = randomEffects(lme);
+assert(numel(randMeans) == n_subjects * 2);
+randSems = (randStats(:, 'Upper').Upper - randStats(:, 'Lower').Lower) / 2;
+
+h = bar(reshape(randMeans, [2 20])', 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
+xs = h(1).XData;
+xs = sort([xs - 0.2, xs + 0.2])';
+hold on;
+errorbar(xs, randMeans, randSems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+hold off;
+
+set(gca, 'xtick', h(1).XData);
+ylabel('Random effect');
+xtickangle(60);
+xlabel('subject');
+
+[fixedMeans, ~, fixedStats] = fixedEffects(lme);
+
+
+
+
 
 
 %% between-subject
