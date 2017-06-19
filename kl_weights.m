@@ -2,10 +2,6 @@
 % TODO dedupe NOTE that we flipped subj_idx and run in the kl_betas_roi and test_liks
 %
 
-% GLM 148 = condition-specific KL_weights & wrong
-%
-KL_glm = 148;
-
 %% Load behavior
 %
 [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
@@ -20,27 +16,16 @@ params = [prior_variance inv_softmax_temp];
 which_structures = logical([1 1 1 0]);
 simulated = simulate_subjects(data, metadata, params, which_structures, which_rows, false);
 
-%% sanity check max voxel from 'KL_weights' contrast
-% to make sure our method of extracting these is correct
-%
-EXPT = context_expt();
-modeldir = EXPT.modeldir;
-V = spm_vol(fullfile(modeldir, ['model', num2str(KL_glm)], ['con6'], 'spmT_0001.nii')); % T-value map
-Y = spm_read_vols(V);
-cor = mni2cor([-48    -52    -16], V.mat);
-Y(cor(1), cor(2), cor(3)); % sanity check -- should be as seen in ccnl_view Show Results Table
-assert(abs(Y(cor(1), cor(2), cor(3)) - 9.032) < 1e-3);
-
-%% Pick the voxels to look at
-%
-
-% Some random voxels as controls
+%% Some random voxels as controls
 %
 rand_voxels = gen_rand_voxels(fullfile('masks', 'mask.nii'), 20);
 
+%% The KL_weight betas
+%
+
 % The peak voxel from each ROI from the contrast (from the results table)
 %
-rois = {'Temporal_Inf_L', ...
+KL_weights_rois = {'Temporal_Inf_L', ...
     'Parietal_Inf_L', ...
 	'Temporal_Inf_L', ...
 	'Supp_Motor_Area_R', ...
@@ -57,7 +42,7 @@ rois = {'Temporal_Inf_L', ...
 	'Pallidum_L', ...
 	'Frontal_Inf_Tri_L'};
 
-peak_voxels = [-48    -52    -16; ...
+KL_weights_peak_voxels = [-48    -52    -16; ...
 	-32    -56    46; ...
 	-42    -34    -28; ...
 	10    14    46; ...
@@ -74,14 +59,28 @@ peak_voxels = [-48    -52    -16; ...
 	-20    4    -4; ...
 	-44    40    0];
 
-%% Load the KL betas (takes a while)
-%
-kl_betas = load_run_betas(148, 'KL_weights', [peak_voxels; rand_voxels]);
+KL_weights_betas = load_run_betas(148, 'KL_weights', [KL_weights_peak_voxels; rand_voxels]);
 
-%% !!!!! use the posterior KL !!!!! TODO refactor
-%rois = {'Angular_R', 'Parietal_Inf_R', 'Frontal_Mid_2_L', 'Location not in atlas', 'Frontal_Mid_2_R', 'OFCmed_R', 'Frontal_Mid_2_R'};
-%peak_voxels = [34  -68 52; 40  -46 38; -42 54  2; -30 62  22; 36  54  0; 18  42  -16; 52  32  32];
-%kl_betas = load_run_betas(123, 'surprise', [peak_voxels; rand_voxels]);
+%% The KL_posterior betas
+%
+KL_posterior_rois = {'Angular_R', ...
+    'Parietal_Inf_R', ...
+    'Frontal_Mid_2_L', ...
+    'Location not in atlas', ...
+    'Frontal_Mid_2_R', ...
+    'OFCmed_R', ...
+    'Frontal_Mid_2_R'};
+
+KL_posterior_peak_voxels = [34  -68 52; ...
+    40  -46 38; ...
+    -42 54  2; ...
+    -30 62  22; ...
+    36  54  0; ...
+    18  42  -16; ...
+    52  32  32];
+
+KL_posterior_betas = load_run_betas(123, 'surprise', [KL_posterior_peak_voxels; rand_voxels]);
+
 
 %% Get the behavioral correlates
 %
@@ -110,12 +109,12 @@ for subj = goodSubjects % 1..25
         %
         run_test_trials = run_trials & ~data.isTrain & ~data.timeout;
         
-        X = data.chose_sick(run_test_trials); % actual subject choice on each trial
+        X_fixed = data.chose_sick(run_test_trials); % actual subject choice on each trial
         P = simulated.pred(run_test_trials); % probability of subject choice on each trial
-        assert(numel(X) <= metadata.testTrialsPerRun);
+        assert(numel(X_fixed) <= metadata.testTrialsPerRun);
         
-        liks = binopdf(X, 1, P);
-        assert(numel(liks) == numel(X));
+        liks = binopdf(X_fixed, 1, P);
+        assert(numel(liks) == numel(X_fixed));
         avg_loglik = mean(log(liks)); % average to account for timeouts
         
         test_liks(subj_idx, run) = avg_loglik; 
@@ -134,17 +133,36 @@ save('results/kl_weights.mat');
 
 load('results/kl_weights.mat');
 
-lmes = {};
-means = [];
-sems = [];
-ps = [];
+% pick which one to analyze TODO refactor
+%
+analyze_KL_weights_and_not_KL_posterior = false; % #KNOB
 
-ttest_ps = [];
+if analyze_KL_weights_and_not_KL_posterior
+    KL_betas = KL_weights_betas;
+    rois = KL_weights_rois;
+else
+    KL_betas = KL_posterior_betas;
+    rois = KL_posterior_rois;
+end
+
+% Do the correlations
+%
+
+lmes = {};
+lme_means = [];
+lme_sems = [];
+lme_ps = [];
+
+glm_means = [];
+glm_sems = [];
+glm_ps = [];
+
 ttest_means = [];
 ttest_sems = [];
+ttest_ps = [];
 
-for roi = 1:size(kl_betas, 3)
-    kl_betas_roi = kl_betas(:, :, roi);
+for roi = 1:size(KL_betas, 3)
+    kl_betas_roi = KL_betas(:, :, roi);
 
     lme_liks = [];
     lme_betas = [];
@@ -156,8 +174,8 @@ for roi = 1:size(kl_betas, 3)
         x = test_liks(subj_idx, :)';
         y = kl_betas_roi(subj_idx, :)';
         
-        %x = zscore(x);
-        %y = zscore(y);
+        x = zscore(x);
+        y = zscore(y);
 
         % LME model within-subject analysis
         %
@@ -176,15 +194,16 @@ for roi = 1:size(kl_betas, 3)
     % LME model
     %
     tbl = array2table([lme_betas, lme_liks, lme_ids], 'VariableNames', {'Beta', 'Likelihood', 'Subject'});
+    %formula = 'Beta ~ Likelihood + (Likelihood|Subject)';
     formula = 'Beta ~ Likelihood + (Likelihood|Subject)';
     lme = fitlme(tbl, formula);
     lmes{roi} = lme;
 
     p = lme.Coefficients(2, 'pValue').pValue;
     coef = lme.Coefficients(2, 'Estimate').Estimate;
-    means = [means; coef];
-    sems = [sems; (lme.Coefficients(2, 'Upper').Upper - lme.Coefficients(2, 'Lower').Lower) / 2];
-    ps = [ps; p];
+    lme_means = [lme_means; coef];
+    lme_sems = [lme_sems; (lme.Coefficients(2, 'Upper').Upper - lme.Coefficients(2, 'Lower').Lower) / 2];
+    lme_ps = [lme_ps; p];
     
     % t-test on fisher z-transformed correlation coefficients
     %
@@ -192,6 +211,25 @@ for roi = 1:size(kl_betas, 3)
     ttest_ps = [ttest_ps; p];
     ttest_means = [ttest_means; mean(fisher_rs)];
     ttest_sems = [ttest_sems; (ci(2) - ci(1)) / 2];
+    
+    % manually run LME with the GLM function
+    % WRONG -- betas for random effects come from normal distribution
+    %
+    %{
+    o = ones(size(lme_betas, 1), 1);
+    X_fixed = [o lme_liks];
+    X = X_fixed;
+    for subj_idx = 1:metadata.N
+        X_subj = X_fixed .* (lme_ids == subj_idx);
+        X = [X X_subj];
+    end
+    [b, dev, stats] = glmfit(X, lme_betas, 'normal', 'constant', 'off');
+    glm_means = [glm_means; b(2)];
+    glm_sems = [glm_sems; stats.se(2)];
+    glm_ps = [glm_ps; stats.p(2)];
+    %}
+    
+    break;
 end
 
 %
@@ -204,10 +242,10 @@ figure;
 %
 subplot(2, 1, 1);
 
-h = bar(means, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
+h = bar(lme_means, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
 xs = h(1).XData;
 hold on;
-errorbar(xs, means, sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+errorbar(xs, lme_means, lme_sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
 hold off;
 
 set(gca, 'xtick', xs);
@@ -221,7 +259,7 @@ title('KL_weight betas correlated with test log likelihood: LME analysis', 'Inte
 %
 subplot(2, 1, 2);
 
-h = bar(ps, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
+h = bar(lme_ps, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
 xs = h(1).XData;
 hold on;
 plot([0 max(xs) + 1],[0.05 0.05],'k--');
@@ -299,3 +337,6 @@ ylabel('p-value');
 xticklabels([strrep(rois, '_', '\_'), repmat({'random'}, 1, size(rand_voxels, 1))]);
 xtickangle(60);
 xlabel('voxel');
+
+
+
