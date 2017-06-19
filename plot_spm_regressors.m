@@ -1,14 +1,15 @@
-function plot_spm_regressors(EXPT, glmodel, subj, run)
+function plot_spm_regressors(glmodel, subj, run)
 
 % Plot the regressors for a given glmodel, subject & run.
 % Requires the SPM structure to have been generated i.e. the single-subject
 % GLM should have been run
 %
 
+EXPT = context_expt();
 include_motion = false;
 %mask = 'hippocampus.nii';
 
-multi = EXPT.create_multi(glmodel, subj, run);
+multi = context_create_multi(glmodel, subj, run, true);
 
 %lkasjflaksjflasjkfd
 % TODO broken -- don't save stuff in context_create_multi.mat; breaks

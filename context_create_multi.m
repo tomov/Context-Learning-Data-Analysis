@@ -1,4 +1,4 @@
-function multi = context_create_multi(glmodel, subj, run)
+function multi = context_create_multi(glmodel, subj, run, save_output)
 
     % Create multi structure, helper function for creating EXPT in
     % imageryExpt.m
@@ -21,6 +21,10 @@ function multi = context_create_multi(glmodel, subj, run)
     %        .pmod(i).poly
     %
     % Cody Kommers, July 2016
+    
+    if nargin < 4 || isempty(save_output)
+        save_output = false;
+    end
     
     utils; % include some functions
     
@@ -3794,5 +3798,7 @@ function multi = context_create_multi(glmodel, subj, run)
     
     end % end of switch statement
 
-   %save('context_create_multi.mat'); % <-- DON'T DO IT! breaks on NCF...
+   if save_output
+       save('context_create_multi.mat'); % <-- DON'T DO IT! breaks on NCF... b/c of file permissions
+   end
 end 
