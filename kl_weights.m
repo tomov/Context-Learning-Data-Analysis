@@ -76,8 +76,12 @@ peak_voxels = [-48    -52    -16; ...
 
 %% Load the KL betas (takes a while)
 %
-%kl_betas = load_run_betas(148, 'KL_weights', [peak_voxels; rand_voxels]);
-kl_betas = load_run_betas(123, 'surprise', [peak_voxels; rand_voxels]);
+kl_betas = load_run_betas(148, 'KL_weights', [peak_voxels; rand_voxels]);
+
+%% !!!!! use the posterior KL !!!!! TODO refactor
+%rois = {'Angular_R', 'Parietal_Inf_R', 'Frontal_Mid_2_L', 'Location not in atlas', 'Frontal_Mid_2_R', 'OFCmed_R', 'Frontal_Mid_2_R'};
+%peak_voxels = [34  -68 52; 40  -46 38; -42 54  2; -30 62  22; 36  54  0; 18  42  -16; 52  32  32];
+%kl_betas = load_run_betas(123, 'surprise', [peak_voxels; rand_voxels]);
 
 %% Get the behavioral correlates
 %
@@ -125,7 +129,7 @@ end
 
 save('results/kl_weights.mat');
 
-%% within-subject analysis using a linear mixed effects model
+%% within-subject analysis using a linear mixed effects model and/or t-tests
 %
 
 load('results/kl_weights.mat');
@@ -135,12 +139,18 @@ means = [];
 sems = [];
 ps = [];
 
+ttest_ps = [];
+ttest_means = [];
+ttest_sems = [];
+
 for roi = 1:size(kl_betas, 3)
     kl_betas_roi = kl_betas(:, :, roi);
 
     lme_liks = [];
     lme_betas = [];
     lme_ids = [];
+    
+    fisher_rs = [];
 
     for subj_idx = 1:metadata.N
         x = test_liks(subj_idx, :)';
@@ -148,12 +158,23 @@ for roi = 1:size(kl_betas, 3)
         
         %x = zscore(x);
         %y = zscore(y);
-        
+
+        % LME model within-subject analysis
+        %
         lme_liks = [lme_liks; x];
         lme_betas = [lme_betas; y];
         lme_ids = [lme_ids; ones(size(x,1),1) * subj_idx];
+        
+        % Simple within-subject t-test
+        %
+        r = corrcoef(x, y);
+        r = r(1,2);
+        fisher_r = atanh(r);
+        fisher_rs = [fisher_rs; fisher_r];
     end
 
+    % LME model
+    %
     tbl = array2table([lme_betas, lme_liks, lme_ids], 'VariableNames', {'Beta', 'Likelihood', 'Subject'});
     formula = 'Beta ~ Likelihood + (Likelihood|Subject)';
     lme = fitlme(tbl, formula);
@@ -164,11 +185,22 @@ for roi = 1:size(kl_betas, 3)
     means = [means; coef];
     sems = [sems; (lme.Coefficients(2, 'Upper').Upper - lme.Coefficients(2, 'Lower').Lower) / 2];
     ps = [ps; p];
+    
+    % t-test on fisher z-transformed correlation coefficients
+    %
+    [h, p, ci, stats] = ttest(fisher_rs);
+    ttest_ps = [ttest_ps; p];
+    ttest_means = [ttest_means; mean(fisher_rs)];
+    ttest_sems = [ttest_sems; (ci(2) - ci(1)) / 2];
 end
+
+%
+% LME plots
+%
 
 figure;
 
-% plot correlation coefficients
+% plot correlation coefficients for LME
 %
 subplot(2, 1, 1);
 
@@ -180,7 +212,7 @@ hold off;
 
 set(gca, 'xtick', xs);
 ylabel('Fixed effect');
-xticklabels([strrep(rois, '_', '\_'), repmat({'random'}, 1, numel(rand_vox_x))]);
+xticklabels([strrep(rois, '_', '\_'), repmat({'random'}, 1, size(rand_voxels, 1))]);
 xtickangle(60);
 xlabel('voxel');
 title('KL_weight betas correlated with test log likelihood: LME analysis', 'Interpreter', 'none');
@@ -197,7 +229,7 @@ hold off;
 
 set(gca, 'xtick', xs);
 ylabel('p-value');
-xticklabels([strrep(rois, '_', '\_'), repmat({'random'}, 1, numel(rand_vox_x))]);
+xticklabels([strrep(rois, '_', '\_'), repmat({'random'}, 1, size(rand_voxels, 1))]);
 xtickangle(60);
 xlabel('voxel');
 
@@ -227,3 +259,43 @@ xlabel('subject');
 
 [fixedMeans, ~, fixedStats] = fixedEffects(lme);
 %}
+
+
+%
+% t-test plots
+%
+
+figure;
+
+% plot correlation coefficients for t-tests
+%
+subplot(2, 1, 1);
+
+h = bar(ttest_means, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
+xs = h(1).XData;
+hold on;
+errorbar(xs, ttest_means, ttest_sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+hold off;
+
+set(gca, 'xtick', xs);
+ylabel('Fixed effect');
+xticklabels([strrep(rois, '_', '\_'), repmat({'random'}, 1, size(rand_voxels, 1))]);
+xtickangle(60);
+xlabel('voxel');
+title('KL_weight betas correlated with test log likelihood: t-test', 'Interpreter', 'none');
+
+% plot p-values
+%
+subplot(2, 1, 2);
+
+h = bar(ttest_ps, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
+xs = h(1).XData;
+hold on;
+plot([0 max(xs) + 1],[0.05 0.05],'k--');
+hold off;
+
+set(gca, 'xtick', xs);
+ylabel('p-value');
+xticklabels([strrep(rois, '_', '\_'), repmat({'random'}, 1, size(rand_voxels, 1))]);
+xtickangle(60);
+xlabel('voxel');
