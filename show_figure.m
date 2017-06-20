@@ -258,40 +258,111 @@ switch figure_name
         fprintf('Correlation D_KL and human errors (TRAINING TRIALS): r = %f, p = %f\n', r, p);
                 
         
+        
+        
+        
     case 'Figure_4'
         figure;
         
-        % Plot saved brain activation map from Figure 4A
         %
-        subplot(1, 2, 1);
+        % Top row: weights
+        %
+
+        % Plot saved brain activation map for weights KL
+        %
+        subplot(2, 2, 3);
         
-        imshow('images/kl-minus-error.png');
+        imshow('images/kl-weights.png'); % from glm 148, 'KL_weights'
+        title('Parameter estimates', 'FontSize', 10);
         
         % Plot fisher Z-transformed correlation coefficients between
-        % per-run log likelihood of subject test choices and AG beta
+        % per-run log likelihood of subject test choices and temporal beta for
+        % weights KL
         %
-        
-        load('kl_analysis.mat'); % as output by kl_structure_learning.m
+        load(fullfile('results', 'kl_weights.mat')); % computed by kl_weights.m
 
-        subplot(1, 2, 2);
+        subplot(3, 4, 11);
         
-        assert(isequal(rois{1}, 'Angular_R'));
-        rs = fisher_all_rs(1,:);
-        [rs, subj_ids] = sort(rs);
+        assert(isequal(rois{1}, 'Temporal_Inf_L'));
+        rs1 = all_fisher_rs{1};
+        [rs1, subj_ids] = sort(rs1);
         
-        bar(rs);
+        bar(rs1, 'EdgeColor', 'none');
         set(gca, 'XTick', 1:1:20);
         %xticklabels(subj_ids);
         xticklabels({[]});
         
-        xlabel('Subject');
-        ylabel('Fisher z-transformed correlation coefficient');
+        xlabel('Subject', 'FontSize', 10);
+        ylabel('Correlation with behavior', 'FontSize', 10);
         xlim([0 21]);
         ylim([-0.75 1.1]);
+        title('L Inf Temporal Gyrus', 'FontSize', 10);
+        set(gca, 'xtick', []);
+
+        % same for parietal betas
+        %
+        subplot(3, 4, 12);
+        
+        assert(isequal(rois{2}, 'Parietal_Inf_L'));
+        rs2 = all_fisher_rs{2};
+        [rs2, subj_ids] = sort(rs2);
+        
+        bar(rs2, 'EdgeColor', 'none');
+        set(gca, 'XTick', 1:1:20);
+        %xticklabels(subj_ids);
+        xticklabels({[]});
+        
+        xlabel('Subject', 'FontSize', 10);
+        %ylabel('Correlation with behavior');
+        xlim([0 21]);
+        ylim([-0.75 1.1]);
+        title('L Inf Parietal Lobe', 'FontSize', 10);
+        set(gca, 'xtick', []);
+        
+        %
+        % Bottom row: posterior
+        %
+        
+        % Plot saved brain activation map for posterior KL
+        %
+        subplot(2, 2, 1);
+        
+        imshow('images/kl-posterior.png'); % from glm 123, 'surprise'
+        title('Causal structures', 'FontSize', 10);
+        
+        % Plot fisher Z-transformed correlation coefficients between
+        % per-run log likelihood of subject test choices and AG beta for
+        % posterior KL
+        %
+        load(fullfile('results', 'kl_posterior.mat')); % computed by kl_weights.m
+
+        subplot(2, 2, 2);
+        
+        assert(isequal(rois{1}, 'Parietal_Sup_R'));
+        rs = all_fisher_rs{1};
+        [rs, subj_ids] = sort(rs);
+        
+        bar(rs, 'EdgeColor', 'none');
+        set(gca, 'XTick', 1:1:20);
+        %xticklabels(subj_ids);
+        xticklabels({[]});
+        
+        xlabel('Subject', 'FontSize', 10);
+        ylabel('Correlation with behavior', 'FontSize', 10);
+        xlim([0 21]);
+        ylim([-0.75 1.1]);
+        title('R Angular Gyrus', 'FontSize', 10);
+        set(gca, 'xtick', []);
         %set(gca,'fontsize',13);
         
         %print(gcf, 'Figure_4B.png', '-dpng', '-r300');
         %print(gcf, 'images/fmri-results.pdf', '-dpdf', '-bestfit');
+        
+        
+        
+        
+        
+        
         
     case 'Figure_4B_OLD'     
         

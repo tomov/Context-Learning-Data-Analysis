@@ -92,6 +92,7 @@ barweb(Ms, SEMs, 1, metadata.contextRoles, 'Subject P(choose sick) in test');
 ylabel('Sick probability');
 legend({'x_1c_1', 'x_1c_3', 'x_3c_1', 'x_3c_3'});
 
+subject_Ms = Ms; % for stats
 
 %
 % Choice probabilities in test phase for MODEL (based on the actual
@@ -153,7 +154,17 @@ barweb(Ms, SEMs, 1, metadata.contextRoles, 'Ideal model P(choose sick) in test')
 ylabel('Sick probability');
 legend({'x_1c_1', 'x_1c_3', 'x_3c_1', 'x_3c_3'});
 
+model_Ms = Ms; % for stats
 
+
+%
+% some stats for the paper
+%
+
+[r, p] = corrcoef(subject_Ms(:), model_Ms(:));
+r = r(1,2);
+p = p(1,2);
+fprintf('Correlation between model and subject test behavior: r = %f, p = %.10f (p = 10^%f)\n', r, p, log10(p));
 
 
 %

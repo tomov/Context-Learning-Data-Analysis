@@ -24,6 +24,11 @@ disp('Using parameters:');
 disp(params);
 disp('generated with options:');
 disp(options);
+
+prior_variance = 0.1249;
+inv_softmax_temp = 2.0064;
+params = [prior_variance inv_softmax_temp];
+options.which_structures = logical([1 1 1 0]);
 % safeguards
 %assert(options.isFmriData == true);
 %assert(~options.fixedEffects);

@@ -169,16 +169,16 @@ for subj = goodSubjects % 1..25
 end
 
 
-save('results/kl_weights.mat');
+save('results/kl_stuff.mat');
 
 %% within-subject analysis using a linear mixed effects model and/or t-tests
 %
 
-load('results/kl_weights.mat');
+load('results/kl_stuff.mat');
 
 % pick which one to analyze TODO refactor
 %
-analyze_KL_weights_and_not_KL_posterior = false; % #KNOB
+analyze_KL_weights_and_not_KL_posterior = true; % #KNOB
 
 if analyze_KL_weights_and_not_KL_posterior
     KL_betas = KL_weights_betas;
@@ -196,13 +196,11 @@ lme_means = [];
 lme_sems = [];
 lme_ps = [];
 
-glm_means = [];
-glm_sems = [];
-glm_ps = [];
-
 ttest_means = [];
 ttest_sems = [];
 ttest_ps = [];
+
+all_fisher_rs = {};
 
 for roi = 1:size(KL_betas, 3)
     kl_betas_roi = KL_betas(:, :, roi);
@@ -254,23 +252,7 @@ for roi = 1:size(KL_betas, 3)
     ttest_ps = [ttest_ps; p];
     ttest_means = [ttest_means; mean(fisher_rs)];
     ttest_sems = [ttest_sems; (ci(2) - ci(1)) / 2];
-    
-    % manually run LME with the GLM function
-    % WRONG -- betas for random effects come from normal distribution
-    %
-    %{
-    o = ones(size(lme_betas, 1), 1);
-    X_fixed = [o lme_liks];
-    X = X_fixed;
-    for subj_idx = 1:metadata.N
-        X_subj = X_fixed .* (lme_ids == subj_idx);
-        X = [X X_subj];
-    end
-    [b, dev, stats] = glmfit(X, lme_betas, 'normal', 'constant', 'off');
-    glm_means = [glm_means; b(2)];
-    glm_sems = [glm_sems; stats.se(2)];
-    glm_ps = [glm_ps; stats.p(2)];
-    %}
+    all_fisher_rs{roi} = fisher_rs;
 end
 
 %
