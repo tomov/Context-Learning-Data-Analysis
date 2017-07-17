@@ -2,12 +2,34 @@
 % table
 %
 
+ % path to the results table exported from bspmview 
+ % 1. open contrast with bspmview
+ % 2. Display -> Preferences -> Anatomical Labeling: AAL2
+ % 3. Display -> Show Results Table
+ % 4. Options -> Save Report
+ %
+table_filename_aal2 = '../Neuron manuscript/tables/KL_weights_AAL2.xlsx';
+
+% The Talairach atlas with Brodmann areas and whatnot
+% got it from http://www.talairach.org/index.html
+% BUT... these are all fucked up; or my coordinate transformations are
+% fucked too... use http://sprout022.sprout.yale.edu/mni2tal/mni2tal.html
+% instead
+%
+talairach_atlas_filename = '../../libs/talairach/talairach.nii';
+tala = load_untouch_nii(talairach_atlas_filename); % load atlas
+tala_labels = strsplit(tala.ext.section.edata, '\n'); % get label list from the header
+tala_labels(1) = []; % bogus entries
+tala_labels(end) = [];
+
+[~, tala_vol, tala_mask] = load_mask(talairach_atlas_filename); % load the actual atlas
+assert(max(tala_mask(:)) == numel(tala_labels));
 
 % Anatomical region name, AAL2 label
-% Table 2 from Implementation of a new parcellation of the orbitofrontal cortex in the
+% Table 2 from Rolls et al., Implementation of a new parcellation of the orbitofrontal cortex in the
 % automated anatomical labeling atlas (NeuroImage, 2015)
 %
-ROIs = {'Precentral gyrus',  'Precentral' ;
+aal2_labels = {'Precentral gyrus',  'Precentral' ;
 'Postcentral gyrus',  'Postcentral' ;
 'Rolandic operculum',  'Rolandic_Oper' ;
 'Superior frontal gyrus, dorsolateral',  'Frontal_Sup' ;
@@ -55,8 +77,7 @@ ROIs = {'Precentral gyrus',  'Precentral' ;
 'Lenticular nucleus, Pallidum',  'Pallidum' ;
 'Thalamus',  'Thalamus' };
 
-
-[num, txt, raw] = xlsread('../paper/save_table_spmT_0001_PosNeg_I3.5794_C176_S20.xlsx');
+[num, txt, raw] = xlsread(table_filename_aal2);
 
 rows = size(num, 1);
 txt = txt(end-rows+1:end, :);
@@ -64,9 +85,9 @@ txt = txt(end-rows+1:end, :);
 for i=1:rows
     roi_label = txt{i,2};
     roi = [];
-    for j=1:size(ROIs, 1)
-        if startsWith(roi_label, ROIs{j, 2})
-            roi = ROIs{j, 1};
+    for j=1:size(aal2_labels, 1)
+        if startsWith(roi_label, aal2_labels{j, 2})
+            roi = aal2_labels{j, 1};
             break;
         end
     end
@@ -76,6 +97,29 @@ for i=1:rows
         s = strsplit(roi_label, '_');
         roi = [roi, ' (', s{end}, ')'];
     end
-    fprintf('%s & %s & %d & %.3f & %d %d %d \\\\\n', txt{i,1}, roi, num(i,1), num(i,2), num(i,3), num(i,4), num(i,5));
+    mni_voxel = [num(i,3), num(i,4), num(i,5)];
+    
+    % get the brodmann area from the talairach atlas
+    tal_voxel = icbm_spm2tal(mni_voxel); % first convert from MNI to Talairach space
+    %tal_voxel = mni2tal(mni_voxel); % <-- this is wrong... 
+    cor = round(tala_vol.mat \ [tal_voxel'; 1]); % convert from talairach voxel to array indices
+    if min(cor) < 1
+        BA = '????';
+    else
+        if tala_mask(cor(1), cor(2), cor(3)) == 0
+            BA = '???';
+        else
+            tala_label = tala_labels{tala_mask(cor(1), cor(2), cor(3))};
+            k = strfind(tala_label, 'Brodmann area ');
+            if isempty(k)
+                BA = '??'; % no BA
+            else
+                BA = tala_label(k + length('Brodmann area '):end);
+            end
+        end
+    end
+    
+    fprintf('%s & %s &    %s        & %d & %.3f & %d %d %d \\\\\n', txt{i,1}, roi, BA, num(i,1), num(i,2), mni_voxel(1), mni_voxel(2), mni_voxel(3));
+    %break;
 end
 

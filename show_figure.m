@@ -173,6 +173,7 @@ switch figure_name
         %
         % Correlate model with subject choices
         %
+        load(fullfile('results', 'fit_params_results.mat'), 'results', 'results_options');        
         
         s = simulated.pred(data.which_rows);
         d = data.chose_sick(data.which_rows);
@@ -189,7 +190,8 @@ switch figure_name
         fprintf('Correlation between model and humans (TEST TRIALS): r = %f, p = %f\n', r, p);
         
         total_loglik = model_likfun(data, metadata, params, which_structures, data.which_rows, false);
-        fprintf('Total log likelihood = %f\n', total_loglik);
+        bic = results(1).bic; % TODO FIXME the params are close but not quite there
+        fprintf('Total log likelihood = %f; BIC = %f (on whatever it was fit)\n', total_loglik, bic);
 
         %
         % Correlate single-causal-structure models with human data
@@ -200,9 +202,9 @@ switch figure_name
         structure_names = {'M_1', 'M_2', 'M_3'};
         
         for i = 1:3
-            load(fullfile('results', 'fit_params_results.mat'), 'results', 'results_options');
             params = results(results_idxs(i)).x;
             options = results_options(results_idxs(i));
+            bic = results(results_idxs(i)).bic;
             %assert(options.isFmriData == true);
             %assert(~options.fixedEffects);
             assert(isequal(options.which_structures, which_structuress{i}));
@@ -224,8 +226,133 @@ switch figure_name
             fprintf('$r = %.4f$ for all trials ($r = %.4f$ for the test trials) for $%s$\n', r, r_test, structure_names{i});            
 
             total_loglik = model_likfun(data, metadata, params, which_structuress{i}, data.which_rows, false);
-            fprintf('Total log likelihood for %s = %f\n', structure_names{i}, total_loglik);
+            fprintf('Total log likelihood for %s = %f; BIC = %f (on whatever it was fit)\n', structure_names{i}, total_loglik, bic);
         end
+        
+        assert(false, 'THESE ARE DEPRECATED -- use the stats from plot_behavior.m; you have to change which_structures e.g. to [1 0 0 0] for M1 only');
+        
+        
+        
+    % same as Figure 3 except for pilot data
+    %
+    case 'Figure_S1'
+        
+        [data, metadata] = load_data(fullfile('data', 'pilot.csv'), false);
+        simulated = simulate_subjects(data, metadata, params, which_structures);
+        
+        %
+        % Figure 3A: Posterior probabilities over structures in each condition
+        %
+        
+        figure;
+        %set(handle, 'Position', [500, 500, 450, 200])
+        
+        subplot(2, 1, 1);
+
+        P_means = [];
+        for condition = metadata.contextRoles
+            which_rows = data.which_rows & data.isTrain & data.trialId == 20 & strcmp(data.contextRole, condition);
+            
+            P = simulated.P(which_rows, which_structures);             
+            P_means = [P_means; mean(P, 1)];
+        end
+
+        bar(P_means);
+        xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
+        ylabel('Posterior probability');
+        legend({'M1', 'M2', 'M3'}, 'Position', [0.15 0.3 1 1]);
+        ylim([0 1.1]);
+        set(gca,'fontsize',13);    
+        
+        %
+        % Figure 3B: Choice probabilities on test trials for model vs. humans
+        %
+        
+        subplot(2, 1, 2);
+        
+        % Choice probabilities for model
+        %
+        model_means = [];
+        for condition = metadata.contextRoles
+            which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
+            
+            x1c1 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 0);
+            x1c3 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 2);
+            x3c1 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 0);
+            x3c3 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 2);
+
+            model_means = [model_means; mean(x1c1) mean(x1c3) mean(x3c1) mean(x3c3)];
+        end
+
+        % Choice probabilities for human subjects
+        %
+        human_choices = [];        
+        for condition = metadata.contextRoles
+            which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
+            
+            x1c1 = []; x1c3 = []; x3c1 = []; x3c3 = [];
+            for who = metadata.subjects
+                x1c1 = [x1c1, data.chose_sick(which_rows & data.cueId == 0 & data.contextId == 0 & strcmp(data.participant, who))];
+                x1c3 = [x1c3, data.chose_sick(which_rows & data.cueId == 0 & data.contextId == 2 & strcmp(data.participant, who))];
+                x3c1 = [x3c1, data.chose_sick(which_rows & data.cueId == 2 & data.contextId == 0 & strcmp(data.participant, who))];
+                x3c3 = [x3c3, data.chose_sick(which_rows & data.cueId == 2 & data.contextId == 2 & strcmp(data.participant, who))];
+            end
+            assert(isequal(size(x1c1), [metadata.runsPerContext metadata.N]));
+            assert(isequal(size(x1c3), [metadata.runsPerContext metadata.N]));
+            assert(isequal(size(x3c1), [metadata.runsPerContext metadata.N]));
+            assert(isequal(size(x3c3), [metadata.runsPerContext metadata.N]));
+            
+            human_choices = [human_choices; mean(x1c1); mean(x1c3); mean(x3c1); mean(x3c3)];
+        end
+        
+        [human_sems, human_means] = wse(human_choices');
+        
+        % Plot model choices probabilities
+        %
+        h = bar(model_means);
+        
+        % Get x-coordinates of bar centers and "flatten" the human choice
+        % data so we can overlay it nicely
+        %
+        xs = sort([h(1).XData + h(1).XOffset, ...
+                   h(2).XData + h(2).XOffset, ...
+                   h(3).XData + h(3).XOffset, ...
+                   h(4).XData + h(4).XOffset]);
+        human_means = human_means'; human_means = human_means(:);
+        human_sems = human_sems'; human_sems = human_sems(:);        
+        
+        % Plot human choices
+        %
+        hold on;
+        errorbar(xs, human_means, human_sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+        % the markers in the errorbar plot are misaligned from the error
+        % bars -- this hack adjusts them
+        xs_adjust = xs;
+        xs_adjust(1) = xs_adjust(1) + 0.0035;
+        xs_adjust(2) = xs_adjust(2) + 0.003;
+        xs_adjust(3) = xs_adjust(3) + 0.003;
+        xs_adjust(4) = xs_adjust(4) + 0.0025;
+        xs_adjust(5) = xs_adjust(5) + 0.004;
+        xs_adjust(6) = xs_adjust(6) + 0.004;
+        xs_adjust(7) = xs_adjust(7) + 0.0025;
+        xs_adjust(8) = xs_adjust(8) + 0.0025;
+        xs_adjust(9) = xs_adjust(9) + 0.003;
+        xs_adjust(10) = xs_adjust(10) + 0.004;
+        xs_adjust(11) = xs_adjust(11) + 0.003;
+        xs_adjust(12) = xs_adjust(12) + 0.0025;
+        plot(xs_adjust, human_means, 'o', 'MarkerSize', 5, 'MarkerFaceColor', [0 0 0], 'Color', [0 0 0]);
+        hold off;
+        xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
+        ylabel('Choice probability');
+        legend({'x_1c_1', 'x_1c_3', 'x_3c_1', 'x_3c_3'}, 'Position', [0.07 -0.095 1 1]);
+        ylim([0 1.1]);
+        set(gca,'fontsize',13);
+        
+        %print(gcf, 'untitled.pdf', '-dpdf', '-bestfit');
+        
+        
+        
+        
         
         
         
@@ -272,8 +399,9 @@ switch figure_name
         %
         subplot(2, 2, 3);
         
-        imshow('images/kl-weights.png'); % from glm 148, 'KL_weights'
-        title('Parameter estimates', 'FontSize', 10);
+        %imshow('images/kl-weights.png'); % from glm 148, 'KL_weights'
+        imshow('images/kl-weights-surface.png'); % from glm 148, 'KL_weights'
+        title('Associative weights', 'FontSize', 10);
         
         % Plot fisher Z-transformed correlation coefficients between
         % per-run log likelihood of subject test choices and temporal beta for
@@ -316,7 +444,7 @@ switch figure_name
         %ylabel('Correlation with behavior');
         xlim([0 21]);
         ylim([-0.75 1.1]);
-        title('L Inf Parietal Lobe', 'FontSize', 10);
+        title('L Angular Gyrus', 'FontSize', 10);
         set(gca, 'xtick', []);
         
         %
@@ -327,7 +455,8 @@ switch figure_name
         %
         subplot(2, 2, 1);
         
-        imshow('images/kl-posterior.png'); % from glm 123, 'surprise'
+        %imshow('images/kl-posterior.png'); % from glm 123, 'surprise'
+        imshow('images/kl-structures-surface.png'); % from glm 123, 'surprise'
         title('Causal structures', 'FontSize', 10);
         
         % Plot fisher Z-transformed correlation coefficients between

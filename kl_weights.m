@@ -295,14 +295,14 @@ analyze_KL_weights_and_not_KL_structures = true; % #KNOB
 if analyze_KL_weights_and_not_KL_structures
     KL_betas = KL_weights_148_betas;
     rois = KL_weights_148_rois;
-   % KL_betas = KL_weights_151_betas;
-   % rois = KL_weights_151_rois;
+  %  KL_betas = KL_weights_151_betas;
+  %  rois = KL_weights_151_rois;
     plot_what = 'KL_weights';
 else
     KL_betas = KL_structures_123_betas;
     rois = KL_structures_123_rois;
-  %  KL_betas = KL_structures_151_betas;
-  %  rois = KL_structures_151_rois;
+   % KL_betas = KL_structures_151_betas;
+   % rois = KL_structures_151_rois;
     plot_what = 'KL_structures';
 end
 
@@ -317,6 +317,7 @@ lme_ps = [];
 ttest_means = [];
 ttest_sems = [];
 ttest_ps = [];
+ttest_ts = [];
 
 all_fisher_rs = {};
 
@@ -367,6 +368,7 @@ for roi = 1:size(KL_betas, 3)
     % t-test on fisher z-transformed correlation coefficients
     %
     [h, p, ci, stats] = ttest(fisher_rs);
+    ttest_ts = [ttest_ts; stats.tstat];
     ttest_ps = [ttest_ps; p];
     ttest_means = [ttest_means; mean(fisher_rs)];
     ttest_sems = [ttest_sems; (ci(2) - ci(1)) / 2];
