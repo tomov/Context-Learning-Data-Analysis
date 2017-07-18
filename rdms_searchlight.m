@@ -23,20 +23,29 @@ y = y(idx);
 z = z(idx);
 r = 5;
 
-idx = 1:100;
+idx = 201:300;
 
 Searchlight = rdms_get_searchlight(data, metadata, which_rows, x(idx), y(idx), z(idx), r);
-showRDMs(Searchlight, 1);
 
 %% Get the model RDMs
 %
 Model = rdms_get_model(data, metadata, which_rows);
-showRDMs(Model, 2);
-
-...
-
-    rows = Neural;
-    cols = Model;
-    [table_Rho, table_H, table_P, all_subject_rhos, lmes] = rdms_second_order(metadata, rows, cols, control_model_idxs, do_LME, lme_neural_idxs, lme_model_idxs);
 
 
+%% Get second-order RDM
+%
+control_model_idxs = [8, 12]; % #KNOB control for time and run
+assert(isequal(Model(8).name, 'time'));
+assert(isequal(Model(12).name, 'run'));
+rows = Searchlight;
+cols = Model;
+
+[table_Rho, table_H, table_P, all_subject_rhos] = rdms_second_order(metadata, rows, cols, control_model_idxs, false, [], []);
+
+
+
+which = table_Rho > 0 & table_P < 0.05 / numel(table_P); % Bonferroni correction
+
+
+%%
+%save('rdms/spotlight_101-200.mat', 'table_H', 'table_P', 'table_Rho', 'all_subject_rhos', 'x', 'y', 'z', 'r', 'Model')

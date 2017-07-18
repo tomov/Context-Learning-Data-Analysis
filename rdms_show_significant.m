@@ -14,6 +14,7 @@ if bonferroni
 else
     which = table_Rho > 0 & table_P < 0.01;
 end
+
 assert(~all_vs_all); % only works for neural vs. model comparisons
 
 all_subject_zs = atanh(all_subject_rhos); % Fisher z transform the rhos
