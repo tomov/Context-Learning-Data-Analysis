@@ -64,7 +64,7 @@ end
 % Construct the mask
 %
 my_vol = aal2_vol;
-my_vol.fname = filename; % CRUCIAL! o/w overwrite AAL2.nii
+my_vol.fname = filename; % CRUCIAL!!!!!!!!! o/w overwrite AAL2.nii
 my_mask = ismember(aal2_mask, my_roi_idxs);
 
 % Optionally put the mask in our subject coordinate space,
