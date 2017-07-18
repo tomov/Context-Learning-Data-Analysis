@@ -6,7 +6,7 @@ function Searchlight = rdms_get_searchlight(data, metadata, which_rows, x, y, z,
 % data, metadata = subject data and metadata as output by load_data
 % which_rows = which rows (trials) to include
 % x, y, z = vectors of voxel coordinates in group-level mask coordinate space
-% r = sphere radius
+% r = sphere radius in group-level coordinate space (i.e. voxels, NOT mm!)
 %
 % OUTPUT:
 % Searchlight = struct array of RDMs
@@ -43,11 +43,11 @@ for event = {'trial_onset', 'feedback_onset'}
         % Build spherical mask
         %
         sphere_mask = zeros(size(mask));
-        for newx = x(i) - r : x(i) + r
+        for newx = floor(x(i) - r) : ceil(x(i) + r)
             if newx < min_x || newx > max_x, continue; end
-            for newy = y(i) - r : y(i) + r
+            for newy = floor(y(i) - r) : ceil(y(i) + r)
                 if newy < min_y || newy > max_y, continue; end
-                for newz = z(i) - r : z(i) + r
+                for newz = floor(z(i) - r) : ceil(z(i) + r)
                     if newz < min_z || newz > max_z, continue; end
                     if ~mask(newx, newy, newz), continue; end
                     if (x(i) - newx)^2 + (y(i) - newy)^2 + (z(i) - newz)^2 > r^2, continue; end

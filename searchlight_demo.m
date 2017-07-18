@@ -1,4 +1,4 @@
-r = 5;
+r = 1.814;
 
 [mask, Vmask] = load_mask('masks/mask.nii');
 Vmask.fname = 'masks/searchlight.nii';
@@ -25,11 +25,11 @@ newmasks = {};
 for i = randi(numel(x))
     
     newmask = zeros(size(mask));
-    for newx = x(i) - r : x(i) + r
+    for newx = floor(x(i) - r) : ceil(x(i) + r)
         if newx < min_x || newx > max_x, continue; end
-        for newy = y(i) - r : y(i) + r
+        for newy = floor(y(i) - r) : ceil(y(i) + r)
             if newy < min_y || newy > max_y, continue; end
-            for newz = z(i) - r : z(i) + r
+            for newz = floor(z(i) - r) : ceil(z(i) + r)
                 if newz < min_z || newz > max_z, continue; end
                 if ~mask(newx, newy, newz), continue; end
                 if (x(i) - newx)^2 + (y(i) - newy)^2 + (z(i) - newz)^2 > r^2, continue; end
