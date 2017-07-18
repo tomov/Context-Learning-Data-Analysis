@@ -3087,6 +3087,7 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
         % + error regressor on wrong trials, to account for error signal
         % result: THIS IS IT -- R angular gyrus, lateral OFC, R lateral PFC
         %          (after FWE)
+        % #KEEP in dropbox
         %
         case 123
             which_error = which_train & ~data.response.corr;
@@ -3544,7 +3545,8 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
             end
         
         % For each trial, have a trial_onset regressor and a feedback regressor (training trials only)
-        % it's for the classifier 
+        % it's for the classifier
+        % #KEEP in dropbox
         %
         case 143
             idx = 0;
@@ -3702,6 +3704,8 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
             end
         
         % KL for weights for strucutre corresponding to condition
+        % THIS IS IT -- going in paper
+        % #KEEP in dropbox
         %
         case 148
             which_error = which_train & ~data.response.corr;

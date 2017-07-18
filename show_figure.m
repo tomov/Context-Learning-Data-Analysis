@@ -357,9 +357,10 @@ switch figure_name
         
         
     case 'Figure_4A'
-        % Slices showing KL divergence activations [use the model with the error regressor]
-        %
-        ccnl_view(context_expt(), 123, 'surprise - wrong');
+        ccnl_view(context_expt(), 123, 'surprise');
+        
+    case 'Figure_4C'
+        ccnl_view(context_expt(), 148, 'KL_weights');
         
 
     case 'Figure_4A_stats'        

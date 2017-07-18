@@ -1,4 +1,4 @@
-function [table_Rho, table_H, table_P, all_subject_rhos, lme] = rdms_second_order(metadata, rows, cols, control_col_idxs, do_LME, lme_row_idxs, lme_col_idxs)
+function [table_Rho, table_H, table_P, all_subject_rhos, lmes] = rdms_second_order(metadata, rows, cols, control_col_idxs, do_LME, lme_row_idxs, lme_col_idxs)
 
 % Perform second-order RDM analysis
 %
