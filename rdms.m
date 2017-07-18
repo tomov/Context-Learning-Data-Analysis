@@ -72,24 +72,15 @@ P = array2table(table_P, 'RowNames', {rows.name}, 'VariableNames', {cols.name});
 %
 rdms_show_full(rows, cols, table_Rho, table_P, all_vs_all);
 
-
-
-
 %% Show the significant positive correlations
 %
 rdms_show_significant(rows, cols, table_Rho, table_P, all_subject_rhos, lmes, do_LME, all_vs_all, true);
-
 
 %% Chan et al.-like bar plots for their models
 %
 rdms_show_chan_etal(rows, cols, all_subject_rhos, all_vs_all, control_model_idxs);
 
-
 %% Interesting visualizations
 % show select neural / model pairs that I think are interesting
 %
 rdms_show_interesting(rows, cols, all_subject_rhos, all_vs_all, control_model_idxs);
-
-
-
-
