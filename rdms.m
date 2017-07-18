@@ -1,52 +1,27 @@
 % Compare RDMs from different ROIs with model RDMs
 %
 
-%% Load data and first-order RDMs and
+%% Load data and compute first-order RDMs
 %
 
 [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
 
+which_rows = data.which_rows & data.isTrain; % Look at training trials only
+
 % Get the neural RDMs
 %
-Neural = rdms_get_neural();
+Neural = rdms_get_neural(data, metadata, which_rows);
 showRDMs(Neural, 1);
 
 % Get the model RDMs
 %
-Model = rdms_get_model();
+Model = rdms_get_model(data, metadata, which_rows);
 showRDMs(Model, 2);
 
 
+
+%% Compute second-order RDM
 %
-% Second-order similarity matrix from the RDMs
-% compare neural RDMs with the model RDMs
-%
-
-
-
-%% Compare the average RDMs only -- DON'T RUN THIS...
-% this is LAME -- look at the one below
-%
-userOptions.RDMcorrelationType= 'Spearman';
-userOptions.analysisName = 'blah';
-userOptions.rootPath = '~/Downloads/'; % TODO how to turn off saving the figure?
-corrMat = pairwiseCorrelateRDMs({Neural, Model}, userOptions, struct('figureNumber', 3,'fileName',[]));
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-%% Proper RDM comparison
 % compare each neural and model RDMs for subject separately using
 % Spearman's rank coefficient, then find which ones are significant
 %
@@ -60,21 +35,29 @@ control_model_idxs = [8, 12]; % #KNOB control for time and run
 assert(isequal(Model(8).name, 'time'));
 assert(isequal(Model(12).name, 'run'));
 
-% Where the money is
+% Compute second-order RDM
 %
 
 if all_vs_all
-    % Can't do LME for all vs. all
+    % all RDMs vs. all RDMs
     %
-    [table_Rho, table_H, table_P, all_subject_rhos] = rdms_second_order([Neural Model], [Neural Model], [], false, [], []);
+    % Notice we can't do LME here
+    %
+    rows = [Neural Model];
+    cols = rows;
+    [table_Rho, table_H, table_P, all_subject_rhos] = rdms_second_order(metadata, rows, cols, [], false, [], []);
 else
+    % Neural RDMs vs. Model RDMs
+    %
     % It is important that rows = Neural and cols = Model for the visualizations
     % and the linear mixed effects modeling
     %
     %lme_neural_idxs = [1 2 5 11 12 14 15 18 24 25]; % which ROIs to consider for LME
     lme_neural_idxs = 1:numel(Neural);
     lme_model_idxs = [1 3 18 39 41 46]; % which models to consider to LME
-    [table_Rho, table_H, table_P, all_subject_rhos, lme] = rdms_second_order(Neural, Model, control_model_idxs, lme_model_idxs, lme_model_idxs);
+    rows = Neural;
+    cols = Model;
+    [table_Rho, table_H, table_P, all_subject_rhos, lme] = rdms_second_order(metadata, rows, cols, control_model_idxs, true, lme_model_idxs, lme_model_idxs);
 end
 
 

@@ -1,14 +1,16 @@
-function Model = rdms_get_model()
+function Model = rdms_get_model(data, metadata, which_rows)
 
-% ------------------ Compute the Model RDMs ----------------------
+% Compute the RDMs for different models
 %
+% INPUT:
+% data, metadata = subject data and metadata as output by load_data
+% which_rows = which rows (trials) to include
+%
+% OUTPUT:
+% Model = struct array of RDMs
 
 disp('Computing model RDMs...');
 tic
-
-% Load behavior
-%
-[data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
 
 % Simulate behavior
 %
@@ -24,10 +26,6 @@ assert(options.isFmriData == false);
 assert(options.fixedEffects == 1);
 assert(isequal(options.which_structures, [1 1 1 0]));
 which_structures = logical(options.which_structures);
-
-% Look at training trials only
-%
-which_rows = data.which_rows & data.isTrain;
 
 % Simulate behavior using Kalman filter
 %

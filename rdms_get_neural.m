@@ -1,8 +1,14 @@
-function Neural = rdms_get_neural()
+function Neural = rdms_get_neural(data, metadata, which_rows)
 
 % Compute the neural RDMs
 % Normalized correlation for neural data for different ROIs
 %
+% INPUT:
+% data, metadata = subject data and metadata as output by load_data
+% which_rows = which rows (trials) to include
+%
+% OUTPUT:
+% Neural = struct array of RDMs
 
 neural_idx = 0;
 
