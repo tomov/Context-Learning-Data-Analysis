@@ -1,4 +1,4 @@
-function Searchlight = rdms_get_searchlight(data, metadata, which_rows, x, y, z, r)
+function Searchlight = rdms_get_searchlight(data, metadata, which_rows, x, y, z, r, use_pregenerated_betas)
 
 % Compute the searchlight neural RDMs
 %
@@ -7,6 +7,10 @@ function Searchlight = rdms_get_searchlight(data, metadata, which_rows, x, y, z,
 % which_rows = which rows (trials) to include
 % x, y, z = vectors of voxel coordinates in group-level mask coordinate space
 % r = sphere radius in group-level coordinate space (i.e. voxels, NOT mm!)
+% use_pregenerated_betas = whether to use the pregenerated whole-brain
+%     betas to extract the submasks (faster but requires lots of memory to
+%     preload them and fails on NCF...)
+%     setting to false is SUPER SLOW...
 %
 % OUTPUT:
 % Searchlight = struct array of RDMs
@@ -31,9 +35,12 @@ max_z = max(all_z);
 for event = {'trial_onset', 'feedback_onset'}
     event = event{1};
 
-    % Load neural data for given event
-    %
-    whole_brain_betas = get_betas('masks/mask.nii', event, data, metadata);
+    if use_pregenerated_betas
+        % Load neural data for given event. Warning -- takes up ~8.5 G and
+        % NCF doens't like that
+        %
+        whole_brain_betas = get_betas('masks/mask.nii', event, data, metadata);
+    end
 
     % For each voxel, build a mask that's a sphere around it
     % Make sure to only include voxels from the brian
@@ -55,12 +62,17 @@ for event = {'trial_onset', 'feedback_onset'}
                 end
             end
         end
+        sphere_mask = logical(sphere_mask);
 
         % Get sphere center coordinates in MNI space
         %
         mni = cor2mni([x(i) y(i) z(i)], Vmask.mat);
 
-        sphere_betas = get_betas_submask(sphere_mask, whole_brain_betas);
+        if use_pregenerated_betas
+            sphere_betas = get_betas_submask(sphere_mask, whole_brain_betas); % fast
+        else
+            sphere_betas = load_betas(sphere_mask, event, data, metadata); % old fashioned SUPER SLOW
+        end
         [sphereRDMs, avgSphereRDM] = compute_rdms(sphere_betas, 'cosine', data, metadata, which_rows);
         searchlight_idx = searchlight_idx + 1;
         Searchlight(searchlight_idx).RDMs = sphereRDMs;

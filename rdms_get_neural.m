@@ -1,4 +1,4 @@
-function Neural = rdms_get_neural(data, metadata, which_rows)
+function Neural = rdms_get_neural(data, metadata, which_rows, use_tmaps)
 
 % Compute the neural RDMs
 % Normalized correlation for neural data for different ROIs
@@ -6,6 +6,7 @@ function Neural = rdms_get_neural(data, metadata, which_rows)
 % INPUT:
 % data, metadata = subject data and metadata as output by load_data
 % which_rows = which rows (trials) to include
+% use_tmaps = if true, use tmaps; otherwise, use betas for neural data
 %
 % OUTPUT:
 % Neural = struct array of RDMs
@@ -15,6 +16,12 @@ neural_idx = 0;
 disp('Computing neural RDMs...');
 tic
 
+if use_tmaps
+    get_activations = @get_tmaps;
+else
+    get_activations = @get_betas;
+end
+
 % for each ROI, take betas at both trial onset and feedback onset
 %
 for event = {'trial_onset', 'feedback_onset'}
@@ -22,7 +29,7 @@ for event = {'trial_onset', 'feedback_onset'}
 
     % Load neural data
     %
-    whole_brain_betas = get_betas('masks/mask.nii', event, data, metadata);
+    whole_brain_betas = get_activations('masks/mask.nii', event, data, metadata);
 
     hippocampus_mask = load_mask('masks/hippocampus.nii');
     hippocampus_betas = get_betas_submask(hippocampus_mask, whole_brain_betas);

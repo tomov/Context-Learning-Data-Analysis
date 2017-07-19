@@ -58,7 +58,7 @@ for subj = subjs
             % append beta
             tmaps(which_row, :) = tmap;
             
-            fprintf('loaded subj %d, run %d, trail %d (%s): %d voxels\n', subj, run, trial, regressor, sum(~isnan(tmap)));
+            fprintf('loaded subj %d, run %d, trial %d (%s): %d voxels\n', subj, run, trial, regressor, sum(~isnan(tmap)));
         end
     end
 end

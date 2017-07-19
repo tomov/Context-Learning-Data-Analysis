@@ -54,7 +54,7 @@ for subj = subjs
             % append beta
             betas(which_row, :) = beta;
             
-            fprintf('loaded subj %d, run %d, trail %d (%s): %d voxels\n', subj, run, trial, regressor, sum(~isnan(beta)));
+            fprintf('loaded subj %d, run %d, trial %d (%s): %d voxels\n', subj, run, trial, regressor, sum(~isnan(beta)));
         end
     end
 end

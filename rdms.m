@@ -10,7 +10,7 @@ which_rows = data.which_rows & data.isTrain; % Look at training trials only
 
 % Get the neural RDMs
 %
-Neural = rdms_get_neural(data, metadata, which_rows);
+Neural = rdms_get_neural(data, metadata, which_rows, true);
 showRDMs(Neural, 1);
 
 % Get the model RDMs

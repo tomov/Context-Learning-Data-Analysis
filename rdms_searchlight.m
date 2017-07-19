@@ -42,7 +42,7 @@ x = x(idx);
 y = y(idx);
 z = z(idx);
 
-Searchlight = rdms_get_searchlight(data, metadata, which_rows, x, y, z, r);
+Searchlight = rdms_get_searchlight(data, metadata, which_rows, x, y, z, r, true);
 
 %% Get the model RDMs
 %

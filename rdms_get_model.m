@@ -17,6 +17,8 @@ tic
 load(fullfile('results', 'fit_params_results.mat'), 'results', 'results_options');
 params = results(1).x;
 options = results_options(1);
+% OVERRIDE -- use params from pilot data
+params = [0.1249 2.0064];
 disp('Using parameters:');
 disp(params);
 disp('generated with options:');
@@ -261,7 +263,9 @@ Model(model_idx).color = [0 1 0];
 
 % PEs
 %
-PEs = data.outcome - simulated.valuess;
+save('shit.mat');
+outcomes = repmat(data.outcome, 1, size(simulated.valuess, 2));
+PEs = outcomes - simulated.valuess;
 PEs = PEs + rand(size(PEs)) * 0.001; % so cosine metric works
 [pesRDMs, avgPesRDM] = compute_rdms(PEs, 'cosine', data, metadata, which_rows);
 model_idx = model_idx + 1;
@@ -292,7 +296,8 @@ Model(model_idx).color = [0 1 0];
 
 % PEs^2
 %
-PEs2 = (data.outcome - simulated.valuess) .^ 2;
+outcomes = repmat(data.outcome, 1, size(simulated.valuess, 2));
+PEs2 = (outcomes - simulated.valuess) .^ 2;
 PEs2 = PEs2 + rand(size(PEs2)); % so cosine metric works
 [pes2RDMs, avgPes2RDM] = compute_rdms(PEs2, 'cosine', data, metadata, which_rows);
 model_idx = model_idx + 1;
@@ -303,7 +308,8 @@ Model(model_idx).color = [0 1 0];
 
 % log(PEs^2)
 %
-logPEs2 = log((data.outcome - simulated.valuess) .^ 2 + 0.001); % so we don't take log(0)
+outcomes = repmat(data.outcome, 1, size(simulated.valuess, 2));
+logPEs2 = log((outcomes - simulated.valuess) .^ 2 + 0.001); % so we don't take log(0)
 [logPes2RDMs, avgLogPes2RDM] = compute_rdms(logPEs2, 'cosine', data, metadata, which_rows);
 model_idx = model_idx + 1;
 Model(model_idx).RDMs = logPes2RDMs;
