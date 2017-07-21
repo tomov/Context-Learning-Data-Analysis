@@ -10,7 +10,7 @@ which_rows = data.which_rows & data.isTrain; % Look at training trials only
 
 % Get the neural RDMs
 %
-Neural = rdms_get_neural(data, metadata, which_rows, true, false); % use t-maps, use nosmooth
+Neural = rdms_get_neural(data, metadata, which_rows, true, true); % use t-maps, use nosmooth
 showRDMs(Neural, 1);
 
 % Get the model RDMs
@@ -74,7 +74,7 @@ rdms_show_full(rows, cols, table_Rho, table_P, all_vs_all);
 
 %% Show the significant positive correlations
 %
-rdms_show_significant(rows, cols, table_Rho, table_P, all_subject_rhos, lmes, do_LME, all_vs_all, false); % with LME
+rdms_show_significant(rows, cols, table_Rho, table_P, all_subject_rhos, lmes, do_LME, all_vs_all, true); % with LME
 %rdms_show_significant(rows, cols, table_Rho, table_P, all_subject_rhos, {}, false, all_vs_all, true); % no LME
 
 %% Chan et al.-like bar plots for their models

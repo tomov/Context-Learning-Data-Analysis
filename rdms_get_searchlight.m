@@ -79,7 +79,7 @@ for event = {'trial_onset', 'feedback_onset'}
         mni = cor2mni([x(i) y(i) z(i)], Vmask.mat);
 
         if use_pregenerated_activations
-            sphere_activations = get_activations_submask(sphere_mask, whole_brain_activations, use_nosmooth); % fast
+            sphere_activations = get_activations_submask(sphere_mask, whole_brain_activations); % fast
         else
             sphere_activations = load_activations(sphere_mask, event, data, metadata, use_nosmooth); % old fashioned SUPER SLOW
         end
