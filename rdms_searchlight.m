@@ -57,7 +57,7 @@ assert(isequal(Model(12).name, 'run'));
 rows = Searchlight;
 cols = Model;
 
-[table_Rho, table_H, table_P, all_subject_rhos] = rdms_second_order(metadata, rows, cols, control_model_idxs, false, [], []);
+[table_Rho, table_H, table_T, table_P, all_subject_rhos] = rdms_second_order(metadata, rows, cols, control_model_idxs, false, [], []);
 
 
 %% Save output
@@ -66,4 +66,4 @@ cols = Model;
 %which = table_Rho > 0 & table_P < 0.05 / numel(table_P); % Bonferroni correction
 
 filename = sprintf('searchlight_%d-%d.mat', start_idx, end_idx);
-save(fullfile('rdms', filename), 'table_Rho', 'table_P', 'all_subject_rhos', 'x', 'y', 'z', 'r', 'idx');
+save(fullfile('rdms', filename), 'table_Rho', 'table_T', 'table_P', 'all_subject_rhos', 'x', 'y', 'z', 'r', 'idx');

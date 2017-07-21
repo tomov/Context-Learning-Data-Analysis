@@ -1,4 +1,4 @@
-function [table_Rho, table_H, table_P, all_subject_rhos, lmes] = rdms_second_order(metadata, rows, cols, control_col_idxs, do_LME, lme_row_idxs, lme_col_idxs)
+function [table_Rho, table_H, table_T, table_P, all_subject_rhos, lmes] = rdms_second_order(metadata, rows, cols, control_col_idxs, do_LME, lme_row_idxs, lme_col_idxs)
 
 % Perform second-order RDM analysis
 %
@@ -41,6 +41,7 @@ same_run_trig_control = repmat(same_run_trig, 1, 1, numel(control_col_idxs));
 %
 table_Rho = []; % average Spearman's rho for each ROI for each model
 table_H = []; % result of hypothesis test for each ROI for each model -- is the correlation significant?
+table_T = []; % t-value of hypothesis test for each ROI for each model
 table_P = []; % p-value of hypothesis test for each ROI for each model
 all_subject_rhos = nan(numel(rows), numel(cols), metadata.N);
 lmes = {};
@@ -136,6 +137,7 @@ for row_idx = 1:numel(rows)
     table_Rho = [table_Rho; mean(fisher_models_rhos')];
     table_H = [table_H; h];
     table_P = [table_P; ps];
+    table_T = [table_T; stats.tstat];
 end
 
 

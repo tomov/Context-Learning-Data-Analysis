@@ -44,7 +44,7 @@ if all_vs_all
     do_LME = false; % we can't do LME here
     rows = [Neural Model];
     cols = rows;
-    [table_Rho, table_H, table_P, all_subject_rhos] = rdms_second_order(metadata, rows, cols, [], do_LME, [], []);
+    [table_Rho, table_H, table_T, table_P, all_subject_rhos] = rdms_second_order(metadata, rows, cols, [], do_LME, [], []);
 else
     % Neural RDMs vs. Model RDMs
     %
@@ -57,7 +57,7 @@ else
     lme_model_idxs = [1 3 18 39 41 46]; % which models to consider to LME
     rows = Neural;
     cols = Model;
-    [table_Rho, table_H, table_P, all_subject_rhos, lmes] = rdms_second_order(metadata, rows, cols, control_model_idxs, do_LME, lme_neural_idxs, lme_model_idxs);
+    [table_Rho, table_H, table_T, table_P, all_subject_rhos, lmes] = rdms_second_order(metadata, rows, cols, control_model_idxs, do_LME, lme_neural_idxs, lme_model_idxs);
 end
 
 
@@ -74,7 +74,8 @@ rdms_show_full(rows, cols, table_Rho, table_P, all_vs_all);
 
 %% Show the significant positive correlations
 %
-rdms_show_significant(rows, cols, table_Rho, table_P, all_subject_rhos, lmes, do_LME, all_vs_all, true);
+rdms_show_significant(rows, cols, table_Rho, table_P, all_subject_rhos, lmes, do_LME, all_vs_all, false); % with LME
+%rdms_show_significant(rows, cols, table_Rho, table_P, all_subject_rhos, {}, false, all_vs_all, true); % no LME
 
 %% Chan et al.-like bar plots for their models
 %
