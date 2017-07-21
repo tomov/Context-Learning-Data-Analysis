@@ -1,4 +1,4 @@
-function tmaps = get_tmaps(mask, regressor_prefix, data, metadata)
+function tmaps = get_tmaps(mask, regressor_prefix, data, metadata, use_nosmooth)
 
 % Wrapper around load_tmaps that caches the results to a file and tries to load from that file
 % subsequently.
@@ -7,10 +7,15 @@ function tmaps = get_tmaps(mask, regressor_prefix, data, metadata)
 
 assert(ismember(regressor_prefix, {'trial_onset', 'feedback_onset'}));
 
+suffix = '';
+if use_nosmooth
+    suffix = '_nosmooth';
+end
+
 % Load the neural data
 %
 [~, maskname, ~] = fileparts(mask);
-tmaps_filename = fullfile('tmaps', ['tmaps_', regressor_prefix, '_', maskname, '.mat']);
+tmaps_filename = fullfile('tmaps', ['tmaps_', regressor_prefix, '_', maskname, suffix, '.mat']);
 
 % Try to load the precomputed tmaps from the single mat file. If they
 % haven't been precomputed yet, load them and save them in a file for
@@ -18,7 +23,7 @@ tmaps_filename = fullfile('tmaps', ['tmaps_', regressor_prefix, '_', maskname, '
 %
 if exist(tmaps_filename, 'file') ~= 2
     fprintf('Loading tmaps from disk and saving them to %s\n', tmaps_filename);
-    tmaps = load_tmaps(mask, regressor_prefix, data, metadata);
+    tmaps = load_tmaps(mask, regressor_prefix, data, metadata, use_nosmooth);
     save(tmaps_filename, 'tmaps', '-v7.3');
 else
     fprintf('Loading precomputed tmaps from %s\n', tmaps_filename);

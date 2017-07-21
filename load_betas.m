@@ -1,4 +1,4 @@
-function betas = load_betas(mask, regressor_prefix, data, metadata)
+function betas = load_betas(mask, regressor_prefix, data, metadata, use_nosmooth)
 
 % Load all the betas corresponding to activations at trial onset for the
 % given mask and regressor prefix. Does this for all trials for all runs for all subjects.
@@ -8,6 +8,7 @@ function betas = load_betas(mask, regressor_prefix, data, metadata)
 % regressor_prefix = 'trial_onset' or 'feedback_onset'; assumes regressor
 %                    names are of the form {regressor prefix}_{trial id}
 % data, metadata = subject behavioral data as output by load_data
+% use_nosmooth = whether to use the non-smoothed neural data
 %
 % OUTPUT:
 % betas = [nRows x nVoxels] beta coefficients for the mask for each trial.
@@ -21,6 +22,10 @@ EXPT = context_expt();
 glmodel = 143; % this is the one that has a regressor for each trial onset
 subjs = getGoodSubjects();
 runs = 1:metadata.runsPerSubject;
+
+if use_nosmooth
+    EXPT.modeldir = [EXPT.modeldir, '_nosmooth'];
+end
 
 if strcmp(regressor_prefix, 'trial_onset')
     trials = 1:metadata.trialsPerRun;

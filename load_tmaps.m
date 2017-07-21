@@ -1,4 +1,4 @@
-function tmaps = load_tmaps(mask, regressor_prefix, data, metadata)
+function tmaps = load_tmaps(mask, regressor_prefix, data, metadata, use_nosmooth)
 
 % Load all the t-maps corresponding to activations at trial onset or feedback onset for the
 % given mask and regressor prefix. Does this for all trials for all runs for all subjects.
@@ -12,6 +12,7 @@ function tmaps = load_tmaps(mask, regressor_prefix, data, metadata)
 %                    t-maps have the exact same names as the regressor
 %                    names (including the Sn(#) prefix)
 % data, metadata = subject behavioral data as output by load_data
+% use_nosmooth = whether to use the non-smoothed neural data
 %
 % OUTPUT:
 % tmaps = [nRows x nVoxels] t statistics for the voxels in the mask for each trial.
@@ -25,6 +26,10 @@ EXPT = context_expt();
 glmodel = 143; % this is the one that has a regressor for each trial onset
 subjs = getGoodSubjects();
 runs = 1:metadata.runsPerSubject;
+
+if use_nosmooth
+    EXPT.modeldir = [EXPT.modeldir, '_nosmooth'];
+end
 
 if strcmp(regressor_prefix, 'trial_onset')
     trials = 1:metadata.trialsPerRun;
