@@ -74,8 +74,8 @@ rdms_show_full(rows, cols, table_Rho, table_P, all_vs_all);
 
 %% Show the significant positive correlations
 %
-rdms_show_significant(rows, cols, table_Rho, table_P, all_subject_rhos, lmes, do_LME, all_vs_all, true); % with LME
-%rdms_show_significant(rows, cols, table_Rho, table_P, all_subject_rhos, {}, false, all_vs_all, true); % no LME
+%rdms_show_significant(rows, cols, table_Rho, table_P, all_subject_rhos, lmes, do_LME, all_vs_all, true); % with LME
+rdms_show_significant(rows, cols, table_Rho, table_P, all_subject_rhos, {}, false, all_vs_all, true); % no LME
 
 %% Chan et al.-like bar plots for their models
 %

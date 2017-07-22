@@ -152,7 +152,9 @@ switch method
         % x = inputs
         % y = targets
         %
-        CVfit = cvglmnet(inputs, targets, 'multinomial', options, 'deviance', [], foldid, true, true);
+        parallel = false;
+        keep = true;
+        CVfit = cvglmnet(inputs, targets, 'multinomial', options, 'deviance', [], foldid, parallel, keep);
         disp(CVfit);
 
         outputs = cvglmnetPredict(CVfit, inputs, CVfit.lambda_1se, 'response');

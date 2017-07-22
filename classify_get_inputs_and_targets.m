@@ -29,6 +29,15 @@ function [inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, t
 %disp(subjs)
 %disp(predict_what);
 
+use_tmaps = true; % #KNOB TODO make parameter
+use_nosmooth = true; % #KNOB TODO make parameter
+
+if use_tmaps
+    get_activations = @get_tmaps;
+else
+    get_activations = @get_betas;
+end
+
 % Load the subject behavioral data
 %
 [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
@@ -36,7 +45,7 @@ subjects = metadata.allSubjects;
 
 % Load the neural data
 %
-betas = get_betas(mask, 'trial_onset', data, metadata);
+activations = get_activations(mask, 'trial_onset', data, metadata, use_nosmooth);
 
 % condition = context role labels
 %
@@ -44,7 +53,7 @@ condition_labels = containers.Map(metadata.conditions, ...
                         {[1 0 0], [0 1 0], [0 0 1]});
                     
 n_observations = length(subjs) * length(runs) * length(trials);
-n_voxels = size(betas, 2);
+n_voxels = size(activations, 2);
 
 % figure out which rows (trials) we're looking at
 %
@@ -64,7 +73,7 @@ end
 % Compute input vectors
 %
 
-inputs = betas(which_rows, :); % rows = x = observations, cols = voxels / dependent vars
+inputs = activations(which_rows, :); % rows = x = observations, cols = voxels / dependent vars
 inputs(isnan(inputs)) = 0; % some of them fall outside the imaging range and are NaNs; don't let those screw up our analysis
 assert(size(inputs, 1) == n_observations);
 assert(size(inputs, 2) == n_voxels);

@@ -103,6 +103,7 @@ for row_idx = 1:numel(rows)
         else
             stars = significance(ps(i));
         end
+        %stars = int2str(length(stars));
         text(xs(i) - length(stars) * 0.3 / 2, means(i) + sems(i) * 1.2, stars, 'Rotation', 45);
     end
 
