@@ -42,7 +42,7 @@ x = x(idx);
 y = y(idx);
 z = z(idx);
 
-Searchlight = rdms_get_searchlight(data, metadata, which_rows, x, y, z, r, true, true, false); % use pregen'd betas, use tmaps, use nosmooth
+Searchlight = rdms_get_searchlight(data, metadata, which_rows, x, y, z, r, true, false, false); % use pregen'd betas, use tmaps, use nosmooth
 
 %% Get the model RDMs
 %

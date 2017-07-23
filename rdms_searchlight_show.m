@@ -1,6 +1,26 @@
-event = 'feedback_onset';
-model = 'logPosterior';
+clear all;
+close all;
 
+event = 'feedback_onset';
+model = 'prior';
+%dirname = 'rdms/betas_smooth';
+dirname = 'rdms';
+
+% posterior @ feedback_onset -- bilateral AG, bilateral dlPFC, IT, visual... :(
+% prior @ feedback_onset -- same
+% prior @ trial_onset -- vlPFC
+% values @ feedback_onset - bilateral AG, right dlPFC
+% value @ feedback_onset - right IT
+% newValue @ feedback_onset - right IT, right AG !!!
+% PEs - bilateral AG
+% 
+% weightsAfter @ feedback_onset -- nothing :(
+% weightsBefore @ trial_onset -- 
+
+% logPosterior @ feedback_onset -- bilateral AG, dlPFC
+% logPrior @ feedback_onset -- bilateral AG, lateral PFC, visual
+% logPrior @ trial_onset -- right IT, med PFC / BA 10
+% logValuesSquared @ feedback_onset -- right AG
 
 assert(ismember(event, {'trial_onset', 'feedback_onset'}));
 
@@ -16,17 +36,17 @@ assert(ismember(model, model_names));
 %
 [~, V, tmap] = load_mask(fullfile('masks', 'spmT_0001.nii'));
 tmap(:) = NaN; % clear
-V.fname = fullfile('rdms/searchlight_tmap.nii'); % change immediately!
+V.fname = fullfile(dirname, 'searchlight_tmap.nii'); % change immediately!
 
 %% load all the searchlight results
 %
-files = dir('rdms');
+files = dir(dirname);
 for i = 1:length(files)
     file = files(i).name;
     if startsWith(file, 'searchlight_') && endsWith(file, '.mat')
         disp(['Loading ', file]);
         table_T = [];
-        load(fullfile('rdms', file));
+        load(fullfile(dirname, file));
         if isempty(table_T)
             % forgot to keep track of table_T sometimes...
             % you can get the t-values from the p-values using the fact that:

@@ -3,6 +3,11 @@
 # Appends the job ids to a file jobs.txt for convenience / keeping track of stuff
 #
 
+echo ---------------- >> jobs.txt
+echo --- Here we go classify_leaveout_run.sh >> jobs.txt
+echo ---------------- >> jobs.txt
+
+
 methods=( "cvglmnet" "patternnet" )
 masknames=( "hippocampus" "ofc" "striatum" "vmpfc" "bg" "pallidum" "visual" "v1" "motor" "sensory" )
 runs_to_leaveout=(1 2 3 4 5 6 7 8 9)

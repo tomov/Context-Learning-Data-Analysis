@@ -129,7 +129,9 @@ for row_idx = 1:numel(rows)
         end
     end
     
-    % Group-level analysis
+    % Group-level analysis -- collapse across subjects
+    % for each model, do a t-test of the correlation coefficients between
+    % each subject's neural RDM and the corresponding model RDM
     %
     fisher_models_rhos = atanh(models_subjs_rhos);
     [h, ps, ci, stats] = ttest(fisher_models_rhos');
