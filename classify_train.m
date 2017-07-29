@@ -148,6 +148,25 @@ switch method
         foldid = data.runId(which_rows);
         foldid = arrayfun(@(x) find(x == runs), foldid);
         %}
+        % each (subject, run) is a separate fold TODO rm
+        %
+        [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
+        cur_participant = '';
+        cur_run = NaN;
+        cur_fold = 0;
+        foldid = [];
+        for i = find(which_rows)'
+            if ~isequal(data.participant{i}, cur_participant) || ~isequal(data.runId(i), cur_run)
+                cur_fold = cur_fold + 1;
+            end
+            foldid = [foldid; cur_fold];
+            cur_participant = data.participant{i};
+            cur_run = data.runId(i);
+        end
+        assert(length(foldid) == sum(which_rows));
+        disp('folds:');
+        disp(foldid);
+
         
         % x = inputs
         % y = targets
@@ -172,5 +191,5 @@ toc
 
 % Save everything except for inputs (too big)
 %
-%fprintf('SAVING to %s\n', outFilename);
-%save(outFilename,'-regexp','^(?!(inputs)$).');
+fprintf('SAVING to %s\n', outFilename);
+save(outFilename,'-regexp','^(?!(inputs)$).');

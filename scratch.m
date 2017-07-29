@@ -1,5 +1,40 @@
 
+% to convert from .hdr and .img (as bspmview outputs them) to nii
+%
+%nii = load_nii('masks/ClusterMask_spmT_0001_x=32_y=-62_z=46_1172voxels.hdr');
+%save_nii(nii, 'masks/right_AG_123_ClusterMask_spmT_0001_x=32_y=-62_z=46_1172voxels.nii');
 
+% to trim the bad voxels in the wrong hemisphere
+%
+[~, V, Y] = load_mask('masks/right_AG_123_ClusterMask_spmT_0001_x=32_y=-62_z=46_1172voxels.nii');
+V.fname = 'masks/right_AG_123_ClusterMask_spmT_0001_x=32_y=-62_z=46_1172voxels_edited.nii';
+
+for x = 1:size(Y, 1)
+    for y = 1:size(Y, 2)
+        for z = 1:size(Y, 3)
+            mni = cor2mni([x y z], V.mat);
+            if mni(1) < 0
+                Y(x,y,z) = 0;
+            end
+        end
+    end
+end
+
+spm_write_vol(V, Y);
+
+check_mask(V.fname);
+
+
+%{
+batch_size = 1000;
+r = 1.814;
+for batch=1:217
+    fprintf('Batch = %d\n', batch);
+    start_idx = (batch - 1) * batch_size + 1;
+    end_idx = batch * batch_size;
+    rdms_searchlight(start_idx, end_idx, 1.814);
+end
+%}
 
 
 %{

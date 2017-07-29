@@ -1,10 +1,16 @@
 clear all;
 close all;
 
+% QUESTIONS:
+% 1. P(weights) -- comparing trials across runs? see rdms_get_model.m
+% NO -- too similar; 2. two-sample t-test of prior vs. posterior -- which one is more similar to the
+% given voxel RDM? (we have spearman's rho for all participants)
+%
+
 event = 'feedback_onset';
-model = 'prior';
-%dirname = 'rdms/betas_smooth';
-dirname = 'rdms';
+model = 'posterior';
+dirname = 'rdms/betas_smooth';
+%dirname = 'rdms';
 
 % posterior @ feedback_onset -- bilateral AG, bilateral dlPFC, IT, visual... :(
 % prior @ feedback_onset -- same

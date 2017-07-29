@@ -49,6 +49,7 @@ lmes = {};
 % Do the work
 %
 for row_idx = 1:numel(rows)
+    fprintf('Row %d\n', row_idx);
 
     models_subjs_rhos = []; % Spearman rhos: row = model, col = subject
     for col_idx = 1:numel(cols)

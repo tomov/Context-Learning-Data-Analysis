@@ -12,7 +12,7 @@ function Model = rdms_get_model(data, metadata, which_rows)
 disp('Computing model RDMs...');
 tic
 
-% Simulate behavior
+%% Simulate behavior
 %
 load(fullfile('results', 'fit_params_results.mat'), 'results', 'results_options');
 params = results(1).x;
@@ -29,14 +29,32 @@ assert(options.fixedEffects == 1);
 assert(isequal(options.which_structures, [1 1 1 0]));
 which_structures = logical(options.which_structures);
 
-% Simulate behavior using Kalman filter
+%% Simulate behavior using Kalman filter
 %
 simulated = simulate_subjects(data, metadata, params, which_structures);
 
-model_idx = 0;
+% vector that specifies the structure corresponding to the condition
+%
+current_structure = nan(length(data.condition), 1);
+for i = 1:length(data.condition)
+    if strcmp(data.condition{i}, 'irrelevant')
+        current_structure(i) = 1;
+    elseif strcmp(data.condition{i}, 'modulatory')
+        current_structure(i) = 2;
+    else
+        assert(strcmp(data.condition{i}, 'additive'));
+        current_structure(i) = 3;
+    end
+end
 
 %
-% at trial onset
+%% Create model RDMs
+%
+
+
+model_idx = 0;
+
+%% models at trial onset
 %
 
 % Posterior: normalized correlation of posterior
@@ -214,7 +232,7 @@ Model(model_idx).RDM = avgLogVals2RDM;
 Model(model_idx).name = 'logValuesSquared';
 Model(model_idx).color = [0 1 0];
 
-% weights before the update
+% weights before the update (i.e. prior weights) for all structures
 %
 ww_before = [simulated.ww_before{1} simulated.ww_before{2} simulated.ww_before{3}];
 ww_before = ww_before + rand(size(ww_before)) * 0.001; % so cosine metric works
@@ -227,8 +245,7 @@ Model(model_idx).color = [0 1 0];
 
 
 
-%
-% at feedback onset
+%% models at feedback onset
 %
 
 
@@ -513,7 +530,7 @@ Model(model_idx).RDM = avgPriorMaqOnlyRDM;
 Model(model_idx).name = 'priorMAQonly';
 Model(model_idx).color = [0 1 0];
 
-% weights after the update
+% weights after the update (i.e. posterior weights) for all structures
 %
 ww_after = [simulated.ww_after{1} simulated.ww_after{2} simulated.ww_after{3}];
 ww_after = ww_after + rand(size(ww_after)) * 0.001; % so cosine metric works
@@ -524,6 +541,67 @@ Model(model_idx).RDM = avgWeightsAfterRDM;
 Model(model_idx).name = 'weightsAfter';
 Model(model_idx).color = [0 1 0];
 
+% prior weights for strucutre corresponding to condition (see GLM 148)
+%
+max_dim = max([size(simulated.ww_before{1}, 2), size(simulated.ww_before{2}, 2), size(simulated.ww_before{3}, 2)]);
+ww_prior = zeros(size(data.condition, 1), max_dim);
+for i = 1:size(simulated.ww_before{1}, 1)
+    M = current_structure(i);
+    ww_prior(i, 1:size(simulated.ww_before{M}, 2)) = simulated.ww_before{M}(i,:);
+    % TODO FIXME to make the weights for M1 comparable to M2 and M3, include them twice
+    % i.e. when comparing a trial from M1 with a trial from M2, we'll be comparing both weights for x1 and x2 from M1
+    % with M2's weights for x1 and x2 in c1 and in c2. I.e. weight vectors
+    % are M1 = [x1 x2 x1 x2], M2 = [x1c1 x2c1 x1c2 x2c2]
+    % unfortunately for M3, this means we'll be comparing x1 and x2 with c1
+    % and c2 because the weight vector for M3 = [x1 x2 c1 c2]
+    %
+    if M == 1
+        assert(size(simulated.ww_before{M}, 2) == 2);
+        assert(max_dim == 4);
+        ww_prior(i, 3:4) = ww_prior(i, 1:2);
+    end
+end
+ww_prior = ww_prior + rand(size(ww_prior)) * 0.001; % so cosine metric works
+[weightsPosteriorRDMs, avgWeightsPosteriorRDM] = compute_rdms(ww_prior, 'cosine', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = weightsPosteriorRDMs;
+Model(model_idx).RDM = avgWeightsPosteriorRDM;
+Model(model_idx).name = 'weightsPrior';
+Model(model_idx).color = [0 1 0];
+
+% posterior weights for strucutre corresponding to condition (see GLM 148)
+%
+max_dim = max([size(simulated.ww_after{1}, 2), size(simulated.ww_after{2}, 2), size(simulated.ww_after{3}, 2)]);
+ww_posterior = zeros(size(data.condition, 1), max_dim);
+for i = 1:size(simulated.ww_after{1}, 1)
+    M = current_structure(i);
+    ww_posterior(i, 1:size(simulated.ww_after{M}, 2)) = simulated.ww_after{M}(i,:);
+    if M == 1
+        assert(size(simulated.ww_before{M}, 2) == 2);
+        assert(max_dim == 4);
+        ww_posterior(i, 3:4) = ww_posterior(i, 1:2);
+    end
+end
+ww_posterior = ww_posterior + rand(size(ww_posterior)) * 0.001; % so cosine metric works
+[weightsPosteriorRDMs, avgWeightsPosteriorRDM] = compute_rdms(ww_posterior, 'cosine', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = weightsPosteriorRDMs;
+Model(model_idx).RDM = avgWeightsPosteriorRDM;
+Model(model_idx).name = 'weightsPosterior';
+Model(model_idx).color = [0 1 0];
+
+
+% prior Sigma for strucutre corresponding to condition (see GLM 148)
+%
+%max_dim = max([numel(simulated.Sigma_before{1}(:,:,1)), numel(simulated.Sigma_before{2}(:,:,1)), numel(simulated.Sigma_before{3}(:,:,1))]);
+%Sigma_prior = zeros(size(data.condition, 1), max_dim); % it's ok to pad with zeros when the weight vector is smaller
+%for i = 1:size(simulated.Sigma_before{1}, 3)
+%    M = current_structure(i);
+%    s = simulated.Sigma_before{M}(:,:,i);
+%    s = s(:)'; % flatten the covariance matrix
+%    Sigma_prior(i, 1:numel(s)) = s;
+%end
+%Sigma_prior = Sigma_prior + rand(size(Sigma_prior)) * 0.001; % so cosine metric works
 
 
 disp('Computed model RDMs.');
