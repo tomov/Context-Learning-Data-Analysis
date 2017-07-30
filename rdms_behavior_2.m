@@ -1,23 +1,12 @@
-% Idea: the posterior (and learning in general) is pretty flat in the
-% second half of training
-% => areas which encode the posterior should look similar during the second
-% half of training (as opposed to areas who don't / during the first half
-% of training)
-% => the extent to which these representations are consistent is indicative
-% of how well the subject has learned (...or maybe is not learning at
-% all??? idk...)
-% anyway, see if there's a relationship between the similarity of
-% representations in given ROIs during the second half of training, and
-% performance on the test trials (the structure learning effect)
+% TODO dedupe with rdms_behavior.m and rdms_second_order.m
 %
-% => GLM1 has the effect; however could be just a reflection of the structure
-% learning effect we saw earlier...
+% Idea: RDMs of ROIs vs. models (e.g. posterior) on a run-by-run basis;
+% correlate with behavior 
+% same as kl_structure_learning effect but multivoxel pattern
+%
 
 close all;
 clear all;
-
-% load('results/rdms_behavior.mat'); % <--- alternative to recomputing all
-% the shit from scratch
 
 utils;
 
@@ -65,14 +54,27 @@ masks(6).rdm_name = 'light-R-AG-cluster-290';
 masks(7).filename = 'masks/light_ClusterMask_searchlight_tmap_x=36_y=-58_z=44_60voxels_edited.nii';
 masks(7).rdm_name = 'light-R-AG-cluster-60';
 
-Neural = rdms_get_neural_2(masks, data, metadata, which_trials, false, false);
-Neural_controls = rdms_get_neural(data, metadata, which_trials, false, false); % use t-maps, use nosmooth
-Neural = [Neural, Neural_controls];
+%Neural = rdms_get_neural_2(masks, data, metadata, which_trials, false, false);
+Neural = rdms_get_neural(data, metadata, which_trials, false, false); % use t-maps, use nosmooth
+%Neural = [Neural, Neural_controls];
 showRDMs(Neural, 1);
+
+%% Get the model RDMs
+%
+Model = rdms_get_model(data, metadata, which_trials);
+showRDMs(Model, 2);
+
+control_model_idxs = [8, 12]; % #KNOB control for time and run
+assert(isequal(Model(8).name, 'time'));
+assert(isequal(Model(12).name, 'run'));
+
+model_idx = 1;
+assert(isequal(Model(1).name, 'posterior'));
+
 
 %% find how similar representations are in each ROI at the end of training
 %
-avg_dists = nan(metadata.runsPerSubject, metadata.N, numel(Neural));
+rhos = nan(metadata.runsPerSubject, metadata.N, numel(Neural));
 
 goodSubjects = getGoodSubjects();
 subjs = metadata.allSubjects(goodSubjects);
@@ -90,9 +92,10 @@ which_trials_per_subj = which_trials & strcmp(data.participant, subjs{1});
 % for each run of each subject, get the average RDM
 %
 for run = 1:metadata.runsPerSubject
-    t1_mask = data.runId(t1) == run & data.trialId(t1) > 10;
-    t2_mask = data.runId(t2) == run & data.trialId(t2) > 10;
+    t1_mask = data.runId(t1) == run & data.trialId(t1);
+    t2_mask = data.runId(t2) == run & data.trialId(t2);
     run_mask = t1_mask & t2_mask & t1 > t2;
+    run_mask_control = repmat(run_mask, 1, 1, numel(control_model_idxs));
     
     for subj = 1:metadata.N
         fprintf('subject %d, run %d\n', subj, run);
@@ -103,11 +106,26 @@ for run = 1:metadata.runsPerSubject
             % use a binary mask that says which pairs of trials from the RDM
             % to look at.
             %
-            RDM = Neural(neural_idx).RDMs(:,:,subj);
-            sub_RDM = RDM(run_mask);
+            neural_RDM = Neural(neural_idx).RDMs(:,:,subj);
+            model_RDM = Model(model_idx).RDMs(:,:,subj);
+            control_RDMs = nan(size(neural_RDM, 1), size(model_RDM, 2), numel(control_model_idxs));
+            for i = 1:numel(control_model_idxs) 
+                control_RDMs(:,:,i) = Model(control_model_idxs(i)).RDMs(:,:,subj);
+            end
+            
+            neural_subRDM = neural_RDM(run_mask);
+            model_subRDM = model_RDM(run_mask);
+            control_subRDMs = control_RDMs(run_mask_control);
+            
+            control_subRDMs = reshape(control_subRDMs, size(neural_subRDM, 1), numel(control_model_idxs));
+            %rho = partialcorr(neural_subRDM, model_subRDM, control_subRDMs, 'type', 'Spearman');
+            rho = corr(neural_subRDM, model_subRDM, 'type', 'Spearman');
+            assert(~isnan(rho));
+
+            rhos(run, subj, neural_idx) = rho;
             
             % TODO is this legit? Fisher z-transform?
-            avg_dists(run, subj , neural_idx) = mean(sub_RDM);
+            %avg_dists(run, subj , neural_idx) = mean(neural_subRDM);
         end
     end
 end
@@ -129,7 +147,7 @@ for run = 1:metadata.runsPerSubject
         test_log_lik = mean(log(test_liks)); % take the mean -- takes care of TIMEOUTs (think: what if the subject responded on only 1 test trial? we can't just sum them)
         test_log_liks(run, subj) = test_log_lik;
         %test_log_liks(run, subj) = sum(log(test_liks)); % TODO which one is the "right" one?
-        test_log_liks(run, subj) = prod(test_liks);
+        %test_log_liks(run, subj) = prod(test_liks);
     end
 end
         
@@ -140,11 +158,11 @@ r_sems = [];
 all_rs = nan(numel(Neural), metadata.N);
 
 for neural_idx = 1:numel(Neural) % for each ROI
-    avg_dists_roi = avg_dists(:,:,neural_idx);
+    rhos_roi = rhos(:,:,neural_idx);
     rs = [];
     for subj = 1:metadata.N % for each subject
         x = test_log_liks(:, subj);
-        y = avg_dists_roi(:, subj);
+        y = rhos_roi(:, subj);
         
         x = zscore(x); % TODO try w/o
         y = zscore(y);
