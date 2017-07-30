@@ -32,6 +32,9 @@ assert(isequal(options.which_structures, [1 1 1 0]));
 which_structures = logical(options.which_structures);
 
 
+predict = @(V_n) softmax(V_n, params(2));
+
+
 simulated = simulate_subjects(data, metadata, params, which_structures);
 
 
@@ -141,6 +144,50 @@ for run = 1:metadata.runsPerSubject
         subj_run_test_trials = data.which_rows & data.runId == run & data.isTest & ~data.timeout &...
             strcmp(data.participant, metadata.allSubjects{goodSubjects(subj)});
         assert(sum(subj_run_test_trials) <= 4 && sum(subj_run_test_trials) >= 3);
+        
+        
+        % OPTION 1 -- do it like we do it in GLM 124 and the KL structure
+        % learning effect (kl_structure_learning.m) i.e. take the
+        % likelihood for the causal structure corresponding to the current
+        % condition only
+        %
+        model_test_valuess = simulated.valuess(subj_run_test_trials, :); % one for each structure
+        model_test_choice_probs = predict(model_test_valuess);
+        subj_test_choices = strcmp(data.response.keys(subj_run_test_trials), 'left');
+        
+        liks = nan(size(model_test_choice_probs));
+        for i = 1:size(model_test_choice_probs, 1) % for each test trial
+            for j = 1:size(model_test_choice_probs, 2) % for each causal structure
+                liks(i,j) = binopdf(subj_test_choices(i), 1, model_test_choice_probs(i, j));
+            end
+        end
+        
+        % take average log likelihood !!!
+        % this is to account for missing trials where subject timed
+        % out. Note that taking the sum would be wrong -- imagine
+        % if subject responded on only 1 trial
+        test_log_lik = mean(log(liks), 1);
+        test_log_lik = test_log_lik(:, 1:3); % exclude M4
+        
+        M = -1;
+        condition = data.condition(subj_run_test_trials);
+        condition = condition{1};
+        if strcmp(condition, 'irrelevant')
+            M = 1;
+        elseif strcmp(condition, 'modulatory')
+            M = 2;
+        else
+            assert(strcmp(condition, 'additive'));
+            M = 3;
+        end
+        
+        test_log_liks(run, subj) = test_log_lik(M);
+        
+        % OPTION 2 -- take the overall likelihood; it's basically the same
+        % thing since by the end of training, the overall likelihood = the
+        % likelihood of the "correct" causal structure
+        %
+        %{
         model_test_choice_probs = simulated.pred(subj_run_test_trials);
         subj_test_choices = strcmp(data.response.keys(subj_run_test_trials), 'left');
         test_liks = binopdf(subj_test_choices, 1, model_test_choice_probs); % WARNING: won't work on NCF...
@@ -148,6 +195,7 @@ for run = 1:metadata.runsPerSubject
         test_log_liks(run, subj) = test_log_lik;
         %test_log_liks(run, subj) = sum(log(test_liks)); % TODO which one is the "right" one?
         %test_log_liks(run, subj) = prod(test_liks);
+        %}
     end
 end
         
