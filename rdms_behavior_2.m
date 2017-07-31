@@ -41,21 +41,86 @@ simulated = simulate_subjects(data, metadata, params, which_structures);
 %% Get the neural RDMs
 %
 clear masks;
-masks(1).filename = 'masks/glm123_ClusterMask_spmT_0001_x=32_y=-66_z=50_1172voxels_edited.nii';
-masks(1).rdm_name = 'GLM1-R-AG-cluster-1172';
-masks(2).filename = 'masks/glm123_ClusterMask_spmT_0001_x=32_y=-66_z=50_458voxels_edited.nii';
-masks(2).rdm_name = 'GLM1-R-AG-cluster-458';
-masks(3).filename = 'masks/glm123_ClusterMask_spmT_0001_x=32_y=-66_z=50_192voxels_edited.nii';
-masks(3).rdm_name = 'GLM1-R-AG-cluster-192';
-masks(4).filename = 'masks/glm123_ClusterMask_spmT_0001_x=32_y=-66_z=50_59voxels_edited.nii';
-masks(4).rdm_name = 'GLM1-R-AG-cluster-49';
+mask_idx = 0;
 
-masks(5).filename = 'masks/light_ClusterMask_searchlight_tmap_x=36_y=-58_z=44_911voxels_edited.nii';
-masks(5).rdm_name = 'light-R-AG-cluster-911';
-masks(6).filename = 'masks/light_ClusterMask_searchlight_tmap_x=36_y=-58_z=44_290voxels_edited.nii';
-masks(6).rdm_name = 'light-R-AG-cluster-290';
-masks(7).filename = 'masks/light_ClusterMask_searchlight_tmap_x=36_y=-58_z=44_60voxels_edited.nii';
-masks(7).rdm_name = 'light-R-AG-cluster-60';
+% GLM 123 (KL_structures) clusters
+%
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/glm123_R_AG_ClusterMask_spmT_0001_x=32_y=-66_z=50_1172voxels_edited.nii';
+masks(mask_idx).rdm_name = 'GLM1-R-AG-cluster-1172';
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/glm123_R_AG_ClusterMask_spmT_0001_x=32_y=-66_z=50_458voxels_edited.nii';
+masks(mask_idx).rdm_name = 'GLM1-R-AG-cluster-458';
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/glm123_R_AG_ClusterMask_spmT_0001_x=32_y=-66_z=50_192voxels_edited.nii';
+masks(mask_idx).rdm_name = 'GLM1-R-AG-cluster-192';
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/glm123_R_AG_ClusterMask_spmT_0001_x=32_y=-66_z=50_59voxels_edited.nii';
+masks(mask_idx).rdm_name = 'GLM1-R-AG-cluster-49';
+
+% searchlight -- posterior @ feedback_onset clusters
+%
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/light_posterior_feedback-onset_R_AG_ClusterMask_searchlight_tmap_x=36_y=-58_z=44_911voxels_edited.nii';
+masks(mask_idx).rdm_name = 'light-post-f-R-AG-cluster-911';
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/light_posterior_feedback-onset_R_AG_ClusterMask_searchlight_tmap_x=36_y=-58_z=44_290voxels_edited.nii';
+masks(mask_idx).rdm_name = 'light-post-f-R-AG-cluster-290';
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/light_posterior_feedback-onset_R_AG_ClusterMask_searchlight_tmap_x=36_y=-58_z=44_60voxels_edited.nii';
+masks(mask_idx).rdm_name = 'light-post-f-R-AG-cluster-60';
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/light_posterior_feedback-onset_R_dlPFC_ClusterMask_searchlight_tmap_x=54_y=24_z=34_1989voxels_edited.nii';
+masks(mask_idx).rdm_name = 'light-post-f-R-dlPFC-cluster-1989';
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/light_posterior_feedback-onset_R_dlPFC_ClusterMask_searchlight_tmap_x=54_y=24_z=34_117voxels_edited.nii';
+masks(mask_idx).rdm_name = 'light-post-f-R-dlPFC-cluster-117';
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/light_posterior_feedback-onset_L_dlPFC_ClusterMask_searchlight_tmap_x=-50_y=24_z=26_1038voxels_edited.nii';
+masks(mask_idx).rdm_name = 'light-post-f-L-dlPFC-cluster-1038';
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/light_posterior_feedback-onset_L_dlPFC_ClusterMask_searchlight_tmap_x=-52_y=22_z=26_61voxels_edited.nii';
+masks(mask_idx).rdm_name = 'light-post-f-L-dlPFC-cluster-61';
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/light_posterior_feedback-onset_ACC_ClusterMask_searchlight_tmap_x=4_y=22_z=44_253voxels_edited.nii';
+masks(mask_idx).rdm_name = 'light-post-f-ACC-cluster-253';
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/light_posterior_feedback-onset_ACC_ClusterMask_searchlight_tmap_x=6_y=22_z=44_37voxels_edited.nii';
+masks(mask_idx).rdm_name = 'light-post-f-ACC-cluster-37';
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/light_posterior_feedback-onset_L_AG_ClusterMask_searchlight_tmap_x=-26_y=-60_z=36_602voxels_edited.nii';
+masks(mask_idx).rdm_name = 'light-post-f-L-AG-cluster-602';
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/light_posterior_feedback-onset_L_AG_ClusterMask_searchlight_tmap_x=-26_y=-60_z=34_119voxels_edited.nii';
+masks(mask_idx).rdm_name = 'light-post-f-L-AG-cluster-119';
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/light_posterior_feedback-onset_L_AG_ClusterMask_searchlight_tmap_x=-26_y=-60_z=34_10voxels_edited.nii';
+masks(mask_idx).rdm_name = 'light-post-f-L-AG-cluster-10';
+
+
+% searchlight -- prior @ trial_onset clusters
+%
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/light_prior_trial-onset_L_dlPFC_ClusterMask_searchlight_tmap_x=-54_y=12_z=26_315voxels_edited.nii';
+masks(mask_idx).rdm_name = 'light-pri-t-L-dlPFC-cluster-315';
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/light_prior_trial-onset_R_dlPFC_ClusterMask_searchlight_tmap_x=46_y=14_z=22_28voxels_edited.nii';
+masks(mask_idx).rdm_name = 'light-pri-t-L-dlPFC-cluster-28';
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/light_prior_trial-onset_R_dlPFC_ClusterMask_searchlight_tmap_x=46_y=12_z=22_279voxels_edited.nii';
+masks(mask_idx).rdm_name = 'light-pri-t-L-dlPFC-cluster-279';
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/light_prior_trial-onset_L_dlPFC1_ClusterMask_searchlight_tmap_x=-36_y=10_z=24_17voxels_edited.nii';
+masks(mask_idx).rdm_name = 'light-pri-t-L-dlPFC1-cluster-17';
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/light_prior_trial-onset_L_dlPFC2_ClusterMask_searchlight_tmap_x=-56_y=14_z=26_34voxels_edited.nii';
+masks(mask_idx).rdm_name = 'light-pri-t-L-dlPFC2-cluster-34';
+
 
 %Neural = rdms_get_neural_2(masks, data, metadata, which_trials, false, false);
 Neural = rdms_get_neural(data, metadata, which_trials, false, false); % use t-maps, use nosmooth
@@ -75,7 +140,7 @@ model_idx = 1;
 assert(isequal(Model(1).name, 'posterior'));
 
 
-%% find how similar representations are in each ROI at the end of training
+%% find how similar representations are to posterior (model_idx = 1) in different ROIs per-run
 %
 rhos = nan(metadata.runsPerSubject, metadata.N, numel(Neural));
 
@@ -246,6 +311,7 @@ disp(n(logical(h))');
 disp(ps(logical(h))');
 
 
+%{
 % plot stuff
 %
 figure;
@@ -258,4 +324,54 @@ xtickangle(60);
 xlabel('ROI');
 %set(gca, 'XTick', []);
 title('KL betas correlated with structure learning effect: within-subject analysis', 'Interpreter', 'none');
+%}
 
+
+%% plot
+%
+
+figure;
+
+r_means = r_means(:,1);
+r_sems = r_sems(:, 1);
+
+h = bar(r_means, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
+xs = h(1).XData;
+hold on;
+errorbar(xs, r_means, r_sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+hold off;
+
+% Put the p-values
+%
+%bonferroni = false;
+for i = 1:numel(Neural)
+    significance = @(p) repmat('*', 1, floor(-log10(p)) - 1);
+    %{
+    if bonferroni
+        stars = significance(ps(i) * numel(table_P)); % Bonferroni correction
+    else
+        stars = significance(ps(i));
+    end
+    %}
+    
+    %stars = int2str(length(stars));
+    %text(xs(i) - length(stars) * 0.3 / 2, means(i) + sems(i) * 1.2, stars, 'Rotation', 45);
+    txt = 'n.s.';
+    if ps(i) <= 0.05
+        txt = sprintf('p = %.4f', ps(i));
+    end
+    text(xs(i), r_means(i) + r_sems(i) * 1.2, txt, 'Rotation', 90);
+end
+
+% Put the ROI / model names and figure title
+%
+set(gca, 'xtick', xs);
+n = {Neural.name};
+labels = {};
+for j = 1:numel(n)
+    labels{j} = n{j};
+end
+xticklabels(labels);
+xtickangle(55);
+
+ylabel('Avg Fisher z-transformed r');
