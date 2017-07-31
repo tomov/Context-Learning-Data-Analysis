@@ -33,6 +33,23 @@
 %prefix = 'masks/light_posterior_feedback-onset_L_AG_ClusterMask_searchlight_tmap_x=-26_y=-60_z=34_119voxels';
 %prefix = 'masks/light_posterior_feedback-onset_L_AG_ClusterMask_searchlight_tmap_x=-26_y=-60_z=34_10voxels';
 
+%prefix = 'masks/glm123_R_dlPFC_ClusterMask_spmT_0001_x=48_y=24_z=32_1160voxels';
+%prefix = 'masks/glm123_R_dlPFC_ClusterMask_spmT_0001_x=46_y=26_z=26_409voxels';
+%prefix = 'masks/glm123_R_dlPFC_ClusterMask_spmT_0001_x=46_y=26_z=28_166voxels';
+%prefix = 'masks/glm123_R_dlPFC_ClusterMask_spmT_0001_x=46_y=26_z=28_27voxels';
+
+%prefix = 'masks/glm123_L_dlPFC_ClusterMask_spmT_0001_x=-48_y=18_z=24_621voxels';
+%prefix = 'masks/glm123_L_dlPFC_ClusterMask_spmT_0001_x=-38_y=14_z=26_73voxels';
+
+%prefix = 'masks/glm123_R_rlPFC_ClusterMask_spmT_0001_x=36_y=56_z=-4_928voxels';
+%prefix = 'masks/glm123_R_rlPFC_ClusterMask_spmT_0001_x=36_y=56_z=-2_90voxels';
+%prefix = 'masks/glm123_R_rlPFC_ClusterMask_spmT_0001_x=38_y=54_z=-2_22voxels';
+
+%prefix = 'masks/glm123_L_rlPFC_ClusterMask_spmT_0001_x=-40_y=56_z=4_1121voxels';
+%prefix = 'masks/glm123_L_rlPFC_ClusterMask_spmT_0001_x=-40_y=56_z=4_302voxels';
+%prefix = 'masks/glm123_L_rlPFC_ClusterMask_spmT_0001_x=-40_y=56_z=2_115voxels';
+%prefix = 'masks/glm123_L_rlPFC_ClusterMask_spmT_0001_x=-40_y=56_z=2_19voxels';
+
 prefix = 'masks/..';
 
 nii = load_nii([prefix, '.hdr']);
@@ -44,17 +61,19 @@ save_nii(nii, [prefix, '.nii']);
 V.fname = [prefix, '_edited.nii'];
 
 %{
+
 for x = 1:size(Y, 1)
     for y = 1:size(Y, 2)
         for z = 1:size(Y, 3)
             mni = cor2mni([x y z], V.mat);
-            if mni(1) > 0
+            if mni(1) < 0
                 Y(x,y,z) = 0;
             end
         end
     end
 end
 %}
+
 
 spm_write_vol(V, Y);
 
