@@ -177,7 +177,7 @@ Neural = rdms_get_neural_2(masks, data, metadata, which_trials, false, false);
 %Neural_controls = rdms_get_neural(data, metadata, which_trials, false, false);
 %Neural = rdms_get_neural(data, metadata, which_trials, false, false);
 %Neural = [Neural, Neural_controls];
-showRDMs(Neural, 1);
+%showRDMs(Neural, 1);
 
 %% find how similar representations are in each ROI at the end of training
 %
