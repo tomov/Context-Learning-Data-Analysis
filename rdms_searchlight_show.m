@@ -73,7 +73,9 @@ for i = 1:length(files)
         for j = 1:length(x)
             row_idx = j + isequal(event, 'feedback_onset') * length(x);
             col_idx = find(ismember(model_names, model));
-            tmap(x(j), y(j), z(j)) = table_T(row_idx, col_idx);
+            if col_idx <= size(table_T, 2) % in case we're using a model that hasn't been computed in all batches, e.g. weightsPosterior
+                tmap(x(j), y(j), z(j)) = table_T(row_idx, col_idx);
+            end
         end
     end
 end
