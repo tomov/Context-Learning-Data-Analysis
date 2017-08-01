@@ -30,6 +30,11 @@ direct = '+/-';
 df = 19;
 di = strcmpi({'+' '-' '+/-'}, direct);
 
+
+atlas_dirpath = '/Users/momchil/Dropbox/Research/libs/bspmview/supportfiles';
+atlas_name = 'AAL2';
+
+
 extent = bspm_cluster_correct(tmap_filename, df, direct, p, alpha);
 
 
@@ -94,13 +99,21 @@ end
 %st.ol.tab       = LOCMAX;
 %st.ol.maxima    = LOCMAX(:,3:5)';
 
-LOCMAX_orig = LOCMAX
+[atlaslabels, atlas] = bspm_setatlas(tmap_filename, atlas_dirpath, atlas_name);
 
-load('~/Downloads/bspm_setmaxima.mat');
+
 
 %% for sanity checks w/ the real bspmview
 %
 %{
+
+LOCMAX_orig = LOCMAX;
+
+load('~/Downloads/bspm_setmaxima.mat');
+
+assert(immse(LOCMAX_orig, LOCMAX) < 1e-5);
+
+
 C_orig = C;
 CI_orig = CI;
 
