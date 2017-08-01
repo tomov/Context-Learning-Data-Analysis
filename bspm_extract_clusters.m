@@ -1,60 +1,64 @@
-function [C, CI] = bspm_extract_clusters(tmap_filename, table_filename, threshold)
-%UNTITLED12 Summary of this function goes here
-%   Detailed explanation goes here
-
-%{
-EXPT = context_expt();
-mean_structural_filename = fullfile(EXPT.modeldir, 'mean.nii');
-Vmean = spm_vol(mean_structural_filename);
-
-V = spm_vol(tmap_filename);
-Y = spm_read_vols(V);
-V.fname = 'temp/temp.nii'; % CRUCIAL! don't overwrite t-map...
-
-mask = Y > threshold;
-spm_write_vol(V, mask);
-
-spm_check_registration(Vmean, V);
-%}
-
-%%
+function [C, CI, region, extent, stat, peak_voxel, results_table] = bspm_extract_clusters(tmap_filename, p, direct)
 %
-clear all;
-close all;
+% Extract clusters and peak voxels from a t-map contrast AFTER cluster FWE
+% correction. Exactly the same as bspmview -- uses the same functions. As a
+% bonus, even spits out a results table. Pretty cool huh
+%
+% INPUT:
+% tmap_filename = path to .nii file with the contrast t-map, e.g.
+%                 '../neural/model154/con10/spmT_0001.nii'
+% p = p-value threshold for the individual voxels, e.g. 0.001
+% direct = sign of the activations to look at; should be one of +, -, or
+%          +/-
+% 
+% OUTPUT:
+% C = volume with cluster size for each voxel
+% CI = volume with cluster index for each voxel <-- that's the name of the
+%      game; 
+% region = labels for the peak voxels
+% extent = size of the cluster
+% stat = t-statistic for the peak voxels
+% peak_voxel = MNI coordinates
+% results_table = what Save Results Table in bspmview would spit out 
+% 
 
-tmap_filename = '../neural/model154/con10/spmT_0001.nii';
+[~, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
 
-p = 0.001;
-alpha = 0.05;
-direct = '+/-';
-df = 19;
-di = strcmpi({'+' '-' '+/-'}, direct);
+%tmap_filename = '../neural/model154/con10/spmT_0001.nii';
+%p = 0.001; % p-value threshold for individual voxels
+%direct = '+/-'; % positive or negative activations
 
+alpha = 0.05; % significance level for cluster FWE correction
+df = metadata.N - 1; % = degrees of freedom for t-test = # of subjects - 1
+
+Dis = 20; % separation for cluster maxima
+Num = 3; % numpeaks for cluster maxima
 
 atlas_dirpath = '/Users/momchil/Dropbox/Research/libs/bspmview/supportfiles';
 atlas_name = 'AAL2';
 
-
-extent = bspm_cluster_correct(tmap_filename, df, direct, p, alpha);
-
+assert(ismember(direct, {'+', '-', '+/-'}));
 
 
+% get cluster extent threshold
+%
+extent_thresh = bspm_cluster_correct(tmap_filename, df, direct, p, alpha);
+
+
+% get cluster indices
+%
 thresh = spm_invTcdf(1-p, df);
 V = spm_vol(tmap_filename);
 Y = spm_read_vols(V);
-%Y(Y < thresh) = 0;
 Y(isnan(Y)) = 0;
-
-[clustsize, clustidx]   = bspm_getclustidx(Y, thresh, extent);
+[clustsize, clustidx]   = bspm_getclustidx(Y, thresh, extent_thresh);
+di = strcmpi({'+' '-' '+/-'}, direct);
 C = clustsize(di, :);
 CI= clustidx(di, :);
-disp(unique(C));
-disp(unique(CI));
 
 
-
-% read
-
+% set some input params
+%
 M           = V.mat;         %-voxels to mm matrix
 DIM         = V.dim';
 VOX         = abs(diag(M(:,1:3)));
@@ -66,7 +70,7 @@ XYZmm0       = M(1:3,:)*RCP;
 
 
 % set thresh
-
+%
 idx = find(C > 0);
 if find(di) == 2
     Z     = abs(Y(idx));
@@ -76,18 +80,10 @@ end
 Nunique   = length(unique(Z));
 XYZ       = XYZ0(:,idx);
 XYZmm     = XYZmm0(:,idx);
-C         = C(idx);
-%atlas     = st.ol.atlas0(idx);
 
 
 % set maxima
-
-%Dis = st.preferences.separation;
-Dis = 20;
-
-%Num = st.preferences.numpeaks;
-Num = 3;
-
+%
 switch char(direct)
     case {'+', '-'}
         LOCMAX      = bspm_getmaxima(Z, XYZ, M, Dis, Num);
@@ -100,21 +96,30 @@ switch char(direct)
         if ~isempty(NEG), NEG(:,2) = NEG(:,2)*-1; end
         LOCMAX      = [POS; NEG];
 end
-%st.ol.tab       = LOCMAX;
-%st.ol.maxima    = LOCMAX(:,3:5)';
 
+
+% get labels
+%
 [atlaslabels, atlas] = bspm_setatlas(tmap_filename, atlas_dirpath, atlas_name);
-
 LABELS = bspm_getregionnames(LOCMAX(:,3:5)', atlaslabels, atlas, XYZmm0);
 
-
-voxels = [cell(size(LABELS)) LABELS num2cell(LOCMAX)];
-voxels{1,1} = 'Positive';
+% generate resultstable
+%
+results_table = [cell(size(LABELS)) LABELS num2cell(LOCMAX)];
+results_table{1,1} = 'Positive';
 if any(LOCMAX(:,2)<0)
     tmpidx = find(LOCMAX(:,2)<0);
-    voxels{tmpidx(1),1} = 'Negative';
+    results_table{tmpidx(1),1} = 'Negative';
 end
-disp(voxels);
+
+% set outputs
+%
+C = reshape(C, size(Y));
+CI = reshape(CI, size(Y));
+region = LABELS;
+extent = LOCMAX(:, 1);
+stat = LOCMAX(:, 2);
+peak_voxel = LOCMAX(:, 3:5);
 
 %% for sanity checks w/ the real bspmview
 %
