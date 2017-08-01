@@ -68,7 +68,7 @@ XYZmm0       = M(1:3,:)*RCP;
 % set thresh
 
 idx = find(C > 0);
-if di==2
+if find(di) == 2
     Z     = abs(Y(idx));
 else
     Z     = Y(idx);
@@ -78,6 +78,7 @@ XYZ       = XYZ0(:,idx);
 XYZmm     = XYZmm0(:,idx);
 C         = C(idx);
 %atlas     = st.ol.atlas0(idx);
+
 
 % set maxima
 
@@ -90,6 +91,9 @@ Num = 3;
 switch char(direct)
     case {'+', '-'}
         LOCMAX      = bspm_getmaxima(Z, XYZ, M, Dis, Num);
+        if strcmp(direct, '-')
+            LOCMAX(:,2) = -LOCMAX(:,2);
+        end
     otherwise
         POS         = bspm_getmaxima(Z, XYZ, M, Dis, Num);
         NEG         = bspm_getmaxima(Z*-1, XYZ, M, Dis, Num);
