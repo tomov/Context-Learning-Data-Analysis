@@ -42,14 +42,23 @@ Y(isnan(Y)) = 0;
 C = clustsize(di, :);
 CI= clustidx(di, :);
 disp(unique(C));
+disp(unique(CI));
+
+C_orig = C;
+CI_orig = CI;
 
 
 load('~/Downloads/bspm_correct.mat');
 disp(unique(C));
-%Y = st.ol.Y;
+assert(isequal(C_orig, C));
+
 [st.ol.C0, st.ol.C0IDX] = bspm_getclustidx(st.ol.Y, thresh, extent);
 C = st.ol.C0(di,:);
+CI= st.ol.C0IDX(di, :);
 disp(unique(C));
+disp(unique(CI));
+assert(isequal(C_orig, C));
+assert(isequal(CI_orig, CI));
 
 
 load('~/Downloads/bspm_od.mat')
@@ -57,5 +66,8 @@ load('~/Downloads/bspm_od.mat')
 C = clustsize(di, :);
 CI= clustidx(di, :);
 disp(unique(C));
+disp(unique(CI));
+assert(isequal(C_orig, C));
+assert(isequal(CI_orig, CI));
 
 % '../neural/model154/con10/spmT_0001.nii'
