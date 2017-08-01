@@ -78,4 +78,4 @@ fprintf('SAVING to %s\n', filename);
 
 load(filename);
 
-correlate_neural_and_behavior(betas, regions, test_liks, [regressor, ' betas correlated with test log likelihood: t-test']);
+[means, sems, ps] = correlate_neural_and_behavior(betas, region, test_liks, [regressor, ' betas correlated with test log likelihood: t-test']);
