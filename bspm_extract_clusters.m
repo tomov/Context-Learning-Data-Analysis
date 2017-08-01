@@ -101,7 +101,16 @@ end
 
 [atlaslabels, atlas] = bspm_setatlas(tmap_filename, atlas_dirpath, atlas_name);
 
+LABELS = bspm_getregionnames(LOCMAX(:,3:5)', atlaslabels, atlas, XYZmm0);
 
+
+voxels = [cell(size(LABELS)) LABELS num2cell(LOCMAX)];
+voxels{1,1} = 'Positive';
+if any(LOCMAX(:,2)<0)
+    tmpidx = find(LOCMAX(:,2)<0);
+    voxels{tmpidx(1),1} = 'Negative';
+end
+disp(voxels);
 
 %% for sanity checks w/ the real bspmview
 %
