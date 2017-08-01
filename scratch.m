@@ -1,8 +1,7 @@
 
 
-%{
 
-eLife reviewer comment -- contextual tracking confounding KL
+% eLife reviewer comment -- contextual tracking confounding KL
 
 %% Load data
 %
@@ -11,7 +10,10 @@ eLife reviewer comment -- contextual tracking confounding KL
 which_trials = data.which_rows & data.isTrain; % Look at training trials only
 
 context_changed = data.contextId ~= circshift(data.contextId, 1);
-context_changed(data.trialId == 1 & data.isTrain) = 1; % TODO 0 or 1?
+context_changed(data.trialId == 1 & data.isTrain) = 0; % TODO 0 or 1?
+
+cue_changed = data.cueId ~= circshift(data.cueId, 1);
+cue_changed(data.trialId == 1 & data.isTrain) = 0; % TODO 0 or 1?
 
 %% Simulate behavior
 %
@@ -37,26 +39,39 @@ simulated = simulate_subjects(data, metadata, params, which_structures);
 %
 which = which_trials & data.trialId > 1; % ignore trial 1
 
-KL_change = simulated.surprise(which & context_changed);
-KL_nochange = simulated.surprise(which & ~context_changed);
+KL_c_change = simulated.surprise(which & context_changed);
+KL_no_c_change = simulated.surprise(which & ~context_changed);
+
+KL_x_change = simulated.surprise(which & cue_changed);
+KL_no_x_change = simulated.surprise(which & ~cue_changed);
 
 % are they from same distribution?
-[h, p, ks2stat] = kstest2(KL_change, KL_nochange);
-fprintf('Kolmogorov-Smirnov: p(same distribution) = %e\n', p);
+[h, p, ks2stat] = kstest2(KL_c_change, KL_no_c_change);
+fprintf('Kolmogorov-Smirnov for context changes: p(same distribution) = %e\n', p);
 
- % do higher KL's correlate with changes in context?
+[h, p, ks2stat] = kstest2(KL_x_change, KL_no_x_change);
+fprintf('Kolmogorov-Smirnov for cue changes: p(same distribution) = %e\n', p);
+
+% do higher KL's correlate with changes in context?
 [rho, p] = corr([simulated.surprise(which), context_changed(which)], 'type', 'Spearman');
 rho = rho(1,2);
 p = p(1,2);
-fprintf('Spearman: rho = %f, p(no correlation) = %e\n', rho, p);
+fprintf('Spearman for context changes: rho = %f, p(no correlation) = %e\n', rho, p);
+
+[rho, p] = corr([simulated.surprise(which), cue_changed(which)], 'type', 'Spearman');
+rho = rho(1,2);
+p = p(1,2);
+fprintf('Spearman for cue changes: rho = %f, p(no correlation) = %e\n', rho, p);
 
 % do KL's for context change vs. no context change have the same means?
 % (wrong: assumes they're gaussian; they're not...)
 [p, anovatab, stats] = anova1(simulated.surprise(which), context_changed(which));
-fprintf('ANOVA: p(means are equal) = %e\n', p);
+fprintf('ANOVA for context changes: p(means are equal) = %e\n', p);
+
+[p, anovatab, stats] = anova1(simulated.surprise(which), cue_changed(which));
+fprintf('ANOVA for cue changes: p(means are equal) = %e\n', p);
 
 
-%}
 
 
 
