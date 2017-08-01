@@ -5,7 +5,7 @@ close all;
 clear all;
 
 EXPT = context_expt();
-glmodel = 151;
+glmodel = 154;
 
 %% Load behavior
 %
@@ -39,12 +39,12 @@ KL_weights_betas = load_run_betas(glmodel, 'KL_weights', [KL_weights_voxels; ran
 %
 [test_liks, test_RTs] = get_test_behavior();
 
-save('results/peak_voxel_behavior_glm151.mat');
+save('results/peak_voxel_behavior.mat');
 
 %% within-subject analysis using a linear mixed effects model and/or t-tests
 %
 
-load('results/peak_voxel_behavior_glm151.mat');
+load('results/peak_voxel_behavior.mat');
 
 correlate_neural_and_behavior(KL_weights_betas, [KL_weights_rois', repmat({'random'}, 1, size(rand_voxels, 1))], test_liks, 'KL_weight betas correlated with test log likelihood: t-test');
 correlate_neural_and_behavior(KL_structures_betas, [KL_structures_rois', repmat({'random'}, 1, size(rand_voxels, 1))], test_liks, 'KL_structure betas correlated with test log likelihood: t-test');

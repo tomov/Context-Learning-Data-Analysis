@@ -1,8 +1,7 @@
-function [mni, region] = get_peak_voxels_from_contrast(EXPT, model, contrast, p, direct)
-% TODO dedupe with extract_clusters
-%
-% Given a contrast, extract all the peak voxels from the clusters after cluster FWE
-% correction and create masks from them. Uses the same logic as bspmview,
+function [V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_clusters(EXPT, model, contrast, p, direct)
+% Wrapper around bspm_extract_clusters
+% Given a contrast, extract all the activation clusters from the t-map after cluster FWE
+% correction. Uses the same logic as bspmview,
 % and as a sanity check prints the results table -- should be the same as
 % the one from bspmview.
 %
@@ -15,8 +14,21 @@ function [mni, region] = get_peak_voxels_from_contrast(EXPT, model, contrast, p,
 %          defaults to +/-
 %
 % OUTPUT:
-% mni = MNI coordinates of peak voxels
+% V = SPM volume of the t-map, with the filename changed so we don't
+%     overwrite it accidentally
+% Y = the actual t-map
+% C = volume with cluster size for each voxel
+% CI = volume with cluster index for each voxel <-- that's the name of the
+%      game; 
 % region = labels for the peak voxels
+% extent = size of the cluster
+% stat = t-statistic for the peak voxels
+% mni = MNI coordinates of peak voxels
+% cor = coordinates of peak voxel in native space (can be used as indices
+%       in the C and CI volumes)
+% results_table = what Save Results Table in bspmview would spit out 
+% 
+
 
 if ~exist('p', 'var')
     p = 0.001;
@@ -39,5 +51,5 @@ spmT = fullfile(EXPT.modeldir,['model',num2str(model)],['con',num2str(ix)],'spmT
 % extract the clusters
 %
 [C, CI, region, extent, stat, mni, cor, results_table] = bspm_extract_clusters(spmT, p, direct);
-
-
+[~, V, Y] = load_mask(spmT);
+V.fname = 'temp/temp.nii'; % <-- change immediately so we don't overwrite it accidentally

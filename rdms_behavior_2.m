@@ -14,7 +14,8 @@ which_trials = data.which_rows & data.isTrain; % Look at training trials only
 
 %% Get the neural RDMs
 %
-Neural = rdms_get_glm_and_searchlight_rois(data, metadata, which_trials);
+Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures', 0.001, '+');
+%Neural = rdms_get_glm_and_searchlight_rois(data, metadata, which_trials);
 %Neural_controls = rdms_get_anatomical_rois(data, metadata, which_trials, false, false);
 %Neural = [Neural, Neural_controls];
 %showRDMs(Neural, 1);

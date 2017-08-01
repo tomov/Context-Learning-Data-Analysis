@@ -1,6 +1,6 @@
 function run_betas = load_run_betas(glmodel, regressor_prefix, voxels)
 % For a given GLM, get the single-subject betas for each run for a given
-% regressor.
+% regressor and a set of voxels.
 % This is used e.g. to get the KL divergence betas so then you can do a
 % within-subject correlation with behavior on the test trials
 %

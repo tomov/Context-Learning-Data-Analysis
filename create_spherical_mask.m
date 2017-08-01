@@ -1,4 +1,4 @@
-function [sphere_mask, sphere_vol] = create_spherical_mask(x, y, z, r, filename)
+function [sphere_mask, sphere_coords, sphere_vol] = create_spherical_mask(x, y, z, r, filename)
 
 % Create a mask from a list of ROI labels.
 %
@@ -10,6 +10,7 @@ function [sphere_mask, sphere_vol] = create_spherical_mask(x, y, z, r, filename)
 %
 % OUTPUT:
 % sphere_mask = the resulting mask as a 3D binary vector
+% sphere_coords = V x 3 list of MNI coordinates of the sphere voxels   
 % sphere_vol = the corresponding SPM volume variable
 %
 
@@ -39,6 +40,8 @@ max_y = max(all_y);
 min_z = min(all_z);
 max_z = max(all_z);
 
+sphere_coords = [];
+
 % create the spherical mask
 %
 sphere_mask = zeros(size(mask));
@@ -51,6 +54,8 @@ for newx = floor(x - r) : ceil(x + r)
             if ~mask(newx, newy, newz), continue; end
             if (x - newx)^2 + (y - newy)^2 + (z - newz)^2 > r^2, continue; end
             sphere_mask(newx, newy, newz) = 1;
+            mni = cor2mni([newx newy newz], Vmask.mat);
+            sphere_coords = [sphere_coords; mni];
         end
     end
 end
