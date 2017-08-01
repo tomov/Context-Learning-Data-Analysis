@@ -1,6 +1,68 @@
 
 
 %{
+
+eLife reviewer comment -- contextual tracking confounding KL
+
+%% Load data
+%
+[data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
+
+which_trials = data.which_rows & data.isTrain; % Look at training trials only
+
+context_changed = data.contextId ~= circshift(data.contextId, 1);
+context_changed(data.trialId == 1 & data.isTrain) = 1; % TODO 0 or 1?
+
+%% Simulate behavior
+%
+load(fullfile('results', 'fit_params_results.mat'), 'results', 'results_options');
+params = results(1).x;
+options = results_options(1);
+% OVERRIDE -- use params from pilot data
+params = [0.1249 2.0064];
+disp('Using parameters:');
+disp(params);
+disp('generated with options:');
+disp(options);
+% safeguards
+assert(options.isFmriData == false);
+assert(options.fixedEffects == 1);
+assert(isequal(options.which_structures, [1 1 1 0]));
+which_structures = logical(options.which_structures);
+
+
+simulated = simulate_subjects(data, metadata, params, which_structures);
+
+%% mad stats
+%
+which = which_trials & data.trialId > 1; % ignore trial 1
+
+KL_change = simulated.surprise(which & context_changed);
+KL_nochange = simulated.surprise(which & ~context_changed);
+
+% are they from same distribution?
+[h, p, ks2stat] = kstest2(KL_change, KL_nochange);
+fprintf('Kolmogorov-Smirnov: p(same distribution) = %e\n', p);
+
+ % do higher KL's correlate with changes in context?
+[rho, p] = corr([simulated.surprise(which), context_changed(which)], 'type', 'Spearman');
+rho = rho(1,2);
+p = p(1,2);
+fprintf('Spearman: rho = %f, p(no correlation) = %e\n', rho, p);
+
+% do KL's for context change vs. no context change have the same means?
+% (wrong: assumes they're gaussian; they're not...)
+[p, anovatab, stats] = anova1(simulated.surprise(which), context_changed(which));
+fprintf('ANOVA: p(means are equal) = %e\n', p);
+
+
+%}
+
+
+
+
+
+%{
 batch_size = 1000;
 r = 1.814;
 for batch=1:217

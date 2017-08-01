@@ -3945,7 +3945,7 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
             end
             
             
-        % Same as 153 but with orthogonalization off
+        % Same as 151 but with orthogonalization off
         %
         case 153
             which_error = which_train & ~data.response.corr;
@@ -3999,11 +3999,70 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
             end
             
             
+        % Same as 153 but with context changes as a regressor
+        %
+        case 154
+            which_error = which_train & ~data.response.corr;
+
+            KL_structures = simulated.surprise(which_train);
             
+            context_changed = data.contextId ~= circshift(data.contextId, 1);
+            context_changed(data.trialId == 1 & data.isTrain) = 0; % TODO 0 or 1?
+            context_changed = context_changed(which_train);
             
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them!
+                        
+            M = -1;
+            if strcmp(condition, 'irrelevant')
+                M = 1;
+            elseif strcmp(condition, 'modulatory')
+                M = 2;
+            else
+                assert(strcmp(condition, 'additive'));
+                M = 3;
+            end
+            ww_prior = simulated.ww_before{M}(which_train, :);
+            Sigma_prior = simulated.Sigma_before{M}(:,:,which_train);
+            ww_posterior = simulated.ww_after{M}(which_train, :);
+            Sigma_posterior = simulated.Sigma_after{M}(:,:,which_train);
+            KL_weights = KL_divergence_gauss(ww_posterior, Sigma_posterior, ww_prior, Sigma_prior);
+            assert(size(KL_weights, 1) == sum(which_train));
             
+            multi.pmod(1).name{1} = 'KL_structures';
+            multi.pmod(1).param{1} = KL_structures';
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'KL_weights';
+            multi.pmod(1).param{2} = KL_weights';
+            multi.pmod(1).poly{2} = 1; % first order        
             
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+
+            % correct vs. wrong (0/1) @ feedback / outcome onset (WRONG trials 1..20)
+            % 
+            if sum(which_error) > 0
+                multi.names{3} = 'wrong';
+                multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
+                multi.durations{3} = zeros(size(data.contextRole(which_error)));
+            end
+                        
+            % did context change on this trial?
+            %
+            multi.names{4} = 'context_changed';
+            multi.onsets{4} = cellfun(@str2num,data.actualFeedbackOnset(context_changed))';
+            multi.durations{4} = zeros(size(data.contextRole(context_changed)));
             
+
             
         otherwise
             assert(false, 'invalid glmodel -- should be one of the above');

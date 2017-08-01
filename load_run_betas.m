@@ -36,8 +36,8 @@ for subj = goodSubjects % 1..25
     %
     subjdir = fullfile(EXPT.modeldir,['model',num2str(glmodel)],['subj',num2str(subj)]);
     load(fullfile(subjdir,'SPM.mat'));
-    KL_regressors_idxs = find(~cellfun('isempty', strfind(SPM.xX.name, regressor_prefix)));
-    assert(numel(KL_regressors_idxs) == metadata.runsPerSubject);
+    regressors_idxs = find(~cellfun('isempty', strfind(SPM.xX.name, regressor_prefix)));
+    assert(numel(regressors_idxs) == metadata.runsPerSubject);
 
     % Iterate over runs
     %
@@ -45,7 +45,7 @@ for subj = goodSubjects % 1..25
 
         % For each run, get the beta for each ROI peak voxel
         %
-        beta_idx = KL_regressors_idxs(run);
+        beta_idx = regressors_idxs(run);
         assert(~isempty(strfind(SPM.xX.name{beta_idx}, regressor_prefix)));
         % this does not give you the full 3D volume, just the non-nan
         % betas in a linear vector.

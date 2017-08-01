@@ -1,9 +1,15 @@
-function Neural = rdms_get_neural(data, metadata, which_rows, use_tmaps, use_nosmooth)
+function Neural = rdms_get_neural(masks, events, data, metadata, which_rows, use_tmaps, use_nosmooth)
 
 % Compute the neural RDMs
 % Normalized correlation for neural data for different ROIs
 %
 % INPUT:
+% masks = struct array with the masks that we're using for the RDMs
+%     .filename = path to .nii file with the mask
+%     .rdm_name = name of the RDM; suffix will be added corresponding to
+%                 each event for which the RDM is computed
+% events = cell array of event names, e.g. {'trial_onset', 'feedback_onset'}.
+%          Each mask gets a separate RDM for each event
 % data, metadata = subject data and metadata as output by load_data
 % which_rows = which rows (trials) to include
 % use_tmaps = if true, use tmaps; otherwise, use betas for neural data
@@ -25,129 +31,24 @@ end
 
 % for each ROI, take betas at both trial onset and feedback onset
 %
-for event = {'trial_onset', 'feedback_onset'}
+for event = events
     event = event{1};
+    assert(ismember(event, {'trial_onset', 'feedback_onset'}));
 
     % Load neural data
     %
-    whole_brain_activations = get_activations('masks/mask.nii', event, data, metadata, use_nosmooth);
-
-    hippocampus_mask = load_mask('masks/hippocampus.nii');
-    hippocampus_activations = get_activations_submask(hippocampus_mask, whole_brain_activations);
-    [hippocampusRDMs, avgHippocampusRDM] = compute_rdms(hippocampus_activations, 'cosine', data, metadata, which_rows);
-    neural_idx = neural_idx + 1;
-    Neural(neural_idx).RDMs = hippocampusRDMs;
-    Neural(neural_idx).RDM = avgHippocampusRDM;
-    Neural(neural_idx).name = ['hippocampus_', event(1)];
-    Neural(neural_idx).color = [0 1 0];
-
-    ofc_mask = load_mask('masks/ofc.nii');
-    ofc_activations = get_activations_submask(ofc_mask, whole_brain_activations);
-    [ofcRDMs, avgOfcRDM] = compute_rdms(ofc_activations, 'cosine', data, metadata, which_rows);
-    neural_idx = neural_idx + 1;
-    Neural(neural_idx).RDMs = ofcRDMs;
-    Neural(neural_idx).RDM = avgOfcRDM;
-    Neural(neural_idx).name = ['OFC_', event(1)];
-    Neural(neural_idx).color = [0 1 0];
-
-    med_ofc_mask = load_mask('masks/med_ofc.nii');
-    med_ofc_activations = get_activations_submask(med_ofc_mask, whole_brain_activations);
-    [medOfcRDMs, avgMedOfcRDM] = compute_rdms(med_ofc_activations, 'cosine', data, metadata, which_rows);
-    neural_idx = neural_idx + 1;
-    Neural(neural_idx).RDMs = medOfcRDMs;
-    Neural(neural_idx).RDM = avgMedOfcRDM;
-    Neural(neural_idx).name = ['mOFC_', event(1)];
-    Neural(neural_idx).color = [0 1 0];
-
-    vmpfc_mask = load_mask('masks/vmpfc.nii');
-    vmpfc_activations = get_activations_submask(vmpfc_mask, whole_brain_activations);
-    [vmpfcRDMs, avgVmpfcRDM] = compute_rdms(vmpfc_activations, 'cosine', data, metadata, which_rows);
-    neural_idx = neural_idx + 1;
-    Neural(neural_idx).RDMs = vmpfcRDMs;
-    Neural(neural_idx).RDM = avgVmpfcRDM;
-    Neural(neural_idx).name = ['vmPFC_', event(1)];
-    Neural(neural_idx).color = [0 1 0];
-
-    striatum_mask = load_mask('masks/striatum.nii');
-    striatum_activations = get_activations_submask(striatum_mask, whole_brain_activations);
-    [striatumRDMs, avgStriatumRDM] = compute_rdms(striatum_activations, 'cosine', data, metadata, which_rows);
-    neural_idx = neural_idx + 1;
-    Neural(neural_idx).RDMs = striatumRDMs;
-    Neural(neural_idx).RDM = avgStriatumRDM;
-    Neural(neural_idx).name = ['Striatum_', event(1)];
-    Neural(neural_idx).color = [0 1 0];
-
-    pallidum_mask = load_mask('masks/pallidum.nii');
-    pallidum_activations = get_activations_submask(pallidum_mask, whole_brain_activations);
-    [pallidumRDMs, avgPallidumRDM] = compute_rdms(pallidum_activations, 'cosine', data, metadata, which_rows);
-    neural_idx = neural_idx + 1;
-    Neural(neural_idx).RDMs = pallidumRDMs;
-    Neural(neural_idx).RDM = avgPallidumRDM;
-    Neural(neural_idx).name = ['Pallidum_', event(1)];
-    Neural(neural_idx).color = [0 1 0];
-
-    v1_mask = load_mask('masks/v1.nii');
-    v1_activations = get_activations_submask(v1_mask, whole_brain_activations);
-    [v1RDMs, avgV1RDM] = compute_rdms(v1_activations, 'cosine', data, metadata, which_rows);
-    neural_idx = neural_idx + 1;
-    Neural(neural_idx).RDMs = v1RDMs;
-    Neural(neural_idx).RDM = avgV1RDM;
-    Neural(neural_idx).name = ['V1_', event(1)];
-    Neural(neural_idx).color = [0 1 0];
-
-    m1_mask = load_mask('masks/m1.nii');
-    m1_activations = get_activations_submask(m1_mask, whole_brain_activations);
-    [m1RDMs, avgM1RDM] = compute_rdms(m1_activations, 'cosine', data, metadata, which_rows);
-    neural_idx = neural_idx + 1;
-    Neural(neural_idx).RDMs = m1RDMs;
-    Neural(neural_idx).RDM = avgM1RDM;
-    Neural(neural_idx).name = ['M1_', event(1)];
-    Neural(neural_idx).color = [0 1 0];
-
-    s1_mask = load_mask('masks/s1.nii');
-    s1_activations = get_activations_submask(s1_mask, whole_brain_activations);
-    [s1RDMs, avgS1RDM] = compute_rdms(s1_activations, 'cosine', data, metadata, which_rows);
-    neural_idx = neural_idx + 1;
-    Neural(neural_idx).RDMs = s1RDMs;
-    Neural(neural_idx).RDM = avgS1RDM;
-    Neural(neural_idx).name = ['S1_', event(1)];
-    Neural(neural_idx).color = [0 1 0];
-
-    fusiform_mask = load_mask('masks/fusiform.nii');
-    fusiform_activations = get_activations_submask(fusiform_mask, whole_brain_activations);
-    [fusiformRDMs, avgFusiformRDM] = compute_rdms(fusiform_activations, 'cosine', data, metadata, which_rows);
-    neural_idx = neural_idx + 1;
-    Neural(neural_idx).RDMs = fusiformRDMs;
-    Neural(neural_idx).RDM = avgFusiformRDM;
-    Neural(neural_idx).name = ['Fusiform_', event(1)];
-    Neural(neural_idx).color = [0 1 0];
-
-    angular_mask = load_mask('masks/angular.nii');
-    angular_activations = get_activations_submask(angular_mask, whole_brain_activations);
-    [angularRDMs, avgAngularRDM] = compute_rdms(angular_activations, 'cosine', data, metadata, which_rows);
-    neural_idx = neural_idx + 1;
-    Neural(neural_idx).RDMs = angularRDMs;
-    Neural(neural_idx).RDM = avgAngularRDM;
-    Neural(neural_idx).name = ['Angular_', event(1)];
-    Neural(neural_idx).color = [0 1 0];
-
-    mid_front_mask = load_mask('masks/mid_front.nii');
-    mid_front_activations = get_activations_submask(mid_front_mask, whole_brain_activations);
-    [midFrontRDMs, avgMidFrontRDM] = compute_rdms(mid_front_activations, 'cosine', data, metadata, which_rows);
-    neural_idx = neural_idx + 1;
-    Neural(neural_idx).RDMs = midFrontRDMs;
-    Neural(neural_idx).RDM = avgMidFrontRDM;
-    Neural(neural_idx).name = ['MidFront_', event(1)];
-    Neural(neural_idx).color = [0 1 0];
-
-    dl_sup_front_mask = load_mask('masks/dl_sup_front.nii');
-    dl_sup_front_activations = get_activations_submask(dl_sup_front_mask, whole_brain_activations);
-    [dlSupFrontRDMs, avgDlSupFrontRDM] = compute_rdms(dl_sup_front_activations, 'cosine', data, metadata, which_rows);
-    neural_idx = neural_idx + 1;
-    Neural(neural_idx).RDMs = dlSupFrontRDMs;
-    Neural(neural_idx).RDM = avgDlSupFrontRDM;
-    Neural(neural_idx).name = ['dlSupFront_', event(1)];
-    Neural(neural_idx).color = [0 1 0];
+    whole_brain_activations = get_activations(fullfile('masks', 'mask.nii'), event, data, metadata, use_nosmooth);
+    
+    for i = 1:numel(masks)
+        mask = load_mask(masks(i).filename);
+        activations = get_activations_submask(mask, whole_brain_activations);
+        [hippocampusRDMs, avgHippocampusRDM] = compute_rdms(activations, 'cosine', data, metadata, which_rows);
+        neural_idx = neural_idx + 1;
+        Neural(neural_idx).RDMs = hippocampusRDMs;
+        Neural(neural_idx).RDM = avgHippocampusRDM;
+        Neural(neural_idx).name = [masks(i).rdm_name, '_', event(1)];
+        Neural(neural_idx).color = [0 1 0];
+    end
 end
 
 disp('Computed neural RDMs.');
