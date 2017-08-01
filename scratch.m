@@ -1,4 +1,15 @@
+betas_to_behavior(123, 'surprise', 'voxel')
+betas_to_behavior(148, 'KL_weights', 'voxel')
+betas_to_behavior(154, 'KL_structures', 'voxel')
+betas_to_behavior(154, 'KL_weights', 'voxel')
+betas_to_behavior(154, 'KL_structures', 'sphere')
+betas_to_behavior(154, 'KL_weights', 'sphere')
+betas_to_behavior(154, 'KL_structures', 'cluster')
+betas_to_behavior(154, 'KL_weights', 'cluster')
 
+
+
+%{
 
 
 % eLife reviewer comment -- contextual tracking confounding KL
@@ -71,7 +82,7 @@ fprintf('ANOVA for context changes: p(means are equal) = %e\n', p);
 [p, anovatab, stats] = anova1(simulated.surprise(which), cue_changed(which));
 fprintf('ANOVA for cue changes: p(means are equal) = %e\n', p);
 
-
+%}
 
 
 

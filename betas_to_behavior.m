@@ -24,7 +24,7 @@ direct = '+';
 
 assert(ismember(what, {'voxel', 'sphere', 'cluster'}));
 
-filename = ['results/betas_to_behavior_glm', num2str(glmodel), '_', regressor, '_', what];
+filename = ['results/betas_to_behavior_glm', num2str(glmodel), '_', regressor, '_', what, '.mat'];
 
 
 %% Load behavior
@@ -58,7 +58,7 @@ switch what
         % TODO maybe intersect with the cluster too
         %
         for i = 1:numel(region)
-            fprintf('Getting betas for sphere of peak voxel t=%.3f extent=%d roi=%s peak=[%d %d %d]\n', stat(i), extent(i), region{i}, mni(i,1), mni(i,2), mni(i,3));
+            fprintf('\nGetting betas for sphere of peak voxel t=%.3f extent=%d roi=%s peak=[%d %d %d]\n', stat(i), extent(i), region{i}, mni(i,1), mni(i,2), mni(i,3));
 
             % create spherical mask around voxel
             [~, voxels] = create_spherical_mask(mni(i,1), mni(i,2), mni(i,3), r);
@@ -78,7 +78,7 @@ switch what
         % Average betas from the cluster of each peak voxel
         %
         for i = 1:numel(region)
-            fprintf('Getting betas for cluster t=%.3f extent=%d roi=%s peak=[%d %d %d]\n', stat(i), extent(i), region{i}, mni(i,1), mni(i,2), mni(i,3));
+            fprintf('\nGetting betas for cluster t=%.3f extent=%d roi=%s peak=[%d %d %d]\n', stat(i), extent(i), region{i}, mni(i,1), mni(i,2), mni(i,3));
 
             x = cor(i,1);
             y = cor(i,2);
@@ -122,4 +122,4 @@ fprintf('SAVING to %s\n', filename);
 %
 load(filename);
 
-[means, sems, ps] = correlate_neural_and_behavior(betas, region, test_liks, [regressor, ' betas correlated with test log likelihood: t-test']);
+[means, sems, ps] = correlate_neural_and_behavior(betas, region, test_liks, [regressor, ' ', what, ' betas from GLM ', num2str(glmodel), ' correlated with test log likelihood: t-test']);
