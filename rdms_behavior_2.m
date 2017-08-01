@@ -1,5 +1,3 @@
-% TODO dedupe with rdms_behavior.m and rdms_second_order.m
-%
 % Idea: RDMs of ROIs vs. models (e.g. posterior) on a run-by-run basis;
 % correlate with behavior 
 % same as kl_structure_learning effect but multivoxel pattern
