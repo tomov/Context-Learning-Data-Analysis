@@ -1,4 +1,4 @@
-function [C, CI, region, extent, stat, peak_voxel, results_table] = bspm_extract_clusters(tmap_filename, p, direct)
+function [C, CI, region, extent, stat, mni, cor, results_table] = bspm_extract_clusters(tmap_filename, p, direct)
 %
 % Extract clusters and peak voxels from a t-map contrast AFTER cluster FWE
 % correction. Exactly the same as bspmview -- uses the same functions. As a
@@ -18,7 +18,9 @@ function [C, CI, region, extent, stat, peak_voxel, results_table] = bspm_extract
 % region = labels for the peak voxels
 % extent = size of the cluster
 % stat = t-statistic for the peak voxels
-% peak_voxel = MNI coordinates
+% mni = MNI coordinates of peak voxels
+% cor = coordinates of peak voxel in native space (can be used as indices
+%       in the C and CI volumes)
 % results_table = what Save Results Table in bspmview would spit out 
 % 
 
@@ -119,7 +121,8 @@ CI = reshape(CI, size(Y));
 region = LABELS;
 extent = LOCMAX(:, 1);
 stat = LOCMAX(:, 2);
-peak_voxel = LOCMAX(:, 3:5);
+mni = LOCMAX(:, 3:5);
+cor = mni2cor(mni, V.mat);
 
 %% for sanity checks w/ the real bspmview
 %
