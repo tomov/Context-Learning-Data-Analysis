@@ -1,4 +1,4 @@
-function Neural = rdms_get_spheres_from_contrast(data, metadata, which_rows, EXPT, model, contrast, p, direct, r)
+function Neural = rdms_get_spheres_from_contrast(data, metadata, which_rows, EXPT, model, contrast, p, direct, alpha, Dis, Num, r)
 % Compute the neural RDMs for a bunch of ROIs based on spheres around the peak voxels of clusters from the
 % GLM. Input is same as create_sphere_masks_from_contrast
 %
@@ -10,6 +10,9 @@ function Neural = rdms_get_spheres_from_contrast(data, metadata, which_rows, EXP
 % contrast = contrast, e.g. 'KL_weights - KL_structures'
 % p = optional p-value threshold
 % direct = sign of the activations; should be one of +, -, or +/-
+% alpha = significance level for cluster FWE correction, default 0.05 in bspmview
+% Dis = separation for cluster maxima, default 20 in bspmview
+% Num = numpeaks for cluster maxima, default 3 in bspmview
 % r = sphere radius in voxels (native coordinate space)
 %
 % OUTPUT:
@@ -20,9 +23,6 @@ assert(ismember(direct, {'+/-', '+', '-'}));
 events = {'trial_onset', 'feedback_onset'};
 use_tmaps = false;
 use_nosmooth = false;
-alpha = 0.05;
-Dis = 20;
-Num = 3;
 
 [filenames, masknames] = create_sphere_masks_from_contrast(EXPT, model, contrast, p, direct, alpha, Dis, Num, r);
 

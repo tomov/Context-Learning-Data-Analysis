@@ -1,4 +1,4 @@
-function Neural = rdms_get_rois_from_contrast(data, metadata, which_rows, EXPT, model, contrast, p, direct)
+function Neural = rdms_get_rois_from_contrast(data, metadata, which_rows, EXPT, model, contrast, p, direct, alpha, Dis, Num)
 % Compute the neural RDMs for a bunch of ROIs based on clusters from the
 % GLM. Input is same as create_masks_from_contrast
 %
@@ -10,6 +10,10 @@ function Neural = rdms_get_rois_from_contrast(data, metadata, which_rows, EXPT, 
 % contrast = contrast, e.g. 'KL_weights - KL_structures'
 % p = p-value threshold
 % direct = sign of the activations; should be one of +, -, or +/-
+% alpha = significance level for cluster FWE correction, default 0.05 in bspmview
+% Dis = separation for cluster maxima, default 20 in bspmview
+% Num = numpeaks for cluster maxima, default 3 in bspmview
+
 %
 % OUTPUT:
 % Neural = struct array of RDMs
@@ -19,9 +23,6 @@ assert(ismember(direct, {'+/-', '+', '-'}));
 events = {'trial_onset', 'feedback_onset'};
 use_tmaps = false;
 use_nosmooth = false;
-alpha = 0.05;
-Dis = 20;
-Num = 3;
 
 [filenames, masknames] = create_masks_from_contrast(EXPT, model, contrast, p, direct, alpha, Dis, Num);
 
