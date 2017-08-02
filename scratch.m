@@ -1,13 +1,15 @@
-betas_to_behavior(123, 'surprise', 'voxel')
-betas_to_behavior(148, 'KL_weights', 'voxel')
-betas_to_behavior(154, 'KL_structures', 'voxel')
-betas_to_behavior(154, 'KL_weights', 'voxel')
-betas_to_behavior(154, 'KL_structures', 'sphere')
-betas_to_behavior(154, 'KL_weights', 'sphere')
-betas_to_behavior(154, 'KL_structures', 'cluster')
-betas_to_behavior(154, 'KL_weights', 'cluster')
+clear all;
+close all;
+[means{1}, sems{1}, ps{1}] = betas_to_behavior(123, 'surprise', 'voxel');
+[means{2}, sems{2}, ps{2}] = betas_to_behavior(148, 'KL_weights', 'voxel');
+[means{3}, sems{3}, ps{3}] = betas_to_behavior(154, 'KL_structures', 'voxel');
+[means{4}, sems{4}, ps{4}] = betas_to_behavior(154, 'KL_weights', 'voxel');
+[means{5}, sems{5}, ps{5}] = betas_to_behavior(154, 'KL_structures', 'sphere');
+[means{6}, sems{6}, ps{6}] = betas_to_behavior(154, 'KL_weights', 'sphere');
+[means{7}, sems{7}, ps{7}] = betas_to_behavior(154, 'KL_structures', 'cluster');
+[means{8}, sems{8}, ps{8}] = betas_to_behavior(154, 'KL_weights', 'cluster');
 
-
+save('results/betas_to_behavior_alpha=0.001_Num=1.mat');
 
 %{
 

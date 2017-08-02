@@ -29,8 +29,8 @@ function [inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, t
 %disp(subjs)
 %disp(predict_what);
 
-use_tmaps = true; % #KNOB TODO make parameter
-use_nosmooth = true; % #KNOB TODO make parameter
+use_tmaps = false; % #KNOB TODO make parameter
+use_nosmooth = false; % #KNOB TODO make parameter
 
 if use_tmaps
     get_activations = @get_tmaps;
@@ -45,7 +45,7 @@ subjects = metadata.allSubjects;
 
 % Load the neural data
 %
-activations = get_activations(mask, 'trial_onset', data, metadata, use_nosmooth);
+activations = get_activations(mask, 'feedback_onset', data, metadata, use_nosmooth);
 
 % condition = context role labels
 %

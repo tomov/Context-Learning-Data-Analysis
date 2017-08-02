@@ -17,6 +17,9 @@ function [means, sems, ps] = betas_to_behavior(glmodel, regressor, what)
 EXPT = context_expt();
 %glmodel = 154;
 p = 0.001;
+alpha = 0.001;
+Dis = 20;
+Num = 1;
 r = 1.814;
 direct = '+';
 %regressor = 'KL_structures'; % contrasts not supported yet b/c ot load_run_betas
@@ -35,7 +38,7 @@ which_rows = data.which_rows;
 
 %% Find the peak voxels 
 %
-[V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_clusters(EXPT, glmodel, regressor, p, direct);
+[V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_clusters(EXPT, glmodel, regressor, p, direct, alpha, Dis, Num);
 
 
 %% Get the betas

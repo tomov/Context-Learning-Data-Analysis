@@ -177,7 +177,7 @@ if plot_title
 
     % plot correlation coefficients for t-tests
     %
-    subplot(2, 1, 1);
+    subplot(1, 2, 1);
 
     h = bar(ttest_means, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
     xs = h(1).XData;
@@ -186,15 +186,19 @@ if plot_title
     hold off;
 
     set(gca, 'xtick', xs);
-    ylabel('Fixed effect');
+    ylabel('Mean Fisher z-transformed r');
     xticklabels(strrep(neural_names, '_', '\_'));
-    xtickangle(60);
+    %xtickangle(60);
     xlabel('voxel');
-    title(plot_title, 'Interpreter', 'none');
+    
+    camroll(-90);
+    h = title(plot_title, 'Interpreter', 'none');    
+    h.Position = [h.Position(1) - 2.6, h.Position(2), h.Position(3)];
+    
 
     % plot p-values
     %
-    subplot(2, 1, 2);
+    subplot(1, 2, 2);
 
     h = bar(ttest_ps, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
     xs = h(1).XData;
@@ -205,9 +209,10 @@ if plot_title
     set(gca, 'xtick', xs);
     ylabel('p-value');
     xticklabels(strrep(neural_names, '_', '\_'));
-    xtickangle(60);
+    %xtickangle(90);
     xlabel('voxel');
 
+    camroll(-90);    
 end
 
 

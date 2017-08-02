@@ -1,4 +1,4 @@
-function [C, CI, region, extent, stat, mni, cor, results_table] = bspm_extract_clusters(tmap_filename, p, direct)
+function [C, CI, region, extent, stat, mni, cor, results_table] = bspm_extract_clusters(tmap_filename, p, direct, alpha, Dis, Num)
 %
 % Extract clusters and peak voxels from a t-map contrast AFTER cluster FWE
 % correction. Exactly the same as bspmview -- uses the same functions. As a
@@ -10,6 +10,9 @@ function [C, CI, region, extent, stat, mni, cor, results_table] = bspm_extract_c
 % p = p-value threshold for the individual voxels, e.g. 0.001
 % direct = sign of the activations to look at; should be one of +, -, or
 %          +/-
+% alpha = significance level for cluster FWE correction, default 0.05 in bspmview
+% Dis = separation for cluster maxima, default 20 in bspmview
+% Num = numpeaks for cluster maxima, default 3 in bspmview
 % 
 % OUTPUT:
 % C = volume with cluster size for each voxel
@@ -29,12 +32,12 @@ function [C, CI, region, extent, stat, mni, cor, results_table] = bspm_extract_c
 %tmap_filename = '../neural/model154/con10/spmT_0001.nii';
 %p = 0.001; % p-value threshold for individual voxels
 %direct = '+/-'; % positive or negative activations
+%alpha = 0.001;
+%Dis = 20;
+%Num = 1;
 
-alpha = 0.05; % significance level for cluster FWE correction
+
 df = metadata.N - 1; % = degrees of freedom for t-test = # of subjects - 1
-
-Dis = 20; % separation for cluster maxima
-Num = 3; % numpeaks for cluster maxima
 
 atlas_dirpath = '/Users/momchil/Dropbox/Research/libs/bspmview/supportfiles';
 atlas_name = 'AAL2';

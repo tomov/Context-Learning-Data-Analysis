@@ -27,8 +27,8 @@ which_trials = data.which_rows & data.isTrain; % Look at training trials only
 
 %% get the neural rdms
 %
-%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.0005, '+', 1.814);
-Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.0005, '+');
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 1.814);
+%Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+');
 
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_weights', 0.001, '+', 1.814);
 %Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_weights', 0.001, '+');
@@ -36,8 +36,14 @@ Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, 'rdms/betas_s
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures', 0.001, '+', 1.814);
 %Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures', 0.001, '+');
 
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_weights - KL_structures', 0.001, '+', 1.814);
+%Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_weights - KL_structures', 0.001, '+');
+
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures - KL_weights', 0.001, '+', 1.814);
+%Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures - KL_weights', 0.001, '+');
+
 %Neural = rdms_get_glm_and_searchlight_rois(data, metadata, which_trials);
-%Neural = rdms_get_anatomical_rois(data, metadata, which_trials);
+Neural = rdms_get_anatomical_rois(data, metadata, which_trials);
 %Neural = [Neural, Neural_controls];
 %showRDMs(Neural, 1);
 
@@ -87,7 +93,7 @@ for half = 1:2 % first or second half of training
                 sub_RDM = RDM(run_mask);
 
                 % TODO is this legit? Fisher z-transform?
-                avg_dists{half}(subj, run, neural_idx) = mean(1 - sub_RDM);
+                avg_dists{half}(subj, run, neural_idx) = mean(sub_RDM);
             end
         end
     end
@@ -99,9 +105,9 @@ test_log_liks = get_test_behavior();
 
 for half = 1:2
     if half == 1
-        title = 'Stability during trials 1..10 correlated w/ test log likelihood: t-test';
+        title = 'Instability during trials 1..10 correlated w/ test log likelihood: t-test';
     else
-        title = 'Stability during trials 11..20 correlated w/ test log likelihood: t-test';
+        title = 'Instability during trials 11..20 correlated w/ test log likelihood: t-test';
     end
     [means{half}, sems{half}, ps{half}] = correlate_neural_and_behavior(avg_dists{half}, {Neural.name}, test_log_liks, title);
 end
