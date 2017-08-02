@@ -27,7 +27,15 @@ which_trials = data.which_rows & data.isTrain; % Look at training trials only
 
 %% get the neural rdms
 %
-Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_weights - KL_structures', 0.001, '+');
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.0005, '+', 1.814);
+Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.0005, '+');
+
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_weights', 0.001, '+', 1.814);
+%Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_weights', 0.001, '+');
+
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures', 0.001, '+', 1.814);
+%Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures', 0.001, '+');
+
 %Neural = rdms_get_glm_and_searchlight_rois(data, metadata, which_trials);
 %Neural = rdms_get_anatomical_rois(data, metadata, which_trials);
 %Neural = [Neural, Neural_controls];
@@ -35,7 +43,8 @@ Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, context_expt(
 
 %% find how similar representations are in each ROI at the end of training
 %
-avg_dists = nan(metadata.N, metadata.runsPerSubject, numel(Neural));
+avg_dists{1} = nan(metadata.N, metadata.runsPerSubject, numel(Neural));
+avg_dists{2} = nan(metadata.N, metadata.runsPerSubject, numel(Neural));
 
 goodSubjects = getGoodSubjects();
 subjs = metadata.allSubjects(goodSubjects);
@@ -49,28 +58,37 @@ subjs = metadata.allSubjects(goodSubjects);
 which_trials_per_subj = which_trials & strcmp(data.participant, subjs{1});
 [t1, t2] = meshgrid(find(which_trials_per_subj), find(which_trials_per_subj));
 
-% for each ROI,
-% for each run of each subject, get the average RDM
-%
-for run = 1:metadata.runsPerSubject
-    t1_mask = data.runId(t1) == run & data.trialId(t1) > 10;
-    t2_mask = data.runId(t2) == run & data.trialId(t2) > 10;
-    run_mask = t1_mask & t2_mask & t1 > t2;
+for half = 1:2 % first or second half of training
     
-    for subj = 1:metadata.N
-        fprintf('subject %d, run %d\n', subj, run);
-        
-        for neural_idx = 1:numel(Neural)
-            % For a given ROI,
-            % For each run for each subject,
-            % use a binary mask that says which pairs of trials from the RDM
-            % to look at.
-            %
-            RDM = Neural(neural_idx).RDMs(:,:,subj);
-            sub_RDM = RDM(run_mask);
-            
-            % TODO is this legit? Fisher z-transform?
-            avg_dists(subj, run, neural_idx) = mean(sub_RDM);
+    % for each ROI,
+    % for each run of each subject, get the average RDM
+    %
+    for run = 1:metadata.runsPerSubject
+        if half == 1
+            t1_mask = data.runId(t1) == run & data.trialId(t1) <= 10;
+            t2_mask = data.runId(t2) == run & data.trialId(t2) <= 10;
+        else
+            assert(half == 2);
+            t1_mask = data.runId(t1) == run & data.trialId(t1) > 10;
+            t2_mask = data.runId(t2) == run & data.trialId(t2) > 10;
+        end
+        run_mask = t1_mask & t2_mask & t1 > t2;
+
+        for subj = 1:metadata.N
+            fprintf('subject %d, run %d\n', subj, run);
+
+            for neural_idx = 1:numel(Neural)
+                % For a given ROI,
+                % For each run for each subject,
+                % use a binary mask that says which pairs of trials from the RDM
+                % to look at.
+                %
+                RDM = Neural(neural_idx).RDMs(:,:,subj);
+                sub_RDM = RDM(run_mask);
+
+                % TODO is this legit? Fisher z-transform?
+                avg_dists{half}(subj, run, neural_idx) = mean(1 - sub_RDM);
+            end
         end
     end
 end
@@ -79,4 +97,11 @@ end
 %
 test_log_liks = get_test_behavior();
 
-correlate_neural_and_behavior(avg_dists, {Neural.name}, test_log_liks, 'Stability during trials 11..20 correlated w/ test log likelihood: t-test');
+for half = 1:2
+    if half == 1
+        title = 'Stability during trials 1..10 correlated w/ test log likelihood: t-test';
+    else
+        title = 'Stability during trials 11..20 correlated w/ test log likelihood: t-test';
+    end
+    [means{half}, sems{half}, ps{half}] = correlate_neural_and_behavior(avg_dists{half}, {Neural.name}, test_log_liks, title);
+end

@@ -8,19 +8,12 @@ function Neural = rdms_get_rois_from_contrast(data, metadata, which_rows, EXPT, 
 % EXPT = experiment structure, e.g. context_expt()
 % model = GLM number, e.g. 154
 % contrast = contrast, e.g. 'KL_weights - KL_structures'
-% p = optional p-value threshold; defaults to 0.001
-% direct = optional sign of the activations; should be one of +, -, or +/-;
-%          defaults to +/-
+% p = p-value threshold
+% direct = sign of the activations; should be one of +, -, or +/-
 %
 % OUTPUT:
 % Neural = struct array of RDMs
 
-if ~exist('p', 'var')
-    p = 0.001;
-end
-if ~exist('direct', 'var')
-    direct = '+/-';
-end
 assert(ismember(direct, {'+/-', '+', '-'}));
 
 events = {'trial_onset', 'feedback_onset'};

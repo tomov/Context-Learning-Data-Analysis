@@ -42,7 +42,7 @@ assert(ismember(model, model_names));
 %
 [~, V, tmap] = load_mask(fullfile('masks', 'spmT_0001.nii'));
 tmap(:) = NaN; % clear
-V.fname = fullfile(dirname, 'searchlight_tmap.nii'); % change immediately!
+V.fname = fullfile(dirname, ['searchlight_tmap_', model, '_', event, '.nii']); % change immediately!
 
 %% load all the searchlight results
 %

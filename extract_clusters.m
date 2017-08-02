@@ -38,15 +38,19 @@ if ~exist('direct', 'var')
 end
 assert(ismember(direct, {'+/-', '+', '-'}));
 
-% find the contrast
-%
-modeldir = fullfile(EXPT.modeldir,['model',num2str(model)]);
-load(fullfile(modeldir,'contrasts'));
-ix = find(strcmp(contrasts,contrast));
-if isempty(ix)
-    error('Contrast not found');
+if ischar(EXPT)
+    spmT = EXPT; % HACK TODO FIXME -- this is so I can pass a tmap directly if I want to
+else
+    % find the contrast
+    %
+    modeldir = fullfile(EXPT.modeldir,['model',num2str(model)]);
+    load(fullfile(modeldir,'contrasts'));
+    ix = find(strcmp(contrasts,contrast));
+    if isempty(ix)
+        error('Contrast not found');
+    end
+    spmT = fullfile(EXPT.modeldir,['model',num2str(model)],['con',num2str(ix)],'spmT_0001.nii');
 end
-spmT = fullfile(EXPT.modeldir,['model',num2str(model)],['con',num2str(ix)],'spmT_0001.nii');
 
 % extract the clusters
 %

@@ -20,21 +20,9 @@ function [mask_filenames, mask_names] = create_masks_from_contrast(EXPT, model, 
 
 assert(ismember(direct, {'+/-', '+', '-'}));
 
-% find the contrast
-%
-modeldir = fullfile(EXPT.modeldir,['model',num2str(model)]);
-load(fullfile(modeldir,'contrasts'));
-ix = find(strcmp(contrasts,contrast));
-if isempty(ix)
-    error('Contrast not found');
-end
-spmT = fullfile(EXPT.modeldir,['model',num2str(model)],['con',num2str(ix)],'spmT_0001.nii');
-
 % extract the clusters
 %
-[C, CI, region, extent, stat, mni, cor, results_table] = bspm_extract_clusters(spmT, p, direct);
-[~, V, Y] = load_mask(spmT);
-V.fname = 'temp/temp.nii'; % <-- change immediately so we don't overwrite it accidentally
+[V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_clusters(EXPT, model, contrast, p, direct);
 
 disp(results_table);
 

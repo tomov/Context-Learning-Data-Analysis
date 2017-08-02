@@ -75,6 +75,7 @@ for roi = 1:size(neural_activations, 3)
 
     % LME model
     %
+    %{
     tbl = array2table([lme_betas, lme_liks, lme_ids], 'VariableNames', {'Beta', 'Likelihood', 'Subject'});
     %formula = 'Beta ~ Likelihood + (Likelihood|Subject)';
     formula = 'Beta ~ Likelihood + (Likelihood|Subject)';
@@ -86,6 +87,7 @@ for roi = 1:size(neural_activations, 3)
     lme_means = [lme_means; coef];
     lme_sems = [lme_sems; (lme.Coefficients(2, 'Upper').Upper - lme.Coefficients(2, 'Lower').Lower) / 2];
     lme_ps = [lme_ps; p];
+    %}
     
     % t-test on fisher z-transformed correlation coefficients
     %
