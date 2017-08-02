@@ -70,4 +70,4 @@ end
 [~, V, Y] = load_mask(spmT);
 V.fname = 'temp/temp.nii'; % <-- change immediately so we don't overwrite it accidentally
 
-disp(results_table);
+%disp(results_table);

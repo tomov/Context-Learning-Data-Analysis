@@ -1,4 +1,4 @@
-function [mask_filenames, mask_names] = create_sphere_masks_from_contrast(EXPT, model, contrast, p, direct, r)
+function [mask_filenames, mask_names] = create_sphere_masks_from_contrast(EXPT, model, contrast, p, direct, alpha, Dis, Num, r)
 % Given a contrast, extract all the activation clusters from the t-map after cluster FWE
 % correction and create spherical masks around the peak voxels. Uses the same logic as bspmview,
 % and as a sanity check prints the results table -- should be the same as
@@ -11,6 +11,9 @@ function [mask_filenames, mask_names] = create_sphere_masks_from_contrast(EXPT, 
 % p = p-value threshold; defaults to 0.001
 % direct = sign of the activations; should be one of +, -, or +/-;
 %          defaults to +/-
+% alpha = significance level for cluster FWE correction, default 0.05 in bspmview
+% Dis = separation for cluster maxima, default 20 in bspmview
+% Num = numpeaks for cluster maxima, default 3 in bspmview
 % r = sphere radius in voxels (native coordinate space)
 %
 % OUTPUT:
@@ -23,7 +26,7 @@ assert(ismember(direct, {'+/-', '+', '-'}));
 
 % extract the clusters
 %
-[V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_clusters(EXPT, model, contrast, p, direct);
+[V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_clusters(EXPT, model, contrast, p, direct, alpha, Dis, Num);
 
 disp(results_table);
 
@@ -35,7 +38,7 @@ mask_names = [];
 for i = 1:size(region, 1)    
     mask = create_spherical_mask(mni(i,1), mni(i,2), mni(i,3), r);
     
-    filename = sprintf('glm%d %s sphere t=%.3f extent=%d roi=%s peak=[%d %d %d].nii', model, contrast, stat(i), sum(mask(:)), region{i}, mni(i,1), mni(i,2), mni(i,3));
+    filename = sprintf('glm%d_%s_sphere_t=%.3f_extent=%d_roi=%s_peak=[%d_%d_%d].nii', model, contrast, stat(i), sum(mask(:)), region{i}, mni(i,1), mni(i,2), mni(i,3));
     V.fname = fullfile('masks', filename);
     disp(V.fname);
     spm_write_vol(V, mask);

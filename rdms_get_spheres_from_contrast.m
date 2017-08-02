@@ -20,8 +20,11 @@ assert(ismember(direct, {'+/-', '+', '-'}));
 events = {'trial_onset', 'feedback_onset'};
 use_tmaps = false;
 use_nosmooth = false;
+alpha = 0.05;
+Dis = 20;
+Num = 3;
 
-[filenames, masknames] = create_sphere_masks_from_contrast(EXPT, model, contrast, p, direct, r);
+[filenames, masknames] = create_sphere_masks_from_contrast(EXPT, model, contrast, p, direct, alpha, Dis, Num, r);
 
 for mask_idx = 1:numel(filenames)
     masks(mask_idx).filename = filenames{mask_idx};

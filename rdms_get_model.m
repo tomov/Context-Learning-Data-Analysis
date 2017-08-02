@@ -280,7 +280,6 @@ Model(model_idx).color = [0 1 0];
 
 % PEs
 %
-save('shit.mat');
 outcomes = repmat(data.outcome, 1, size(simulated.valuess, 2));
 PEs = outcomes - simulated.valuess;
 PEs = PEs + rand(size(PEs)) * 0.001; % so cosine metric works

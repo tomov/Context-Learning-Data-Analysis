@@ -45,7 +45,13 @@ subjects = metadata.allSubjects;
 
 % Load the neural data
 %
-activations = get_activations(mask, 'feedback_onset', data, metadata, use_nosmooth);
+[~, name] = system('hostname');
+if isempty(strfind(name, 'omchil')) % it could be NCF
+    activations = get_activations(mask, 'feedback_onset', data, metadata, use_nosmooth); % <-- get the mask straight up, or ...
+else % certainly not NCF
+    whole_brain_activations = get_activations(fullfile('masks', 'mask.nii'), 'feedback_onset', data, metadata, use_nosmooth); % get the submask from the whole-brain betas
+    activations = get_activations_submask(load_mask(mask), whole_brain_activations);
+end
 
 % condition = context role labels
 %
