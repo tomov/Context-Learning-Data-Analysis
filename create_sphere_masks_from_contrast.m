@@ -24,11 +24,11 @@ function [mask_filenames, mask_names] = create_sphere_masks_from_contrast(EXPT, 
 
 assert(ismember(direct, {'+/-', '+', '-'}));
 
+intersect_with_cluster = true; % whether to intersect the sphere with the corresponding activation cluster
+
 % extract the clusters
 %
 [V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_clusters(EXPT, model, contrast, p, direct, alpha, Dis, Num);
-
-disp(results_table);
 
 mask_filenames = [];
 mask_names = [];
@@ -37,6 +37,11 @@ mask_names = [];
 %
 for i = 1:size(region, 1)    
     mask = create_spherical_mask(mni(i,1), mni(i,2), mni(i,3), r);
+
+    if intersect_with_cluster
+        clust_idx = CI(cor(i,1), cor(i,2), cor(i,3));
+        mask = mask & (CI == clust_idx);
+    end
     
     filename = sprintf('glm%d_%s_sphere_t=%.3f_extent=%d_roi=%s_peak=[%d_%d_%d].nii', model, contrast, stat(i), sum(mask(:)), region{i}, mni(i,1), mni(i,2), mni(i,3));
     V.fname = fullfile('masks', filename);
@@ -44,6 +49,6 @@ for i = 1:size(region, 1)
     spm_write_vol(V, mask);
     mask_filenames{i} = V.fname;
     
-    maskname = sprintf('GLM%d_sphere_%s_%s_%.3f_%d', model, contrast, region{i}, stat(i), extent(i));
+    maskname = sprintf('GLM%d_sphere_%s_%s_%.3f_%d', model, contrast, region{i}, stat(i), sum(mask(:)));
     mask_names{i} = maskname;
 end

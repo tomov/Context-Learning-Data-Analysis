@@ -60,6 +60,13 @@ for roi = 1:size(neural_activations, 3)
     for subj_idx = 1:metadata.N
         x = behavioral_measure(subj_idx, :)';
         y = neural_activations_roi(subj_idx, :)';
+       
+        % debugging code from before; TODO rm
+        %if roi == 3
+        %    z = [mean(y(x == 0)), mean(y(x == 0.25)), mean(y(x == 0.5)), mean(y(x == 0.75))];
+        %    [~, i] = max(z);
+        %    fprintf('subj = %d: (%d) %.3f %.3f %.3f %.3f\n', subj_idx, i, z);
+        %end
         
         %x = zscore(x);
         %y = zscore(y);

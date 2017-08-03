@@ -1,4 +1,4 @@
-function [means, sems, ps] = betas_to_behavior(glmodel, regressor, what)
+function [means, sems, ps] = betas_to_behavior(glmodel, regressor, what, contrast)
 
 % Correlate peak voxels from different contrasts with behavior
 % Also tries with clusters of voxels (average the betas)
@@ -8,6 +8,8 @@ function [means, sems, ps] = betas_to_behavior(glmodel, regressor, what)
 % regressor = name of regressor to get betas for
 % what = 'voxel', 'sphere', or 'cluster' -- what area to take around the
 %        peak voxel from each cluster
+% contrast = optional contrast from which to extract the clusters; by
+%            default set to regressor
 %
 % EXAMPLES:
 % betas_to_behavior(123, 'surprise', 'voxel')
@@ -19,6 +21,10 @@ function [means, sems, ps] = betas_to_behavior(glmodel, regressor, what)
 % betas_to_behavior(154, 'KL_structures', 'cluster')
 % betas_to_behavior(154, 'KL_weights', 'cluster')
 %
+
+if ~exist('contrast', 'var')
+    contrast = regressor;
+end
 
 EXPT = context_expt();
 %glmodel = 154;
@@ -33,7 +39,7 @@ direct = '+';
 
 assert(ismember(what, {'voxel', 'sphere', 'cluster'}));
 
-filename = ['results/betas_to_behavior_glm', num2str(glmodel), '_', regressor, '_', what, '.mat'];
+filename = ['results/betas_to_behavior_glm', num2str(glmodel), '_', regressor, '_', what, '_', contrast, '.mat'];
 
 
 %% Load behavior
@@ -44,7 +50,7 @@ which_rows = data.which_rows;
 
 %% Find the peak voxels 
 %
-[V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_clusters(EXPT, glmodel, regressor, p, direct, alpha, Dis, Num);
+[V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_clusters(EXPT, glmodel, contrast, p, direct, alpha, Dis, Num);
 
 
 %% Get the betas
@@ -123,12 +129,11 @@ end
 %
 [test_liks, test_RTs] = get_test_behavior();
 
-save(filename);
-fprintf('SAVING to %s\n', filename);
-
 
 %% within-subject analysis using a linear mixed effects model and/or t-tests
 %
-load(filename);
-
 [means, sems, ps] = correlate_neural_and_behavior(betas, region, test_liks, [regressor, ' ', what, ' betas from GLM ', num2str(glmodel), ' correlated with test log likelihood: t-test']);
+
+
+save(filename);
+fprintf('SAVING to %s\n', filename);

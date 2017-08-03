@@ -23,26 +23,56 @@ which_trials = data.which_rows & data.isTrain; % Look at training trials only
 
 %% get the neural rdms
 %
+%Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.0001, '+', 0.99, 20, 3);
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.001, '+', 0.05, 20, 1, 1.814);
 Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 3, 1.814);
-%Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+');
+%Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 3);
 
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_weights', 0.001, '+', 1.814);
 %Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_weights', 0.001, '+');
 
-%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures', 0.001, '+', 1.814);
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures', 0.001, '+', 0.001, 20, 3, 1.814);
 %Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures', 0.001, '+');
 
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_weights - KL_structures', 0.001, '+', 1.814);
 %Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_weights - KL_structures', 0.001, '+');
 
-%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures - KL_weights', 0.001, '+', 1.814);
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures - KL_weights', 0.001, '+', 0.001, 20, 3, 1.814);
 %Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures - KL_weights', 0.001, '+');
 
 %Neural = rdms_get_glm_and_searchlight_rois(data, metadata, which_trials);
 %Neural = rdms_get_anatomical_rois(data, metadata, which_trials);
 %Neural = [Neural, Neural_controls];
-Neural = Neural(numel(Neural)/2+1:end); % cut the trial_onset bs
+%Neural = Neural(numel(Neural)/2+1:end); % cut the trial_onset bs
 %showRDMs(Neural, 1);
+
+
+%% W T F
+%
+
+
+% sanity check -- make sure that the posterior actually correlates both
+%with the ROIs and with the test choices ... well shit
+%{
+Model = rdms_get_model(data, metadata, which_trials);
+control_model_idxs = [8, 12]; % #KNOB control for time and run
+assert(isequal(Model(8).name, 'time'));
+assert(isequal(Model(12).name, 'run'));
+
+Model = [Model(1) Model(8) Model(12)];
+[table_Rho, table_H, table_T, table_P, all_subject_rhos] = rdms_second_order(metadata, Neural, Model, [2 3], false, [], []);
+%}
+%{
+model_idx = 1;
+
+r = table_Rho(:,1);
+[h, p] = ttest(r)
+mean(r)
+sem(r)
+
+Neural_saved = Neural;
+Neural = [Model(1)];
+%}
 
 
 %% find how similar representations are in each ROI at the end of training
@@ -82,8 +112,10 @@ for subj = 1:metadata.N
         x1c3 = strcmp(data.response.keys(which_test_trials & data.cueId == 0 & data.contextId == 2), 'left');
         x3c1 = strcmp(data.response.keys(which_test_trials & data.cueId == 2 & data.contextId == 0), 'left');
         x3c3 = strcmp(data.response.keys(which_test_trials & data.cueId == 2 & data.contextId == 2), 'left');
+        %timeouts = rand(1, 4) .* data.timeout(which_test_trials)'; % to account for timeouts
+        timeouts = rand(1, 4) .* data.timeout(which_test_trials)'; % to account for timeouts
         
-        test_responses(run1, :) = [x1c1 x1c3 x3c1 x3c3];
+        test_responses(run1, :) = [x1c1 x1c3 x3c1 x3c3] + timeouts;
     end
     
     test_RDMs(:,:,subj) = squareRDMs(pdist(test_responses, 'hamming')); % what percentage of coordinates differ
@@ -119,7 +151,16 @@ for run1 = 1:metadata.runsPerSubject
                 
                 Neural_run(neural_idx).RDMs(run1, run2, subj) = mean(sub_RDM);
                 Neural_run(neural_idx).RDMs(run2, run1, subj) = Neural_run(neural_idx).RDMs(run1, run2, subj);
+                
+                               
             end
+            
+            %{
+            RDM = Model(1).RDMs(:,:,subj);
+            sub_RDM = RDM(run_mask);
+            test_RDMs(run1,run2,subj) = mean(sub_RDM);            
+            test_RDMs(run2,run1,subj) = mean(sub_RDM);            
+            %}
         end
     end
 end
@@ -131,7 +172,7 @@ end
 
 
 
-% Correlate test choices and RDMs
+%% Correlate test choices and RDMs
 %
 [r1, r2] = meshgrid(1:metadata.runsPerSubject, 1:metadata.runsPerSubject);
 upper = r1 > r2;

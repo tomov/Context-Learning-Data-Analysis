@@ -29,6 +29,8 @@ else
     get_activations = @get_betas;
 end
 
+[~,Vwhole] = load_mask(fullfile('masks', 'mask.nii')); % for sanity check
+
 % for each ROI, take betas at both trial onset and feedback onset
 %
 for event = events
@@ -40,7 +42,9 @@ for event = events
     whole_brain_activations = get_activations(fullfile('masks', 'mask.nii'), event, data, metadata, use_nosmooth);
     
     for i = 1:numel(masks)
-        mask = load_mask(masks(i).filename);
+        [mask, Vmask] = load_mask(masks(i).filename);
+        assert(isequal(Vwhole.mat, Vmask.mat)); % it is imperative that they are in the same coordinate space if we're getting the betas like this !!!
+
         activations = get_activations_submask(mask, whole_brain_activations);
         [hippocampusRDMs, avgHippocampusRDM] = compute_rdms(activations, 'cosine', data, metadata, which_rows);
         neural_idx = neural_idx + 1;

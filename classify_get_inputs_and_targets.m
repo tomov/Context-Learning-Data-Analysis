@@ -38,6 +38,8 @@ else
     get_activations = @get_betas;
 end
 
+[~,Vwhole] = load_mask(fullfile('masks', 'mask.nii')); % for sanity check
+
 % Load the subject behavioral data
 %
 [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
@@ -50,7 +52,9 @@ if isempty(strfind(name, 'omchil')) % it could be NCF
     activations = get_activations(mask, 'feedback_onset', data, metadata, use_nosmooth); % <-- get the mask straight up, or ...
 else % certainly not NCF
     whole_brain_activations = get_activations(fullfile('masks', 'mask.nii'), 'feedback_onset', data, metadata, use_nosmooth); % get the submask from the whole-brain betas
-    activations = get_activations_submask(load_mask(mask), whole_brain_activations);
+    [mask, Vmask] = load_mask(mask);
+    assert(isequal(Vwhole.mat, Vmask.mat)); % it is imperative that they are in the same coordinate space if we're getting the betas like this!!!
+    activations = get_activations_submask(mask, whole_brain_activations);
 end
 
 % condition = context role labels

@@ -352,8 +352,11 @@ switch figure_name
         
         
         
-    case 'searchlight'
+    case 'searchlight_posterior'
         bspmview('rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', '../neural/mean.nii');
+        
+    case 'searchlight_prior'
+        bspmview('rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', '../neural/mean.nii');
         
     case 'KL_structures'
         ccnl_view(context_expt(), 154, 'KL_structures');
@@ -367,6 +370,97 @@ switch figure_name
     case 'KL_weights - KL_structures'
         ccnl_view(context_expt(), 154, 'KL_weights - KL_structures');
         
+
+    case 'KL_tmaps'
+        figure;
+        
+        %
+        % Top left: structures 
+        %
+
+        subplot(2, 2, 1);
+        
+        imshow('images/KL_structures_tmap_pos.png'); % from GLM 154
+        title('Updating causal structures', 'FontSize', 10);
+        
+        %
+        % Top right: weights 
+        %
+        
+        subplot(2, 2, 2);
+        
+        imshow('images/KL_weights_tmap_pos.png'); % from GLM 154
+        title('Updating associative weights', 'FontSize', 10);
+        
+        %
+        % Bottom left: contrast
+        %
+        
+        subplot(2, 2, 3);
+        
+        imshow('images/KL_structures-KL_weights_tmap.png'); % from GLM 154
+        title('Updating causal structures > updating associative weights', 'FontSize', 10);
+        
+        %
+        % Bottom right: KL structures ~ test choice log likelihood
+        %
+
+        load results/betas_to_behavior_glm154_KL_structures_sphere_KL_structures.mat
+        which = 1:5; % exclude motor and cerebellum areas
+        region = region(which);
+        means = means(which);
+        sems = sems(which);
+        ps = ps(which);
+        mni = mni(which, :);
+
+        h = bar(means, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
+        xs = h(1).XData;
+        hold on;
+        errorbar(xs, means, sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+        for i = 1:numel(xs)
+            if ps(i) < 0.05
+                assert(ps(i) >= 0.01);
+                text(xs(i) - length(stars) * 0.3 / 2, means(i) + sems(i) * 1.2, '*');
+            end
+        end
+        hold off;
+
+        set(gca, 'xtick', xs);
+        ylabel('Average Fisher z-transformed r');
+        neural_names = {};
+        for i = 1:numel(region)
+            hemisphere = [];
+            if mni(i, 1) < 0
+                hemisphere = 'L';
+            else
+                hemisphere = 'R';
+            end
+            neural_names{i} = [aal2_label_to_roi_name(region{i}), ' (', hemisphere, ')'];
+        end
+        xticklabels(neural_names);
+        xtickangle(60);
+
+
+    case 'searchlight_tmaps'
+        figure;
+        
+        %
+        % Top left: structures 
+        %
+
+        subplot(2, 2, 1);
+        
+        imshow('images/searchlight_posterior_tmap.png');
+        title('Causal structures', 'FontSize', 10);
+        
+
+
+
+
+
+
+
+
         
     case 'Figure_4A_Neuron'
         ccnl_view(context_expt(), 123, 'surprise');

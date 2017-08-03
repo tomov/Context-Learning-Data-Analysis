@@ -1,3 +1,28 @@
+
+
+
+[cluster,Vcluster] = load_mask('masks/glm0_light_cluster_t=5.435_extent=17_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii');
+[edited,Vedited] = load_mask('masks/light_prior_trial-onset_L_dlPFC1_ClusterMask_searchlight_tmap_x=-36_y=10_z=24_17voxels_edited.nii');
+
+[x,y,z] = ind2sub(size(edited), find(edited));
+Cedited = [x y z];
+
+[x,y,z] = ind2sub(size(cluster), find(cluster));
+Ccluster = [x y z];
+
+MNIedited = cor2mni(Cedited, Vedited.mat);
+MNIcluster = cor2mni(Ccluster, Vcluster.mat);
+
+MNIedited = sort(MNIedited)
+MNIcluster = sort(MNIcluster)
+
+assert(isequal(MNIcluster, MNIedited));
+
+
+%betas1 = get_betas('masks/glm0_light_sphere_t=5.435_extent=24_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii', 'feedback_onset', data, metadata, false);
+
+
+%{
 clear all;
 close all;
 [means{1}, sems{1}, ps{1}] = betas_to_behavior(123, 'surprise', 'voxel');
@@ -10,6 +35,8 @@ close all;
 [means{8}, sems{8}, ps{8}] = betas_to_behavior(154, 'KL_weights', 'cluster');
 
 save('results/betas_to_behavior_alpha=0.001_Num=1.mat');
+
+%}
 
 %{
 
@@ -85,8 +112,6 @@ fprintf('ANOVA for context changes: p(means are equal) = %e\n', p);
 fprintf('ANOVA for cue changes: p(means are equal) = %e\n', p);
 
 %}
-
-
 
 
 

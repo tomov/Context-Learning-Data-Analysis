@@ -48,6 +48,7 @@ assert(ismember(direct, {'+', '-', '+/-'}));
 % get cluster extent threshold
 %
 extent_thresh = bspm_cluster_correct(tmap_filename, df, direct, p, alpha);
+disp(extent_thresh);
 
 
 % get cluster indices

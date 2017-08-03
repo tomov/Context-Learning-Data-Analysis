@@ -39,58 +39,6 @@ tala_labels(end) = [];
 [~, tala_vol, tala_mask] = load_mask(talairach_atlas_filename); % load the actual atlas
 assert(max(tala_mask(:)) == numel(tala_labels));
 
-% Anatomical region name, AAL2 label
-% Table 2 from Rolls et al., Implementation of a new parcellation of the orbitofrontal cortex in the
-% automated anatomical labeling atlas (NeuroImage, 2015)
-%
-aal2_labels = {'Precentral gyrus',  'Precentral' ;
-'Postcentral gyrus',  'Postcentral' ;
-'Rolandic operculum',  'Rolandic_Oper' ;
-'Superior frontal gyrus, dorsolateral',  'Frontal_Sup' ;
-'Middle frontal gyrus',  'Frontal_Mid' ;
-'Inferior frontal gyrus, opercular part',  'Frontal_Inf_Oper' ;
-'Inferior frontal gyrus, triangular part',  'Frontal_Inf_Tri' ;
-'Superior frontal gyrus, medial',  'Frontal_Sup_Med' ;
-'Supplementary motor area',  'Supp_Motor_Area' ;
-'Paracentral lobule',  'Paracentral_Lobule' ;
-'Superior frontal gyrus, medial orbital',  'Frontal_Med_Orb' ;
-'IFG pars orbitalis',  'Frontal_Inf_Orb' ;
-'Gyrus rectus',  'Rectus' ;
-'Medial orbital gyrus',  'OFCmed' ;
-'Anterior orbital gyrus',  'OFCant' ;
-'Posterior orbital gyrus',  'OFCpost' ;
-'Lateral orbital gyrus',  'OFClat' ;
-'Olfactory cortex',  'Olfactory' ;
-'Superior temporal gyrus',  'Temporal_Sup' ;
-'Heschl''s gyrus',  'Heschl' ;
-'Middle temporal gyrus',  'Temporal_Mid' ;
-'Inferior temporal gyrus',  'Temporal_Inf' ;
-'Superior parietal gyrus',  'Parietal_Sup' ;
-'Inferior parietal gyrus, excluding supramarginal and angular gyri',  'Parietal_Inf' ;
-'Angular gyrus',  'Angular' ;
-'Supramarginal gyrus',  'SupraMarginal',;
-'Precuneus',  'Precuneus' ;
-'Superior occipital gyrus',  'Occipital_Sup' ;
-'Middle occipital gyrus',  'Occipital_Mid' ;
-'Inferior occipital gyrus',  'Occipital_Inf' ;
-'Cuneus',  'Cuneus' ;
-'Calcarine fissure and surrounding cortex',  'Calcarine' ;
-'Lingual gyrus',  'Lingual' ;
-'Fusiform gyrus',  'Fusiform' ;
-'Temporal pole: superior temporal gyrus',  'Temporal_Pole_Sup' ;
-'Temporal pole: middle temporal gyrus',  'Temporal_Pole_Mid' ;
-'Anterior cingulate \& paracingulate gyri',  'Cingulate_Ant' ;
-'Middle cingulate \& paracingulate gyri',  'Cingulate_Mid' ;
-'Posterior cingulate gyrus',  'Cingulate_Post' ;
-'Hippocampus',  'Hippocampus';
-'Parahippocampal gyrus',  'ParaHippocampal' ;
-'Insula',  'Insula' ;
-'Amygdala',  'Amygdala' ;
-'Caudate nucleus',  'Caudate' ;
-'Lenticular nucleus, Putamen',  'Putamen' ;
-'Lenticular nucleus, Pallidum',  'Pallidum' ;
-'Thalamus',  'Thalamus' };
-
 [num, txt, raw] = xlsread(table_filename_aal2);
 
 rows = size(num, 1);
@@ -108,13 +56,7 @@ z = [];
 
 for i=1:rows
     roi_label = txt{i,2};
-    roi = [];
-    for j=1:size(aal2_labels, 1)
-        if startsWith(roi_label, aal2_labels{j, 2})
-            roi = aal2_labels{j, 1};
-            break;
-        end
-    end
+    roi = aal2_label_to_roi_name(roi_label);
     if isempty(roi)
         roi = roi_label;
         region{i} = roi_label;

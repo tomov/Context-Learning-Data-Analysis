@@ -137,4 +137,10 @@ mask_idx = mask_idx + 1;
 masks(mask_idx).filename = 'masks/light_prior_trial-onset_L_dlPFC2_ClusterMask_searchlight_tmap_x=-56_y=14_z=26_34voxels_edited.nii';
 masks(mask_idx).rdm_name = 'light-pri-t-L-dlPFC2-34';
 
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/glm0_light_cluster_t=5.435_extent=17_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii';
+masks(mask_idx).rdm_name = 'FUCK ME';
+
+
 Neural = rdms_get_neural(masks, events, data, metadata, which_rows, use_tmaps, use_nosmooth);

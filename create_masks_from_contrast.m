@@ -27,8 +27,6 @@ assert(ismember(direct, {'+/-', '+', '-'}));
 %
 [V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_clusters(EXPT, model, contrast, p, direct, alpha, Dis, Num);
 
-disp(results_table);
-
 mask_filenames = [];
 mask_names = [];
 
