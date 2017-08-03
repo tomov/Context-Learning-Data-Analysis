@@ -603,5 +603,6 @@ Model(model_idx).color = [0 1 0];
 %Sigma_prior = Sigma_prior + rand(size(Sigma_prior)) * 0.001; % so cosine metric works
 
 
+
 disp('Computed model RDMs.');
 toc
