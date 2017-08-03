@@ -1,4 +1,5 @@
-%
+% Idea: predict condition based on similarity between neural RDM and RDMs
+% for posterior for structures M1, M2, or M3
 
 close all;
 clear all;

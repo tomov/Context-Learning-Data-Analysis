@@ -15,7 +15,7 @@ which_trials = data.which_rows & data.isTrain; % Look at training trials only
 %% Get the neural RDMs
 %
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures', 0.001, '+', 0.001, 20, 1, 1.814);
-Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 1, 1.814);
+Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 5, 1.814);
 
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 1, 1.814);
 %Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+');
@@ -86,8 +86,8 @@ for run = 1:metadata.runsPerSubject
             control_subRDMs = control_RDMs(run_mask_control);
             
             control_subRDMs = reshape(control_subRDMs, size(neural_subRDM, 1), numel(control_model_idxs));
-            %rho = partialcorr(neural_subRDM, model_subRDM, control_subRDMs, 'type', 'Spearman');
-            rho = corr(neural_subRDM, model_subRDM, 'type', 'Spearman');
+            rho = partialcorr(neural_subRDM, model_subRDM, control_subRDMs, 'type', 'Spearman');
+            %rho = corr(neural_subRDM, model_subRDM, 'type', 'Spearman');
             assert(~isnan(rho));
 
             rhos(subj, run, neural_idx) = rho; 

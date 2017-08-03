@@ -193,7 +193,7 @@ if plot_title
     
     camroll(-90);
     h = title(plot_title, 'Interpreter', 'none');    
-    h.Position = [h.Position(1) - 2.6, h.Position(2), h.Position(3)];
+    %h.Position = [h.Position(1) - 1.0, h.Position(2), h.Position(3)];
     
 
     % plot p-values
