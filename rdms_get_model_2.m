@@ -92,5 +92,6 @@ Model(model_idx).color = [0 1 0];
 
 
 
+
 disp('Computed model RDMs.');
 toc

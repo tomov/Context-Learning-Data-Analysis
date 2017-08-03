@@ -352,18 +352,30 @@ switch figure_name
         
         
         
+    case 'searchlight'
+        bspmview('rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', '../neural/mean.nii');
+        
+    case 'KL_structures'
+        ccnl_view(context_expt(), 154, 'KL_structures');
+        
+    case 'KL_weights'
+        ccnl_view(context_expt(), 154, 'KL_weights');
+        
+    case 'KL_structures - KL_weights'
+        ccnl_view(context_expt(), 154, 'KL_structures - KL_weights');
+
+    case 'KL_weights - KL_structures'
+        ccnl_view(context_expt(), 154, 'KL_weights - KL_structures');
         
         
-        
-        
-    case 'Figure_4A'
+    case 'Figure_4A_Neuron'
         ccnl_view(context_expt(), 123, 'surprise');
         
-    case 'Figure_4C'
+    case 'Figure_4C_Neuron'
         ccnl_view(context_expt(), 148, 'KL_weights');
         
 
-    case 'Figure_4A_stats'        
+    case 'Figure_4A_stats_Neuron'        
         
         %
         % Correlate D_KL and wrong answers
@@ -389,7 +401,7 @@ switch figure_name
         
         
         
-    case 'Figure_4'
+    case 'Figure_4_Neuron'
         figure;
         
         %

@@ -1,4 +1,4 @@
-function [ttest_means, ttest_sems, ttest_ps, ttest_ts, lmes, lme_means, lme_sems, lme_ps] = correlate_neural_and_behavior(neural_activations, neural_names, behavioral_measure, plot_title)
+function [ttest_means, ttest_sems, ttest_ps, ttest_ts, lmes, lme_means, lme_sems, lme_ps] = correlate_neural_and_behavior(neural_activations, neural_names, behavioral_measure, plot_title, type)
 % Within-subject correlation of some measure of neural activity (e.g. KL
 % betas) and some measure of behavior (e.g. test choice log likelihood).
 % First correlates them for each subject (9 pairs of measures per subject, one per run)
@@ -13,10 +13,15 @@ function [ttest_means, ttest_sems, ttest_ps, ttest_ts, lmes, lme_means, lme_sems
 % behavioral_measure = N x R matrix of some behavioral measure
 %                      e.g. the output of get_test_behavior()
 % plot_title = title of the plot; if empty, no plot is plotted
+% type = optional type of correlation to perform; default is Pearson
 %
 % OUTPUT:
 % ttest_means, ttest_sems, ttest_ps, ttest_ts, lmes, lme_means, lme_sems,
 % lme_ps = self-explanatory
+
+if ~exist('type', 'var')
+    type = 'Pearson';
+end
 
 assert(size(neural_activations, 1) == size(behavioral_measure, 1));
 assert(size(neural_activations, 2) == size(behavioral_measure, 2));
@@ -44,7 +49,7 @@ ttest_ts = [];
 all_fisher_rs = {};
 
 for roi = 1:size(neural_activations, 3)
-    kl_betas_roi = neural_activations(:, :, roi);
+    neural_activations_roi = neural_activations(:, :, roi);
 
     lme_liks = [];
     lme_betas = [];
@@ -54,7 +59,7 @@ for roi = 1:size(neural_activations, 3)
 
     for subj_idx = 1:metadata.N
         x = behavioral_measure(subj_idx, :)';
-        y = kl_betas_roi(subj_idx, :)';
+        y = neural_activations_roi(subj_idx, :)';
         
         %x = zscore(x);
         %y = zscore(y);
@@ -67,8 +72,9 @@ for roi = 1:size(neural_activations, 3)
         
         % Simple within-subject t-test
         %
-        r = corrcoef(x, y);
-        r = r(1,2);
+        %r = corrcoef(x, y);
+        %r = r(1,2);
+        r = corr(x, y, 'type', type);
         fisher_r = atanh(r);
         fisher_rs = [fisher_rs; fisher_r];
     end

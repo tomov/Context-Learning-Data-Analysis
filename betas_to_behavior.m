@@ -3,6 +3,12 @@ function [means, sems, ps] = betas_to_behavior(glmodel, regressor, what)
 % Correlate peak voxels from different contrasts with behavior
 % Also tries with clusters of voxels (average the betas)
 %
+% INPUT:
+% glmodel = glm as in context_create_multi.m
+% regressor = name of regressor to get betas for
+% what = 'voxel', 'sphere', or 'cluster' -- what area to take around the
+%        peak voxel from each cluster
+%
 % EXAMPLES:
 % betas_to_behavior(123, 'surprise', 'voxel')
 % betas_to_behavior(148, 'KL_weights', 'voxel')
@@ -19,7 +25,7 @@ EXPT = context_expt();
 p = 0.001;
 alpha = 0.001;
 Dis = 20;
-Num = 1;
+Num = 1; % # peak voxels per cluster; default in bspmview is 3
 r = 1.814;
 direct = '+';
 %regressor = 'KL_structures'; % contrasts not supported yet b/c ot load_run_betas

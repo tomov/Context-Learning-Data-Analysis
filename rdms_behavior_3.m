@@ -22,7 +22,7 @@ Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_ex
 %Neural_controls = rdms_get_anatomical_rois(data, metadata, which_trials, false, false);
 %Neural = [Neural, Neural_controls];
 %showRDMs(Neural, 1);
-Neural = Neural(numel(Neural)/2+1:end); % cut the trail_onset bs
+Neural = Neural(numel(Neural)/2+1:end); % cut the trial_onset bs
 
 
 %% Get the model RDMs
@@ -61,8 +61,8 @@ totals = zeros(numel(Neural), 1);
 % for each run of each subject, get the average RDM
 %
 for run = 1:metadata.runsPerSubject
-    t1_mask = data.runId(t1) == run & data.trialId(t1);
-    t2_mask = data.runId(t2) == run & data.trialId(t2);
+    t1_mask = data.runId(t1) == run;
+    t2_mask = data.runId(t2) == run;
     run_mask = t1_mask & t2_mask & t1 > t2;
     run_mask_control = repmat(run_mask, 1, 1, numel(control_model_idxs));
     

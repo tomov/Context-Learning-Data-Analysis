@@ -15,7 +15,7 @@ which_trials = data.which_rows & data.isTrain; % Look at training trials only
 %% Get the neural RDMs
 %
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures', 0.001, '+', 0.001, 20, 1, 1.814);
-Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 5, 1.814);
+Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 1, 1.814);
 
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 1, 1.814);
 %Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+');
@@ -24,7 +24,7 @@ Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/beta
 %Neural_controls = rdms_get_anatomical_rois(data, metadata, which_trials, false, false);
 %Neural = [Neural, Neural_controls];
 %showRDMs(Neural, 1);
-Neural = Neural(numel(Neural)/2+1:end); % cut the trail_onset bs
+Neural = Neural(numel(Neural)/2+1:end); % cut the trial_onset bs
 
 
 %% Get the model RDMs
@@ -60,8 +60,8 @@ which_trials_per_subj = which_trials & strcmp(data.participant, subjs{1});
 % for each run of each subject, get the average RDM
 %
 for run = 1:metadata.runsPerSubject
-    t1_mask = data.runId(t1) == run & data.trialId(t1);
-    t2_mask = data.runId(t2) == run & data.trialId(t2);
+    t1_mask = data.runId(t1) == run;
+    t2_mask = data.runId(t2) == run;
     run_mask = t1_mask & t2_mask & t1 > t2;
     run_mask_control = repmat(run_mask, 1, 1, numel(control_model_idxs));
     
