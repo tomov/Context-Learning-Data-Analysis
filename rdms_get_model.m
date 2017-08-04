@@ -1,4 +1,4 @@
-function Model = rdms_get_model(data, metadata, which_rows)
+function [Model, control_model_idxs] = rdms_get_model(data, metadata, which_rows)
 
 % Compute the RDMs for different models
 %
@@ -11,6 +11,8 @@ function Model = rdms_get_model(data, metadata, which_rows)
 
 disp('Computing model RDMs...');
 tic
+
+control_model_idxs = [];
 
 %% Simulate behavior
 %
@@ -141,6 +143,7 @@ Model(model_idx).RDMs = timeRDMs;
 Model(model_idx).RDM = avgTimeRDM;
 Model(model_idx).name = 'time';
 Model(model_idx).color = [0 1 0];
+control_model_idxs = [control_model_idxs, model_idx]; % this one's a control model
 
 % food image: 1 if same, 0 o/w
 %
@@ -180,6 +183,7 @@ Model(model_idx).RDMs = runRDMs;
 Model(model_idx).RDM = avgRunRDM;
 Model(model_idx).name = 'run';
 Model(model_idx).color = [0 1 0];
+control_model_idxs = [control_model_idxs, model_idx]; % this one's a control model
 
 % condition: 1 if same, 0 o/w
 %

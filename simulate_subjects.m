@@ -46,6 +46,8 @@ simulated.Q4 = []; % prior Q(M4 | ...) at each trial
 simulated.Q = []; % concatenated priors
 simulated.ww_after = {}; % weights for M1..M4 after update
 simulated.ww_before = {}; % weights for M1..M4 before update 
+simulated.ww_posterior = []; % weights after update for all structures concatenated
+simulated.ww_prior = []; % weights before update for all structures concatenated
 simulated.values = []; % values at each trial
 simulated.valuess = []; % values for each sturcture at each trial
 simulated.surprise = []; % D_KL at each trial for the posterior
@@ -55,6 +57,8 @@ simulated.new_values = []; % updated values AFTER the trial
 simulated.new_valuess = []; % updated values for each sturcture AFTER each trial
 simulated.Sigma_after = {}; % Sigma for M1.M4 at each trial after update
 simulated.Sigma_before = {}; % Sigma for M1..M4 at each trial before update
+simulated.Sigma_posterior = []; % Sigma after update for all structures concatenated
+simulated.Sigma_prior = []; % Sigmadefore update for all structures concatenated
 simulated.lambdas = []; % lambdas at each trial
 
 % we either have the same params for all subjects (fixed effects)
@@ -136,6 +140,31 @@ for who = metadata.subjects
             simulated.Sigma_before{2}(:, :, which_train) = Sigma_before{2};
             simulated.Sigma_before{3}(:, :, which_train) = Sigma_before{3};
             simulated.lambdas(which_train, :) = lambdas;
+            
+            % Concatenate weights 
+            %
+            dim = 0;
+            for M = 1:3
+                dim = dim + size(ww_before{M}, 2); 
+            end
+            simulated.ww_prior(which_train, :) = zeros(sum(which_train), dim);
+            simulated.ww_posterior(which_train, :) = zeros(sum(which_train), dim);
+            simulated.Sigma_prior(:, :, which_train) = zeros(dim, dim, sum(which_train));
+            simulated.Sigma_posterior(:, :, which_train) = zeros(dim, dim, sum(which_train));
+            
+            dim = 0;
+            for M = 1:3
+                dims = dim + 1 : dim + size(ww_before{M}, 2);
+                
+                simulated.ww_prior(which_train, dims) = ww_before{M};
+                simulated.Sigma_prior(dims, dims, which_train) = Sigma_before{M};
+                
+                simulated.ww_posterior(which_train, dims) = ww_after{M};
+                simulated.Sigma_posterior(dims, dims, which_train) = Sigma_after{M};
+                
+                dim = dim + size(ww_before{M}, 2); 
+            end
+            
 
             % See what the model predicts for the test trials of that run
             %

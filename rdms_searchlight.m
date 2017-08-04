@@ -19,8 +19,6 @@ function [table_Rho, table_P, all_subject_rhos, idx, x, y, z] = rdms_searchlight
 %% Load data and compute first-order RDMs
 %
 
-HACKSAUCE_REMOVE_ME = true; % TODO REMOVE only look at last 2 models
-
 [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
 
 which_rows = data.which_rows & data.isTrain; % Look at training trials only
@@ -50,21 +48,15 @@ Searchlight = rdms_get_searchlight(data, metadata, which_rows, x, y, z, r, true,
 
 %% Get the model RDMs
 %
-Model = rdms_get_model(data, metadata, which_rows);
+[Model, control_model_idxs] = rdms_get_model_3(data, metadata, which_rows);
 
 
 %% Get second-order RDM
 %
-control_model_idxs = [8, 12]; % #KNOB control for time and run
-assert(isequal(Model(8).name, 'time'));
-assert(isequal(Model(12).name, 'run'));
+assert(isequal(Model(control_model_idxs(1)).name, 'time'));
+assert(isequal(Model(control_model_idxs(2)).name, 'run'));
 rows = Searchlight;
 cols = Model;
-
-if HACKSAUCE_REMOVE_ME
-    cols = cols([control_model_idxs, end-1:end]);
-    control_model_idxs = 1:length(control_model_idxs);
-end
 
 [table_Rho, table_H, table_T, table_P, all_subject_rhos] = rdms_second_order(metadata, rows, cols, control_model_idxs, false, [], []);
 
@@ -74,10 +66,6 @@ end
 
 %which = table_Rho > 0 & table_P < 0.05 / numel(table_P); % Bonferroni correction
 
-if HACKSAUCE_REMOVE_ME
-    filename = sprintf('searchlight_weights_only_%d-%d.mat', start_idx, end_idx);
-else
-    filename = sprintf('searchlight_%d-%d.mat', start_idx, end_idx);
-end
-
-%save(fullfile('rdms', filename), 'table_Rho', 'table_T', 'table_P', 'all_subject_rhos', 'x', 'y', 'z', 'r', 'idx');
+filename = sprintf('searchlight_weights_%d-%d.mat', start_idx, end_idx);
+fprintf('SAVING %s\n', filename);
+save(fullfile('rdms', filename), 'table_Rho', 'table_T', 'table_P', 'all_subject_rhos', 'x', 'y', 'z', 'r', 'idx');

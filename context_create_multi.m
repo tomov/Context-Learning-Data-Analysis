@@ -4048,21 +4048,100 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
             multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
 
+            % did context change on this trial?
+            %
+            multi.names{3} = 'context_changed';
+            multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(context_changed))';
+            multi.durations{3} = zeros(size(data.contextRole(context_changed)));
+            
             % correct vs. wrong (0/1) @ feedback / outcome onset (WRONG trials 1..20)
             % 
             if sum(which_error) > 0
-                multi.names{3} = 'wrong';
-                multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
-                multi.durations{3} = zeros(size(data.contextRole(which_error)));
+                multi.names{4} = 'wrong';
+                multi.onsets{4} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
+                multi.durations{4} = zeros(size(data.contextRole(which_error)));
             end
                         
+
+            
+        % Same as 154 but with KL divergence for all weights
+        %
+        case 155
+            which_error = which_train & ~data.response.corr;
+
+            KL_structures = simulated.surprise(which_train);
+            
+            context_changed = data.contextId ~= circshift(data.contextId, 1);
+            context_changed(data.trialId == 1 & data.isTrain) = 0; % TODO 0 or 1?
+            context_changed = context_changed(which_train);
+            
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them!
+
+            %{
+            dim = 0;
+            for M = 1:3
+                dim = dim + size(simulated.ww_before{M}, 2); 
+            end
+            ww_prior = zeros(sum(which_train), dim);
+            ww_posterior = zeros(sum(which_train), dim);
+            Sigma_prior = zeros(dim, dim, sum(which_train));
+            Sigma_posterior = zeros(dim, dim, sum(which_train));
+            
+            dim = 0;
+            for M = 1:3
+                dims = dim + 1 : dim + size(simulated.ww_before{M}, 2);
+                
+                ww_prior(:, dims) = simulated.ww_before{M}(which_train, :);
+                Sigma_prior(dims, dims, :) = simulated.Sigma_before{M}(:,:,which_train);
+                
+                ww_posterior(:, dims) = simulated.ww_after{M}(which_train, :);
+                Sigma_posterior(dims, dims, :) = simulated.Sigma_after{M}(:,:,which_train);
+                
+                dim = dim + size(simulated.ww_before{M}, 2); 
+            end
+            %}
+            ww_prior = simulated.ww_prior(which_train, :);
+            Sigma_prior = simulated.Sigma_prior(:,:,which_train);
+            ww_posterior = simulated.ww_posterior(which_train, :);
+            Sigma_posterior = simulated.Sigma_posterior(:,:,which_train);
+            KL_weights = KL_divergence_gauss(ww_posterior, Sigma_posterior, ww_prior, Sigma_prior);
+            assert(size(KL_weights, 1) == sum(which_train));
+            
+            multi.pmod(1).name{1} = 'KL_structures';
+            multi.pmod(1).param{1} = KL_structures';
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'KL_weights';
+            multi.pmod(1).param{2} = KL_weights';
+            multi.pmod(1).poly{2} = 1; % first order        
+            
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+
             % did context change on this trial?
             %
-            multi.names{4} = 'context_changed';
-            multi.onsets{4} = cellfun(@str2num,data.actualFeedbackOnset(context_changed))';
-            multi.durations{4} = zeros(size(data.contextRole(context_changed)));
+            multi.names{3} = 'context_changed';
+            multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(context_changed))';
+            multi.durations{3} = zeros(size(data.contextRole(context_changed)));
             
-
+            % correct vs. wrong (0/1) @ feedback / outcome onset (WRONG trials 1..20)
+            % 
+            if sum(which_error) > 0
+                multi.names{4} = 'wrong';
+                multi.onsets{4} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
+                multi.durations{4} = zeros(size(data.contextRole(which_error)));
+            end
+            
+            
             
         otherwise
             assert(false, 'invalid glmodel -- should be one of the above');

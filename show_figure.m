@@ -371,8 +371,10 @@ switch figure_name
         ccnl_view(context_expt(), 154, 'KL_weights - KL_structures');
         
 
-    case 'KL_tmaps'
-        figure;
+    case 'glm154'
+        figure('pos', [100 100 693+20 492]);
+        
+        fontsize = 12;
         
         %
         % Top left: structures 
@@ -381,7 +383,7 @@ switch figure_name
         subplot(2, 2, 1);
         
         imshow('images/KL_structures_tmap_pos.png'); % from GLM 154
-        title('Updating causal structures', 'FontSize', 10);
+        title('Updating causal structures', 'FontSize', fontsize);
         
         %
         % Top right: weights 
@@ -390,7 +392,7 @@ switch figure_name
         subplot(2, 2, 2);
         
         imshow('images/KL_weights_tmap_pos.png'); % from GLM 154
-        title('Updating associative weights', 'FontSize', 10);
+        title('Updating associative weights', 'FontSize', fontsize);
         
         %
         % Bottom left: contrast
@@ -399,14 +401,16 @@ switch figure_name
         subplot(2, 2, 3);
         
         imshow('images/KL_structures-KL_weights_tmap.png'); % from GLM 154
-        title('Updating causal structures > updating associative weights', 'FontSize', 10);
+        title({'Updating causal structures >'; 'updating associative weights'}, 'FontSize', fontsize);
         
         %
         % Bottom right: KL structures ~ test choice log likelihood
         %
 
+        subplot(2, 2, 4);
+        
         load results/betas_to_behavior_glm154_KL_structures_sphere_KL_structures.mat
-        which = 1:5; % exclude motor and cerebellum areas
+        which = 1:6; % exclude motor and cerebellum areas
         region = region(which);
         means = means(which);
         sems = sems(which);
@@ -420,13 +424,13 @@ switch figure_name
         for i = 1:numel(xs)
             if ps(i) < 0.05
                 assert(ps(i) >= 0.01);
-                text(xs(i) - length(stars) * 0.3 / 2, means(i) + sems(i) * 1.2, '*');
+                text(xs(i) - 0.08, means(i) + sems(i) * 1.1, '*', 'FontSize', fontsize);
             end
         end
         hold off;
 
         set(gca, 'xtick', xs);
-        ylabel('Average Fisher z-transformed r');
+        ylabel('Fisher z-transformed r');
         neural_names = {};
         for i = 1:numel(region)
             hemisphere = [];
@@ -435,25 +439,44 @@ switch figure_name
             else
                 hemisphere = 'R';
             end
-            neural_names{i} = [aal2_label_to_roi_name(region{i}), ' (', hemisphere, ')'];
+            roi = aal2_label_to_roi_name(region{i});
+            comma = strfind(roi, ','); % trim the super long names
+            if ~isempty(comma)
+                roi = roi(1:comma(1)-1);
+            end
+            neural_names{i} = [roi, ' (', hemisphere, ')'];
         end
         xticklabels(neural_names);
-        xtickangle(60);
+        xtickangle(30);
+        title('Structure KL betas predict test choices', 'FontSize', fontsize);
 
+        
+        
 
-    case 'searchlight_tmaps'
-        figure;
+    case 'searchlight'
+        
+        figure('pos', [100 100 693+20 492]);
+        
+        fontsize = 12;
         
         %
         % Top left: structures 
         %
 
-        subplot(2, 2, 1);
+        subplot(1, 2, 1);
         
         imshow('images/searchlight_posterior_tmap.png');
-        title('Causal structures', 'FontSize', 10);
+        title('Causal structures at feedback onset', 'FontSize', fontsize);
+        
+        subplot(1, 2, 2);
+        
+        imshow('images/searchlight_prior_tmap.png');
+        title('Causal structures at trial onset', 'FontSize', fontsize);
         
 
+        
+        
+        
 
 
 
