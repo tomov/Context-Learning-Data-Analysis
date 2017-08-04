@@ -1,5 +1,19 @@
 
 
+%Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.0001, '+', 0.99, 20, 3);
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.001, '+', 0.05, 20, 3, 1.814);
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 3, 1.814);
+
+mask_filenames = create_sphere_masks_from_contrast('rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 3, 1.814);
+
+for filename = mask_filenames
+    filename = filename{1};
+    disp(filename);
+    classify('patternnet', filename, 'condition', [1:9], [1:15], [1:9], [16:20], 'z-none', 'feedback_onset');
+end
+
+%{
+% found the bug.......... shit
 
 [cluster,Vcluster] = load_mask('masks/glm0_light_cluster_t=5.435_extent=17_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii');
 [edited,Vedited] = load_mask('masks/light_prior_trial-onset_L_dlPFC1_ClusterMask_searchlight_tmap_x=-36_y=10_z=24_17voxels_edited.nii');
@@ -18,8 +32,32 @@ MNIcluster = sort(MNIcluster)
 
 assert(isequal(MNIcluster, MNIedited));
 
+%}
 
-%betas1 = get_betas('masks/glm0_light_sphere_t=5.435_extent=24_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii', 'feedback_onset', data, metadata, false);
+
+%{
+% validate the freakin' betas...
+
+mask = 'masks/glm0_light_sphere_t=5.435_extent=24_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii';
+betas1 = get_betas(mask, 'trial_onset', data, metadata, false);
+betas1 = betas1(1,:);
+
+whole_brain_betas = get_betas('masks/mask.nii', 'trial_onset', data, metadata, false);
+
+regressor = 20;
+
+[~,Vwhole] = load_mask(fullfile('masks', 'mask.nii')); % for sanity check
+
+
+betas2 = ccnl_get_beta(context_expt(), 143, regressor, 'masks/mask.nii', 1);
+
+
+[m, V] = load_mask(mask);
+assert(isequal(Vwhole.mat, V.mat));
+betas3 = get_activations_submask(m, whole_brain_betas);
+betas3 = betas3(regressor,:);
+betas4 = ccnl_get_beta(context_expt(), 143, regressor, mask, 1);
+%}
 
 
 %{

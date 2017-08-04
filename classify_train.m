@@ -1,4 +1,4 @@
-function [classifier, inputs, targets, outputs, which_rows] = classify_train(method, runs, trials, subjs, mask, predict_what, z_score, foldid)
+function [classifier, inputs, targets, outputs, which_rows] = classify_train(method, runs, trials, subjs, mask, predict_what, z_score, event, foldid)
 % Train classifier to predict stuff based on neural activity at trial onset
 % returns a fitObj that you can pass to glmnetPredict
 % or a petternnet net that you can use e.g. like net(inputs)
@@ -6,7 +6,7 @@ function [classifier, inputs, targets, outputs, which_rows] = classify_train(met
 %
 % method = 'cvglmnet', 'glmnet', 'patternnet'
 
-if nargin < 8
+if ~exist('foldid', 'var')
     % can optionally pass the folds for cvglmnet. If none are passed, uses the default
     % folds that cvglmnet creates
     %
@@ -18,7 +18,7 @@ rng('shuffle');
 fprintf('classify_train\n');
 disp(method);
 
-[inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, trials, subjs, mask, predict_what, z_score);
+[inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, trials, subjs, mask, predict_what, z_score, event);
 
 assert(isempty(foldid) || numel(foldid) == sum(which_rows));
 
@@ -45,7 +45,7 @@ switch method
         % from https://github.com/tomov/food-recognition/blob/master/neural_train.m
 
         % Create a Pattern Recognition Network
-        hiddenLayerSize = 200; % TODO param
+        hiddenLayerSize = 8; % TODO param
         net = patternnet(hiddenLayerSize);
 
         % Set up Division of Data for Training, Validation, Testing
@@ -143,13 +143,12 @@ switch method
 
         % each run is a separate fold TODO rm
         %
-        %{
         [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
         foldid = data.runId(which_rows);
         foldid = arrayfun(@(x) find(x == runs), foldid);
-        %}
         % each (subject, run) is a separate fold TODO rm
         %
+        %{
         [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
         cur_participant = '';
         cur_run = NaN;
@@ -163,6 +162,7 @@ switch method
             cur_participant = data.participant{i};
             cur_run = data.runId(i);
         end
+        %}
         assert(length(foldid) == sum(which_rows));
         disp('folds:');
         disp(foldid);

@@ -1,4 +1,4 @@
-function [inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, trials, subjs, mask, predict_what, z_score)
+function [inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, trials, subjs, mask, predict_what, z_score, event)
 
 % helper method that gets the input betas and the targets for the
 % classifier to train / test on
@@ -15,6 +15,7 @@ function [inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, t
 %           'z-none' = no z-scoring,
 %           'z-run' = z-score all voxels within each run
 %           'z-run-voxel' = z-score each voxel separately within each run
+% event = 'feedback_onset' or 'trial_onset'
 % 
 % OUTPUT:
 % inputs = [n_observations x n_voxels] input to classifier
@@ -31,6 +32,8 @@ function [inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, t
 
 use_tmaps = false; % #KNOB TODO make parameter
 use_nosmooth = false; % #KNOB TODO make parameter
+
+assert(ismember(event, {'trial_onset', 'feedback_onset'}));
 
 if use_tmaps
     get_activations = @get_tmaps;
@@ -49,9 +52,9 @@ subjects = metadata.allSubjects;
 %
 [~, name] = system('hostname');
 if isempty(strfind(name, 'omchil')) % it could be NCF
-    activations = get_activations(mask, 'feedback_onset', data, metadata, use_nosmooth); % <-- get the mask straight up, or ...
+    activations = get_activations(mask, event, data, metadata, use_nosmooth); % <-- get the mask straight up, or ...
 else % certainly not NCF
-    whole_brain_activations = get_activations(fullfile('masks', 'mask.nii'), 'feedback_onset', data, metadata, use_nosmooth); % get the submask from the whole-brain betas
+    whole_brain_activations = get_activations(fullfile('masks', 'mask.nii'), event, data, metadata, use_nosmooth); % get the submask from the whole-brain betas
     [mask, Vmask] = load_mask(mask);
     assert(isequal(Vwhole.mat, Vmask.mat)); % it is imperative that they are in the same coordinate space if we're getting the betas like this!!!
     activations = get_activations_submask(mask, whole_brain_activations);

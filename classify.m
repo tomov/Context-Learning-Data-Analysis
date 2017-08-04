@@ -1,4 +1,4 @@
-function classifier = classify(method, mask, what, training_runs, training_trials, test_runs, test_trials, z_score)
+function classifier = classify(method, mask, what, training_runs, training_trials, test_runs, test_trials, z_score, event)
 
 % Train and test classifier to predict aspects of the task from the neural
 % data i.e. P(regressor | neural activity)
@@ -23,7 +23,12 @@ function classifier = classify(method, mask, what, training_runs, training_trial
 %           'z-none' = no z-scoring,
 %           'z-run' = z-score all voxels within each run
 %           'z-run-voxel' = z-score each voxel separately within each run
+% event = 'feedback_onset' or 'trial_onset'
+
+if ~isempty(event)
+    event = 'feedback_onset';
+end
 
 subjs = getGoodSubjects();
-classifier = classify_train(method, training_runs, training_trials, subjs, mask, what, z_score);
-classify_test(method, classifier, test_runs, test_trials, subjs, mask, what, z_score);
+classifier = classify_train(method, training_runs, training_trials, subjs, mask, what, z_score, event);
+classify_test(method, classifier, test_runs, test_trials, subjs, mask, what, z_score, event);

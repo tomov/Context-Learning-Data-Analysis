@@ -24,7 +24,7 @@ which_trials = data.which_rows & data.isTrain; % Look at training trials only
 %% get the neural rdms
 %
 %Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.0001, '+', 0.99, 20, 3);
-%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.001, '+', 0.05, 20, 1, 1.814);
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.001, '+', 0.05, 20, 3, 1.814);
 Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 3, 1.814);
 %Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 3);
 
@@ -53,14 +53,16 @@ Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/beta
 
 % sanity check -- make sure that the posterior actually correlates both
 %with the ROIs and with the test choices ... well shit
-%{
+
 Model = rdms_get_model(data, metadata, which_trials);
 control_model_idxs = [8, 12]; % #KNOB control for time and run
 assert(isequal(Model(8).name, 'time'));
 assert(isequal(Model(12).name, 'run'));
 
-Model = [Model(1) Model(8) Model(12)];
-[table_Rho, table_H, table_T, table_P, all_subject_rhos] = rdms_second_order(metadata, Neural, Model, [2 3], false, [], []);
+model_idx = 1; % !!!!!!!!! depends on which searchlight tmap we're looking at
+
+%Model = [Model(1) Model(8) Model(12)];
+%[table_Rho, table_H, table_T, table_P, all_subject_rhos] = rdms_second_order(metadata, Neural, Model, [2 3], false, [], []);
 %}
 %{
 model_idx = 1;
@@ -127,11 +129,11 @@ test_RDM = mean(test_RDMs, 3);
 % Then, compute neural RDMs on the run level (i.e. pairs of runs) based on
 % training trial activations for different ROIs
 %
-clear Neural_run;
+clear Run;
 for i=1:numel(Neural)
-    Neural_run(i).RDMs = zeros(metadata.runsPerSubject, metadata.runsPerSubject, metadata.N);
-    Neural_run(i).name = Neural(i).name;
-    Neural_run(i).color = Neural(i).color;
+    Run(i).RDMs = zeros(metadata.runsPerSubject, metadata.runsPerSubject, metadata.N);
+    Run(i).name = Neural(i).name;
+    Run(i).color = Neural(i).color;
 end
 
 for run1 = 1:metadata.runsPerSubject
@@ -140,20 +142,42 @@ for run1 = 1:metadata.runsPerSubject
     for run2 = 1:run1 - 1
         t2_mask = data.runId(t2) == run2 & data.trialId(t2) > 0;
         run_mask = t1_mask & t2_mask;
+        run_mask_control = repmat(run_mask, 1, 1, numel(control_model_idxs));
         %assert(sum(run_mask(:)) == metadata.trainingTrialsPerRun ^ 2 / 4);
 
         for subj = 1:metadata.N
             fprintf('subject %d, runs %d,%d\n', subj, run1, run2);
 
             for neural_idx = 1:numel(Neural)
+                % from rdms_second_order.m
+                neural_RDM = Neural(neural_idx).RDMs(:,:,subj);
+                model_RDM = Model(model_idx).RDMs(:,:,subj);
+                control_RDMs = nan(size(neural_RDM, 1), size(neural_RDM, 2), numel(control_model_idxs));
+                for i = 1:numel(control_model_idxs) 
+                    control_RDMs(:,:,i) = Model(control_model_idxs(i)).RDMs(:,:,subj);
+                end
+
+                x = neural_RDM(run_mask);
+                y = model_RDM(run_mask);
+                z = control_RDMs(run_mask_control);
+                z = reshape(z, size(x, 1), numel(control_model_idxs));
+
+                rho = partialcorr(x, y, z, 'type', 'Spearman');
+
+                Run(neural_idx).RDMs(run1, run2, subj) = rho;
+                Run(neural_idx).RDMs(run2, run1, subj) = rho;
+            end
+            %{
+            % old stuff -- run RDM = average neural RDM for that run pair
+            for neural_idx = 1:numel(Neural)
                 RDM = Neural(neural_idx).RDMs(:,:,subj);
                 sub_RDM = RDM(run_mask);
                 
-                Neural_run(neural_idx).RDMs(run1, run2, subj) = mean(sub_RDM);
-                Neural_run(neural_idx).RDMs(run2, run1, subj) = Neural_run(neural_idx).RDMs(run1, run2, subj);
-                
-                               
+                Run(neural_idx).RDMs(run1, run2, subj) = mean(sub_RDM);
+                Run(neural_idx).RDMs(run2, run1, subj) = Run(neural_idx).RDMs(run1, run2, subj);
             end
+            %}
+
             
             %{
             RDM = Model(1).RDMs(:,:,subj);
@@ -166,28 +190,28 @@ for run1 = 1:metadata.runsPerSubject
 end
 
 for i=1:numel(Neural)
-    Neural_run(i).RDM = mean(Neural_run(i).RDMs, 3);
+    Run(i).RDM = mean(Run(i).RDMs, 3);
 end
-%showRDMs(Neural_run, 2);
+%showRDMs(Run, 2);
 
 
 
-%% Correlate test choices and RDMs
+% Correlate test choices and RDMs
 %
 [r1, r2] = meshgrid(1:metadata.runsPerSubject, 1:metadata.runsPerSubject);
 upper = r1 > r2;
 
-neural = nan(metadata.N, sum(upper(:)), numel(Neural_run));
+neural = nan(metadata.N, sum(upper(:)), numel(Run));
 behavioral = nan(metadata.N, sum(upper(:)));
 
 for subj = 1:metadata.N
     RDM = test_RDMs(:,:,subj);
     behavioral(subj,:) = RDM(upper);
     
-    for neural_idx = 1:numel(Neural_run)
-        RDM = Neural_run(neural_idx).RDMs(:,:,subj);
+    for neural_idx = 1:numel(Run)
+        RDM = Run(neural_idx).RDMs(:,:,subj);
         neural(subj,:,neural_idx) = RDM(upper);
     end
 end
 
-[means, sems, ps] = correlate_neural_and_behavior(neural, {Neural_run.name}, behavioral, 'Training neural ~ test choices', 'Spearman');
+[means, sems, ps] = correlate_neural_and_behavior(neural, {Run.name}, behavioral, 'Training neural ~ test choices', 'Spearman');
