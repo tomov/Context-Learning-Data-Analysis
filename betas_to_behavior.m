@@ -1,4 +1,4 @@
-function [means, sems, ps] = betas_to_behavior(glmodel, regressor, what, contrast)
+function [means, sems, ps, ts] = betas_to_behavior(glmodel, regressor, what, contrast)
 
 % Correlate peak voxels from different contrasts with behavior
 % Also tries with clusters of voxels (average the betas)
@@ -132,7 +132,7 @@ end
 
 %% within-subject analysis using a linear mixed effects model and/or t-tests
 %
-[means, sems, ps] = correlate_neural_and_behavior(betas, region, test_liks, [regressor, ' ', what, ' betas from GLM ', num2str(glmodel), ' correlated with test log likelihood: t-test']);
+[means, sems, ps, ts] = correlate_neural_and_behavior(betas, region, test_liks, [regressor, ' ', what, ' betas from GLM ', num2str(glmodel), ' correlated with test log likelihood: t-test']);
 
 
 save(filename);

@@ -1,9 +1,9 @@
 
-
 %Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.0001, '+', 0.99, 20, 3);
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.001, '+', 0.05, 20, 3, 1.814);
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 3, 1.814);
 
+%{
 mask_filenames = create_sphere_masks_from_contrast('rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 3, 1.814);
 
 for filename = mask_filenames
@@ -11,6 +11,9 @@ for filename = mask_filenames
     disp(filename);
     classify('patternnet', filename, 'condition', [1:9], [1:15], [1:9], [16:20], 'z-none', 'feedback_onset');
 end
+
+%}
+
 
 %{
 % found the bug.......... shit
@@ -76,7 +79,6 @@ save('results/betas_to_behavior_alpha=0.001_Num=1.mat');
 
 %}
 
-%{
 
 
 % eLife reviewer comment -- contextual tracking confounding KL
@@ -110,15 +112,26 @@ assert(options.fixedEffects == 1);
 assert(isequal(options.which_structures, [1 1 1 0]));
 which_structures = logical(options.which_structures);
 
-
 simulated = simulate_subjects(data, metadata, params, which_structures);
 
 %% mad stats
 %
+
+KL_error = simulated.surprise(which_trials & ~data.response.corr);
+KL_no_error = simulated.surprise(which_trials & data.response.corr);
+
+[h, p, ci, stats] = ttest2(KL_error, KL_no_error)
+
+
+
 which = which_trials & data.trialId > 1; % ignore trial 1
 
 KL_c_change = simulated.surprise(which & context_changed);
 KL_no_c_change = simulated.surprise(which & ~context_changed);
+
+
+[h, p, ci, stats] = ttest2(KL_c_change, KL_no_c_change)
+
 
 KL_x_change = simulated.surprise(which & cue_changed);
 KL_no_x_change = simulated.surprise(which & ~cue_changed);
@@ -149,7 +162,7 @@ fprintf('ANOVA for context changes: p(means are equal) = %e\n', p);
 [p, anovatab, stats] = anova1(simulated.surprise(which), cue_changed(which));
 fprintf('ANOVA for cue changes: p(means are equal) = %e\n', p);
 
-%}
+
 
 
 
