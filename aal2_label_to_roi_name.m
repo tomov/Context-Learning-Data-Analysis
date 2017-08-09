@@ -63,7 +63,7 @@ aal2_labels = {...
 'Lenticular nucleus, Putamen',  'Putamen' ;
 'Lenticular nucleus, Pallidum',  'Pallidum' ;
 'Thalamus',  'Thalamus';
-'Cerebellum', 'Cerebelum', 
+'Cerebellum', 'Cerebelum';
 'Vermis', 'Vermis'};
 
 roi = roi_label;

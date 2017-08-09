@@ -30,12 +30,12 @@ function extract_results_table(varargin)
 
 atlas_name = varargin{1};
 method = varargin{2};
-assert(ismember(atlas_name, {'AnatomyToolbox', 'AAL2', 'HarvardOxford-maxprob-thr0'}));
+assert(ismember(atlas_name, {'AnatomyToolbox', 'AAL2', 'HarvardOxford-maxprob-thr0', 'Talairach', 'Brodmann'}));
 assert(ismember(method, {'peak', 'vote', 'all'}));
 
 [V, Y, C, CI, region, extent, stat, mni, cor, results_table, spmT] = extract_clusters(varargin{3:end});
 
-atlas_dirpath = '/Users/momchil/Dropbox/Research/libs/bspmview/supportfiles';
+atlas_dirpath = 'atlases';
 
 
 [atlaslabels, atlas] = bspm_setatlas(spmT, atlas_dirpath, atlas_name);
@@ -76,7 +76,7 @@ for i = 1:size(region, 1)
         end
     end
 
-    % get the cluster label 
+    % get the cluster label(s)
     %
     switch method
         case 'peak'
@@ -146,5 +146,6 @@ for i = 1:size(region, 1)
     
 end
 
+save('shit.mat');
 
 %new_region'

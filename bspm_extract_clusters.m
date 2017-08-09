@@ -39,7 +39,7 @@ function [C, CI, region, extent, stat, mni, cor, results_table] = bspm_extract_c
 
 df = metadata.N - 1; % = degrees of freedom for t-test = # of subjects - 1
 
-atlas_dirpath = '/Users/momchil/Dropbox/Research/libs/bspmview/supportfiles';
+atlas_dirpath = 'atlases';
 atlas_name = 'AAL2';
 
 assert(ismember(direct, {'+', '-', '+/-'}));

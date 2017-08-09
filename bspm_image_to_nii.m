@@ -50,7 +50,7 @@
 %prefix = 'masks/glm123_L_rlPFC_ClusterMask_spmT_0001_x=-40_y=56_z=2_115voxels';
 %prefix = 'masks/glm123_L_rlPFC_ClusterMask_spmT_0001_x=-40_y=56_z=2_19voxels';
 
-prefix = 'masks/..';
+prefix = 'atlases/brodmann';
 
 nii = load_nii([prefix, '.hdr']);
 save_nii(nii, [prefix, '.nii']);
