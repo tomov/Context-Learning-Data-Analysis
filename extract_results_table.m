@@ -1,14 +1,15 @@
-function [V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_results_table(varargin)
-% Wrapper around bspm_extract_clusters
+function extract_results_table(varargin)
+% Wrapper around extract_clusters that also uses different atlases
+%
 % Given a contrast, extract all the activation clusters from the t-map after cluster FWE
-% correction. Uses the same logic as bspmview,
-% and as a sanity check prints the results table -- should be the same as
-% the one from bspmview.
+% correction.
 % Then it uses different atlases to figure out the names of the different activation clusters.
 % As a bonus, prints out the table in LaTeX format.
 %
 % INPUT:
-% same as extract_clusters()
+% atlas_name = which atlas to use, e.g. 'AAL2' or 'AnatomyToolbox'
+% method = 'peak', 'vote', or 'all'
+% the rest of the parameters are the same as extract_clusters()
 %
 % OUTPUT:
 % V = SPM volume of the t-map, with the filename changed so we don't
@@ -26,17 +27,16 @@ function [V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_
 % results_table = what Save Results Table in bspmview would spit out 
 % 
 
-method = 'peak';
 
-[V, Y, C, CI, region, extent, stat, mni, cor, results_table, spmT] = extract_clusters(varargin{:});
+atlas_name = varargin{1};
+method = varargin{2};
+assert(ismember(atlas_name, {'AnatomyToolbox', 'AAL2', 'HarvardOxford-maxprob-thr0'}));
+assert(ismember(method, {'peak', 'vote', 'all'}));
+
+[V, Y, C, CI, region, extent, stat, mni, cor, results_table, spmT] = extract_clusters(varargin{3:end});
 
 atlas_dirpath = '/Users/momchil/Dropbox/Research/libs/bspmview/supportfiles';
 
-atlas_name = 'HarvardOxford-maxprob-thr0';
-atlas_name = 'AAL2';
-atlas_name = 'AnatomyToolbox';
-
-%atlas_names = {'AnatomyToolbox', 'AAL2', 'HarvardOxford-maxprob-thr0'}
 
 [atlaslabels, atlas] = bspm_setatlas(spmT, atlas_dirpath, atlas_name);
 atlas = reshape(atlas, size(Y)); % voxel --> num
@@ -51,49 +51,84 @@ for i = 1:size(region, 1)
     z = cor(i,3);
     assert(immse(stat(i), Y(x,y,z)) < 1e-6);
 
-    % get cluser voxels
+    % get cluser mask and voxels
     clust_idx = CI(x,y,z);
     mask = CI == clust_idx;
-
     voxels = find(mask);
     assert(numel(voxels) == extent(i)); % <-- doesn't work with +/- ; do one at a time
 
-    % get peak voxel atlas label 
-    if isKey(map, atlas(x,y,z))
-        new_region{i} = map(atlas(x, y, z));
-    else
-        new_region{i} = '';
-    end
-    
-    % Convert labels to nice anatomical regions
+    % see which region each voxel "votes" for
     %
-    switch atlas_name
-        case 'AAL2'
-            new_region{i} = aal2_label_to_roi_name(new_region{i}, mni(i,:));
+    [x, y, z] = ind2sub(size(mask), voxels);
+    votes = zeros(1, max(atlas(:)));
+    sign_votes = zeros(1, max(atlas(:))); % whether it's L or R on average
+    for j = 1:numel(x)
+        if atlas(x(j),y(j),z(j)) > 0
+            idx = atlas(x(j),y(j),z(j));
+            votes(idx) = votes(idx) + 1;
             
-        case 'AnatomyToolbox'
-            hemi = '';
-            if startsWith(new_region{i}, 'L ')
-                new_region{i} = new_region{i}(3:end);
-                hemi = 'L';
-            elseif startsWith(new_region{i}, 'R ')
-                new_region{i} = new_region{i}(3:end);
-                hemi = 'R';
+            m = cor2mni([x(j) y(j) z(j)], V.mat);
+            if m(1) < 0
+                sign_votes(idx) = sign_votes(idx) - 1; % L voxel
+            else
+                sign_votes(idx) = sign_votes(idx) + 1; % R voxel
+            end
+        end
+    end
+
+    % get the cluster label 
+    %
+    switch method
+        case 'peak'
+            % just use the peak voxel
+            %
+            if isKey(map, atlas(cor(i,1),cor(i,2),cor(i,3)))
+                label = map(atlas(cor(i,1),cor(i,2),cor(i,3)));
+                new_region{i} = atlas_label_to_roi_name(atlas_name, label, mni(i,:)); % convert to nice anatomical name
+            else
+                new_region{i} = '';
             end
             
-            space = find(new_region{i} == ' ' | new_region{i} == '-');
-            if ~isempty(space)
-                new_region{i} = [new_region{i}(1:space), lower(new_region{i}(space+1:end))];
+        case 'vote'
+            % get the most popular anatomical region in the cluster
+            % each voxel gets one vote
+            %
+            if sum(votes) == 0
+                new_region{i} = ''; % no region :(
+            else
+                [~, idx] = max(votes);
+                label = map(idx);
+                new_region{i} = atlas_label_to_roi_name(atlas_name, label, [sign_votes(idx) 0 0]); % convert to nice anatomical name
             end
             
-            if ~isempty(hemi)
-                new_region{i} = [new_region{i}, ' (', hemi, ')'];
+        case 'all'
+            % List the regions of all voxels
+            %
+            if sum(votes) == 0
+                new_region{i} = ''; % no region :(
+            else
+                [~, idxs] = find(votes);
+                [~, sorted_idxs] = sort(votes(idxs), 'descend');
+
+                rois = {};
+                for j = 1:numel(sorted_idxs)
+                    idx = idxs(sorted_idxs(j));
+                    assert(votes(idx) > 0);
+
+                    label = map(idx);
+                    roi = atlas_label_to_roi_name(atlas_name, label, [sign_votes(idx) 0 0]);
+                    roi = sprintf('%s (%.2f\\%%)', roi, 100 * votes(idx) / sum(votes));
+                    rois = [rois; {roi}];
+                end
+                new_region{i} = strjoin(rois, ' \\\\\n & ');
             end
             
         otherwise
-            assert(false, 'Should be one of the above');
+            assert(false, 'method should be one of these');
     end
-
+    
+    % print for LaTeX
+    %
     sign = '';
     if i == 1 || (stat(i) < 0) ~= (stat(i - 1) < 0) % sign changed
         if stat(i) < 0
@@ -103,9 +138,13 @@ for i = 1:size(region, 1)
         end
     end
     
-    fprintf('%s & %s & %s & %d & %.3f & %d %d %d \\\\\n', sign, new_region{i}, '??', extent(i), stat(i), x, y, z);
+    fprintf('%s & %s & %s & %d & %.3f & %d %d %d \\\\\n', sign, new_region{i}, '??', extent(i), stat(i), mni(i,1), mni(i,2), mni(i,3));
+    if isequal(method, 'all')
+        fprintf('\\hline\n');
+    end
 
+    
 end
 
-save('shit.mat');
-new_region'
+
+%new_region'

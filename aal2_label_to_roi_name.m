@@ -3,11 +3,12 @@ function roi = aal2_label_to_roi_name(roi_label, mni)
 % Function that converts AAL2 labels from e.g. bspmview tables into real anatomical ROI names.
 % 
 % INPUT:
-% roi_label = ROI label as output by bspmview, e.g. 'Angular_R'.
+% roi_label = ROI label from AAL2 atlas as output by bspmview, e.g. 'Angular_R'.
 % mni = optional MNI coordinates to include laterality
 %
 % OUTPUT:
-% roi = the actual anatomical name, e.g. 'Angular gyrus' or 'Angular gyrus (R)'. If not round, returns []
+% roi = the actual anatomical name, e.g. 'Angular gyrus' or 'Angular gyrus
+%       (R)'. If not round, returns the passed roi_label
 %
 
 % Anatomical region name, AAL2 label
@@ -62,7 +63,8 @@ aal2_labels = {...
 'Lenticular nucleus, Putamen',  'Putamen' ;
 'Lenticular nucleus, Pallidum',  'Pallidum' ;
 'Thalamus',  'Thalamus';
-'Cerebellum', 'Cerebelum'};
+'Cerebellum', 'Cerebelum', 
+'Vermis', 'Vermis'};
 
 roi = roi_label;
 
