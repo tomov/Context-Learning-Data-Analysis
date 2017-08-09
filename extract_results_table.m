@@ -1,4 +1,4 @@
-function extract_results_table(varargin)
+function table = extract_results_table(varargin)
 % Wrapper around extract_clusters that also uses different atlases
 %
 % Given a contrast, extract all the activation clusters from the t-map after cluster FWE
@@ -12,36 +12,36 @@ function extract_results_table(varargin)
 % the rest of the parameters are the same as extract_clusters()
 %
 % OUTPUT:
-% V = SPM volume of the t-map, with the filename changed so we don't
-%     overwrite it accidentally
-% Y = the actual t-map
-% C = volume with cluster size for each voxel
-% CI = volume with cluster index for each voxel <-- that's the name of the
-%      game; 
-% region = labels for the peak voxels
-% extent = size of the cluster
-% stat = t-statistic for the peak voxels
-% mni = MNI coordinates of peak voxels
-% cor = coordinates of peak voxel in native space (can be used as indices
-%       in the C and CI volumes)
-% results_table = what Save Results Table in bspmview would spit out 
+% table = a nice table with all the stuffs
 % 
+% EXAMPLE:
+% table = extract_results_table('AnatomyToolbox', 'peak', context_expt(), 154, 'KL_structures', 0.001, '+', 0.05);
+% table = extract_results_table('Brodmann', 'vote', context_expt(), 154, 'KL_structures', 0.001, '+', 0.05);
 
+atlas_dirpath = 'atlases';
 
 atlas_name = varargin{1};
 method = varargin{2};
 assert(ismember(atlas_name, {'AnatomyToolbox', 'AAL2', 'HarvardOxford-maxprob-thr0', 'Talairach', 'Brodmann'}));
 assert(ismember(method, {'peak', 'vote', 'all'}));
 
+% extract the clusters
+%
 [V, Y, C, CI, region, extent, stat, mni, cor, results_table, spmT] = extract_clusters(varargin{3:end});
 
-atlas_dirpath = 'atlases';
-
-
+% load atlas
+%
 [atlaslabels, atlas] = bspm_setatlas(spmT, atlas_dirpath, atlas_name);
 atlas = reshape(atlas, size(Y)); % voxel --> num
 map = containers.Map(atlaslabels.id, atlaslabels.label); % num --> label
 
+% load BA atlas separately
+%
+[~, BAatlas] = bspm_setatlas(spmT, atlas_dirpath, 'Brodmann');
+BAatlas = reshape(BAatlas, size(Y)); % voxel --> BA
+
+% label the clusters
+%
 new_region = {};
 
 for i = 1:size(region, 1) 
@@ -50,12 +50,21 @@ for i = 1:size(region, 1)
     y = cor(i,2);
     z = cor(i,3);
     assert(immse(stat(i), Y(x,y,z)) < 1e-6);
+    
+    % set brodmann area
+    if BAatlas(x, y, z)
+        BA = num2str(BAatlas(x, y, z));
+    else
+        BA = '';
+    end
 
     % get cluser mask and voxels
     clust_idx = CI(x,y,z);
     mask = CI == clust_idx;
     voxels = find(mask);
-    assert(numel(voxels) == extent(i)); % <-- doesn't work with +/- ; do one at a time
+    if ~isequal(method, 'peak')
+        assert(numel(voxels) == extent(i)); % <-- doesn't work with +/- ; do one at a time
+    end
 
     % see which region each voxel "votes" for
     %
@@ -120,7 +129,7 @@ for i = 1:size(region, 1)
                     roi = sprintf('%s (%.2f\\%%)', roi, 100 * votes(idx) / sum(votes));
                     rois = [rois; {roi}];
                 end
-                new_region{i} = strjoin(rois, ' \\\\\n & ');
+                new_region{i} = rois;
             end
             
         otherwise
@@ -138,10 +147,27 @@ for i = 1:size(region, 1)
         end
     end
     
-    fprintf('%s & %s & %s & %d & %.3f & %d %d %d \\\\\n', sign, new_region{i}, '??', extent(i), stat(i), mni(i,1), mni(i,2), mni(i,3));
+    region_latex = new_region{i};
+    if iscell(new_region{i}) % multiple regions in this cluster
+        region_latex = strjoin(new_region{i}, ' \\\\\n & ');
+    else
+        region_latex = new_region{i};
+    end
+    fprintf('%s & %s & %s & %d & %.3f & %d %d %d \\\\\n', sign, region_latex, BA, extent(i), stat(i), mni(i,1), mni(i,2), mni(i,3));
     if isequal(method, 'all')
         fprintf('\\hline\n');
     end
+    
+    % output table
+    %
+    table{i, 1} = sign;
+    table{i, 2} = new_region{i};
+    table{i, 3} = BA;
+    table{i, 4} = extent(i);
+    table{i, 5} = stat(i);
+    table{i, 6} = mni(i,1);
+    table{i, 7} = mni(i,2);
+    table{i, 8} = mni(i,3);
 
     
 end
