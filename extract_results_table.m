@@ -1,0 +1,61 @@
+function [V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_results_table(varargin)
+% Wrapper around bspm_extract_clusters
+% Given a contrast, extract all the activation clusters from the t-map after cluster FWE
+% correction. Uses the same logic as bspmview,
+% and as a sanity check prints the results table -- should be the same as
+% the one from bspmview.
+% Then it uses different atlases to figure out the names of the different activation clusters.
+% As a bonus, prints out the table in LaTeX format.
+%
+% INPUT:
+% same as extract_clusters()
+%
+% OUTPUT:
+% V = SPM volume of the t-map, with the filename changed so we don't
+%     overwrite it accidentally
+% Y = the actual t-map
+% C = volume with cluster size for each voxel
+% CI = volume with cluster index for each voxel <-- that's the name of the
+%      game; 
+% region = labels for the peak voxels
+% extent = size of the cluster
+% stat = t-statistic for the peak voxels
+% mni = MNI coordinates of peak voxels
+% cor = coordinates of peak voxel in native space (can be used as indices
+%       in the C and CI volumes)
+% results_table = what Save Results Table in bspmview would spit out 
+% 
+
+[V, Y, C, CI, region, extent, stat, mni, cor, results_table, spmT] = extract_clusters(varargin{:});
+
+atlas_dirpath = '/Users/momchil/Dropbox/Research/libs/bspmview/supportfiles';
+
+%atlas_name = 'AnatomyToolbox';
+%atlas_name = 'AAL2';
+atlas_name = 'HarvardOxford-maxprob-thr0';
+[atlaslabels, atlas] = bspm_setatlas(spmT, atlas_dirpath, atlas_name);
+atlas = reshape(atlas, size(Y)); % voxel --> num
+map = containers.Map(atlaslabels.id, atlaslabels.label); % num --> label
+
+new_region_labels = {};
+
+for i = 1:size(region, 1) 
+    x = cor(i,1);
+    y = cor(i,2);
+    z = cor(i,3);
+    assert(immse(stat(i), Y(x,y,z)) < 1e-6);
+    
+    clust_idx = CI(x,y,z);
+    mask = CI == clust_idx;
+    
+    voxels = find(mask);
+    assert(numel(voxels) == extent(i));
+    
+    if isKey(map, atlas(x,y,z))
+        new_region_labels{i} = map(atlas(x, y, z));
+    else
+        new_region_labels{i} = '';
+    end
+end
+
+new_region_labels

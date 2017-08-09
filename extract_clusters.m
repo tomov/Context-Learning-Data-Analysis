@@ -1,4 +1,4 @@
-function [V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_clusters(EXPT, model, contrast, p, direct, alpha, Dis, Num)
+function [V, Y, C, CI, region, extent, stat, mni, cor, results_table, spmT] = extract_clusters(EXPT, model, contrast, p, direct, alpha, Dis, Num)
 % Wrapper around bspm_extract_clusters
 % Given a contrast, extract all the activation clusters from the t-map after cluster FWE
 % correction. Uses the same logic as bspmview,
@@ -14,7 +14,7 @@ function [V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_
 %          defaults to +/-
 % alpha = optional significance level for cluster FWE correction, default 0.05 in bspmview
 % Dis = optional separation for cluster maxima, default 20 in bspmview
-% Num = optional numpeaks for cluster maxima, default 3 in bspmview
+% Num = optional numpeaks for cluster maxima, default 1 here (3 in bspmview)
 %
 % OUTPUT:
 % V = SPM volume of the t-map, with the filename changed so we don't
@@ -30,6 +30,7 @@ function [V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_
 % cor = coordinates of peak voxel in native space (can be used as indices
 %       in the C and CI volumes)
 % results_table = what Save Results Table in bspmview would spit out 
+% spmT = path to the t-map .nii file
 % 
 
 
@@ -46,7 +47,7 @@ if ~exist('Dis', 'var')
     Dis = 20;
 end
 if ~exist('Num', 'var')
-    Num = 3;
+    Num = 1; % default 3 in bspmview
 end
 assert(ismember(direct, {'+/-', '+', '-'}));
 
@@ -63,6 +64,8 @@ else
     end
     spmT = fullfile(EXPT.modeldir,['model',num2str(model)],['con',num2str(ix)],'spmT_0001.nii');
 end
+
+fprintf('bspm_extract_clusters(%s, %f, %s, %f, %d, %d)\n', spmT, p, direct, alpha, Dis, Num);
 
 % extract the clusters
 %

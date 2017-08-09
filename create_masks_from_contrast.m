@@ -41,6 +41,8 @@ for i = 1:size(region, 1)
     
     clust_idx = CI(x,y,z);
     mask = CI == clust_idx;
+    % assert(sum(mask(:)) == extent(i)); <-- doesn't work for direct = +/-
+    % TODO investigate
     
     filename = sprintf('glm%d_%s_cluster_t=%.3f_extent=%d_roi=%s_peak=[%d_%d_%d].nii', model, contrast, stat(i), extent(i), region{i}, mni(i,1), mni(i,2), mni(i,3));
     V.fname = fullfile('masks', filename);

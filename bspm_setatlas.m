@@ -1,4 +1,4 @@
-function [atlaslabels, atlas0] = setatlas(tmap_filename, atlas_dirpath, atlas_name)
+function [atlaslabels, atlas0] = bspm_setatlas(tmap_filename, atlas_dirpath, atlas_name)
 % setatlas from bspmview
 %
     atlas_vol = fullfile(atlas_dirpath, sprintf('%s_Atlas_Map.nii', atlas_name));
