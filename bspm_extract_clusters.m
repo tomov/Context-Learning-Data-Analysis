@@ -32,7 +32,7 @@ function [C, CI, region, extent, stat, mni, cor, results_table] = bspm_extract_c
 %tmap_filename = '../neural/model154/con10/spmT_0001.nii';
 %p = 0.001; % p-value threshold for individual voxels
 %direct = '+/-'; % positive or negative activations
-%alpha = 0.001;
+%alpha = 0.05;
 %Dis = 20;
 %Num = 1;
 

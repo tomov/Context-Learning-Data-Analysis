@@ -7,10 +7,10 @@ close all;
 % given voxel RDM? (we have spearman's rho for all participants)
 %
 
-event = 'trial_onset';
-model = 'prior';
-dirname = 'rdms/betas_smooth';
-%dirname = 'rdms';
+event = 'feedback_onset';
+model = 'ww_Sigma_posterior';
+%dirname = 'rdms/betas_smooth';
+dirname = 'rdms';
 
 % posterior @ feedback_onset -- bilateral AG, bilateral dlPFC, IT, visual... :(
 % prior @ feedback_onset -- same
@@ -34,7 +34,7 @@ assert(ismember(event, {'trial_onset', 'feedback_onset'}));
 %
 [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
 which_rows = data.which_rows & data.isTrain; % Look at training trials only
-Model = rdms_get_model(data, metadata, which_rows);
+Model = rdms_get_model_3(data, metadata, which_rows);
 model_names = {Model.name};
 assert(ismember(model, model_names));
 

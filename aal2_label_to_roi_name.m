@@ -61,7 +61,7 @@ aal2_labels = {'Precentral gyrus',  'Precentral' ;
 'Lenticular nucleus, Pallidum',  'Pallidum' ;
 'Thalamus',  'Thalamus' };
 
-roi = [];
+roi = roi_label;
 
 for j=1:size(aal2_labels, 1)
     if startsWith(roi_label, aal2_labels{j, 2})

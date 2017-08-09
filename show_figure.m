@@ -382,17 +382,17 @@ switch figure_name
 
         subplot(2, 2, 1);
         
-        imshow('images/KL_structures_tmap_pos.png'); % from GLM 154
-        title('Updating causal structures', 'FontSize', fontsize);
-        
+        imshow('images/KL_structures_pos.png'); % from GLM 154
+        title('Causal structure update', 'FontSize', fontsize);
+       
         %
         % Top right: weights 
         %
         
         subplot(2, 2, 2);
         
-        imshow('images/KL_weights_tmap_pos.png'); % from GLM 154
-        title('Updating associative weights', 'FontSize', fontsize);
+        imshow('images/KL_weights_pos.png'); % from GLM 154
+        title('Associative weights update', 'FontSize', fontsize);
         
         %
         % Bottom left: contrast
@@ -400,8 +400,8 @@ switch figure_name
         
         subplot(2, 2, 3);
         
-        imshow('images/KL_structures-KL_weights_tmap.png'); % from GLM 154
-        title({'Updating causal structures >'; 'updating associative weights'}, 'FontSize', fontsize);
+        imshow('images/KL_structures-KL_weights.png'); % from GLM 154
+        title({'Causal structure update >'; 'associative weights update'}, 'FontSize', fontsize);
         
         %
         % Bottom right: KL structures ~ test choice log likelihood
@@ -410,7 +410,12 @@ switch figure_name
         subplot(2, 2, 4);
         
         load results/betas_to_behavior_glm154_KL_structures_sphere_KL_structures.mat
-        which = 1:6; % exclude motor and cerebellum areas
+        %which = 1:numel(region);
+        assert(numel(region) == 14);
+        which = [1:7 12 14]; % exclude motor and visual areas
+        % exclude motor & cerebellum, also reorder them
+       % which = [1 4 2 6 5 3];
+        
         region = region(which);
         means = means(which);
         sems = sems(which);
@@ -431,6 +436,7 @@ switch figure_name
 
         set(gca, 'xtick', xs);
         ylabel('Fisher z-transformed r');
+        
         neural_names = {};
         for i = 1:numel(region)
             hemisphere = [];
@@ -448,17 +454,28 @@ switch figure_name
         end
         % screw that, just hardcode the names
         neural_names = { ...
+            'IFG pars orbitalis (R)', ...
             'Angular gyrus (R)', ...
-            'Inferior frontal gyrus (R)', ...
-            'Middle frontal gyrus (L)', ...
+            'IFG pars opercularis (R)', ...
+            'Frontal Pole (L)', ...
             'Angular gyrus (L)', ...
-            'Middle frontal gyrus (R)', ...
-            'Inferior frontal gyrus (L)'};
+            'Middle orbital gyrus (R)', ...
+            'IFG pars opercularis (L)', ...
+            'Inferior temporal gyrus (R)', ...
+            'Lingual gyrus (R)', ...
+            'Middle temporal gyrus (L)'};
+        
         xticklabels(neural_names);
         xtickangle(30);
         title('Structure updating predicts test choices', 'FontSize', fontsize);
 
-        
+        % label subplots A,B,C,D
+        ax1 = axes('Position',[0 0 1 1],'Visible','off');
+        axes(ax1);
+        text(0.1, 0.95, 'A', 'FontSize', 20, 'FontWeight', 'bold');
+        text(0.51, 0.95, 'B', 'FontSize', 20, 'FontWeight', 'bold');
+        text(0.1, 0.47, 'C', 'FontSize', 20, 'FontWeight', 'bold');
+        text(0.51, 0.47, 'D', 'FontSize', 20, 'FontWeight', 'bold');
         
 
     case 'searchlight'
@@ -473,14 +490,23 @@ switch figure_name
 
         subplot(1, 2, 1);
         
-        imshow('images/searchlight_posterior_tmap.png');
-        title('Causal structures at feedback onset', 'FontSize', fontsize);
+        imshow('images/searchlight_prior.png');
+        title('Causal structure prior', 'FontSize', fontsize);
         
-        subplot(1, 2, 2);
+        g = subplot(1, 2, 2);
         
-        imshow('images/searchlight_prior_tmap.png');
-        title('Causal structures at trial onset', 'FontSize', fontsize);
+        imshow('images/searchlight_posterior.png');
+        title('Causal structure posterior', 'FontSize', fontsize);
+        p = get(g, 'position');
+        p([3 4]) = p([3 4]) * 1.025;
+        p(2) = p(2) - 0.01;
+        set(g, 'position', p);
         
+        % label subplots A,B,C,D
+        ax1 = axes('Position',[0 0 1 1],'Visible','off');
+        axes(ax1);
+        text(0.1, 0.7, 'A', 'FontSize', 20, 'FontWeight', 'bold');
+        text(0.54, 0.7, 'B', 'FontSize', 20, 'FontWeight', 'bold');
 
         
         

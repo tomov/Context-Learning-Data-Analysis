@@ -29,7 +29,7 @@ end
 EXPT = context_expt();
 %glmodel = 154;
 p = 0.001;
-alpha = 0.001;
+alpha = 0.05;
 Dis = 20;
 Num = 1; % # peak voxels per cluster; default in bspmview is 3
 r = 1.814;
