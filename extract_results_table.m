@@ -26,36 +26,86 @@ function [V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_
 % results_table = what Save Results Table in bspmview would spit out 
 % 
 
+method = 'peak';
+
 [V, Y, C, CI, region, extent, stat, mni, cor, results_table, spmT] = extract_clusters(varargin{:});
 
 atlas_dirpath = '/Users/momchil/Dropbox/Research/libs/bspmview/supportfiles';
 
-%atlas_name = 'AnatomyToolbox';
-%atlas_name = 'AAL2';
 atlas_name = 'HarvardOxford-maxprob-thr0';
+atlas_name = 'AAL2';
+atlas_name = 'AnatomyToolbox';
+
+%atlas_names = {'AnatomyToolbox', 'AAL2', 'HarvardOxford-maxprob-thr0'}
+
 [atlaslabels, atlas] = bspm_setatlas(spmT, atlas_dirpath, atlas_name);
 atlas = reshape(atlas, size(Y)); % voxel --> num
 map = containers.Map(atlaslabels.id, atlaslabels.label); % num --> label
 
-new_region_labels = {};
+new_region = {};
 
 for i = 1:size(region, 1) 
+    % get peak voxel
     x = cor(i,1);
     y = cor(i,2);
     z = cor(i,3);
     assert(immse(stat(i), Y(x,y,z)) < 1e-6);
-    
+
+    % get cluser voxels
     clust_idx = CI(x,y,z);
     mask = CI == clust_idx;
-    
+
     voxels = find(mask);
-    assert(numel(voxels) == extent(i));
-    
+    assert(numel(voxels) == extent(i)); % <-- doesn't work with +/- ; do one at a time
+
+    % get peak voxel atlas label 
     if isKey(map, atlas(x,y,z))
-        new_region_labels{i} = map(atlas(x, y, z));
+        new_region{i} = map(atlas(x, y, z));
     else
-        new_region_labels{i} = '';
+        new_region{i} = '';
     end
+    
+    % Convert labels to nice anatomical regions
+    %
+    switch atlas_name
+        case 'AAL2'
+            new_region{i} = aal2_label_to_roi_name(new_region{i}, mni(i,:));
+            
+        case 'AnatomyToolbox'
+            hemi = '';
+            if startsWith(new_region{i}, 'L ')
+                new_region{i} = new_region{i}(3:end);
+                hemi = 'L';
+            elseif startsWith(new_region{i}, 'R ')
+                new_region{i} = new_region{i}(3:end);
+                hemi = 'R';
+            end
+            
+            space = find(new_region{i} == ' ' | new_region{i} == '-');
+            if ~isempty(space)
+                new_region{i} = [new_region{i}(1:space), lower(new_region{i}(space+1:end))];
+            end
+            
+            if ~isempty(hemi)
+                new_region{i} = [new_region{i}, ' (', hemi, ')'];
+            end
+            
+        otherwise
+            assert(false, 'Should be one of the above');
+    end
+
+    sign = '';
+    if i == 1 || (stat(i) < 0) ~= (stat(i - 1) < 0) % sign changed
+        if stat(i) < 0
+            sign = 'Negative';
+        else
+            sign = 'Positive';
+        end
+    end
+    
+    fprintf('%s & %s & %s & %d & %.3f & %d %d %d \\\\\n', sign, new_region{i}, '??', extent(i), stat(i), x, y, z);
+
 end
 
-new_region_labels
+save('shit.mat');
+new_region'

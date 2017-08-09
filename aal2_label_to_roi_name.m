@@ -1,25 +1,27 @@
-function roi = aal2_label_to_roi_name(roi_label)
+function roi = aal2_label_to_roi_name(roi_label, mni)
 
 % Function that converts AAL2 labels from e.g. bspmview tables into real anatomical ROI names.
 % 
 % INPUT:
 % roi_label = ROI label as output by bspmview, e.g. 'Angular_R'.
+% mni = optional MNI coordinates to include laterality
 %
 % OUTPUT:
-% roi = the actual anatomical name, e.g. 'Angular gyrus'. If not round, returns []
+% roi = the actual anatomical name, e.g. 'Angular gyrus' or 'Angular gyrus (R)'. If not round, returns []
 %
 
 % Anatomical region name, AAL2 label
 % Table 2 from Rolls et al., Implementation of a new parcellation of the orbitofrontal cortex in the
 % automated anatomical labeling atlas (NeuroImage, 2015)
 %
-aal2_labels = {'Precentral gyrus',  'Precentral' ;
+aal2_labels = {...
+'Precentral gyrus',  'Precentral' ;
 'Postcentral gyrus',  'Postcentral' ;
 'Rolandic operculum',  'Rolandic_Oper' ;
 'Superior frontal gyrus, dorsolateral',  'Frontal_Sup' ;
 'Middle frontal gyrus',  'Frontal_Mid' ;
-'Inferior frontal gyrus, opercular part',  'Frontal_Inf_Oper' ;
-'Inferior frontal gyrus, triangular part',  'Frontal_Inf_Tri' ;
+'IFG pars opercularis',  'Frontal_Inf_Oper' ;
+'IFG pars triangularis',  'Frontal_Inf_Tri' ;
 'Superior frontal gyrus, medial',  'Frontal_Sup_Med' ;
 'Supplementary motor area',  'Supp_Motor_Area' ;
 'Paracentral lobule',  'Paracentral_Lobule' ;
@@ -59,13 +61,21 @@ aal2_labels = {'Precentral gyrus',  'Precentral' ;
 'Caudate nucleus',  'Caudate' ;
 'Lenticular nucleus, Putamen',  'Putamen' ;
 'Lenticular nucleus, Pallidum',  'Pallidum' ;
-'Thalamus',  'Thalamus' };
+'Thalamus',  'Thalamus';
+'Cerebellum', 'Cerebelum'};
 
 roi = roi_label;
 
 for j=1:size(aal2_labels, 1)
     if startsWith(roi_label, aal2_labels{j, 2})
         roi = aal2_labels{j, 1};
+        if exist('mni', 'var') % optionally include laterality
+            if mni(1) < 0
+                roi = [roi, ' (L)'];
+            else
+                roi = [roi, ' (R)'];
+            end
+        end
         break;
     end
 end
