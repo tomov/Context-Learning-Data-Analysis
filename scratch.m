@@ -1,4 +1,21 @@
 
+%{
+[file, name] = create_mask_from_contrast(context_expt(), 154, 'KL_structures', 0.001, '+', 0.05, 20, 1);
+check_mask(file);
+[file, name] = create_mask_from_contrast('rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'searchlight_posterior', 0.001, '+', 0.05, 20, 1);
+check_mask(file);
+
+intersect_masks({'masks/glm0_searchlight_posterior.nii', 'masks/glm154_KL_structures.nii'}, 'masks/KL_structures_and_posterior.nii')
+
+mask1 = load_mask('masks/glm0_searchlight_posterior.nii');
+mask2 = load_mask('masks/glm154_KL_structures.nii');
+mask3 = load_mask('masks/KL_structures_and_posterior.nii');
+mask = mask1 & mask2;
+assert(isequal(mask, mask3));
+
+bspmview('masks/KL_structures_and_posterior.nii', '../neural/mean.nii');
+%}
+
 %Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.0001, '+', 0.99, 20, 3);
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.001, '+', 0.05, 20, 3, 1.814);
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 3, 1.814);
