@@ -1,9 +1,13 @@
 function show_figure(figure_name)
 
+sem = @(x) std(x) / sqrt(length(x));
+
 % Generate figures from the paper.
 %
 % figure_name = which figure to show, e.g. Figure_3A
 %
+
+rng default; % be consistent please
 
 % set nicer colors
 C = linspecer(3);
@@ -54,6 +58,73 @@ end
 % Plot figure(s)
 %
 switch figure_name
+    
+    case 'Figure_curves'
+        figure('pos', [100 100 693+20 360] * 3/4);
+        
+        %
+        % Learning curves
+        % 
+        %figure;
+            
+        for group = 1:2
+            if group == 1
+                % pilot subjects
+                [data, metadata] = load_data(fullfile('data', 'pilot.csv'), false);
+            else
+                % fmri subjects
+                [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
+            end
+            simulated = simulate_subjects(data, metadata, params, which_structures);        
+            
+            % average learning curve
+            %
+            human_correct = [];
+            model_correct = [];
+            
+            human_correct_sem = [];
+            model_correct_sem = [];
+
+            for n = 1:metadata.trainingTrialsPerRun
+
+                human_corr_n = []; % accuracy on trial n for each subject, averaged across blocks
+                model_corr_n = [];
+                for who = metadata.subjects
+                    which = data.which_rows & data.isTrain & data.trialId == n & strcmp(data.participant, who);
+                    
+                    subj_corr_n = strcmp(data.response.keys(which), data.corrAns(which)); % accuracy on trial n for subject who, averaged across blocks
+                    sim_subj_corr_n = strcmp(simulated.keys(which), data.corrAns(which)); % accuracy on trial n for model for subject who, averaged across blocks
+                    
+                    human_corr_n = [human_corr_n, mean(subj_corr_n)];
+                    model_corr_n = [model_corr_n, mean(sim_subj_corr_n)];
+                end                
+                
+                human_correct = [human_correct mean(human_corr_n)];
+                model_correct = [model_correct mean(model_corr_n)];
+                
+                human_correct_sem = [human_correct_sem sem(human_corr_n)];
+                model_correct_sem = [model_correct_sem sem(model_corr_n)];
+            end
+
+            subplot(1,2,group);
+            plot(model_correct, '.-', 'LineWidth', 2); % == mean(human_correct_all_runs)
+            %errorbar(1:metadata.trainingTrialsPerRun, model_correct, model_correct_sem, 'o-', 'LineWidth', 2);
+            hold on;
+            plot(human_correct, '.-', 'LineWidth', 2); % == mean(model_correct_all_runs)
+            %errorbar(1:metadata.trainingTrialsPerRun, human_correct, human_correct_sem, 'o-', 'LineWidth', 2);
+            hold off;
+            legend({'model', 'subjects'}, 'Position', [0.30 0.05 1 1]);
+            %title('Average per-trial accuracy');
+            if group == 1
+                title('Behavioral pilot');
+            else
+                title('fMRI');
+            end
+            xlabel('trial #');
+            ylabel('accuracy');
+            set(gca,'fontsize',13);
+        end
+        
     
     case 'Figure_3'
         
