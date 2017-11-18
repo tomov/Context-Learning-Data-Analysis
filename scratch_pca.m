@@ -1,5 +1,18 @@
 % PCA stuff based on https://github.com/tomov/neurolab/tree/master/exercise
 
+% see the tmap from the prior RDMs (i.e. where the prior might be stored)
+%bspmview('rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 'masks/mean.nii');
+
+% get spherical masks from the peak voxels in the clusters in that tmap
+%create_sphere_masks_from_contrast('rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.001, '+', 0.05, 20, 3, 1.814);
+% -> 
+% 'masks/glm0_light_sphere_t=5.687_extent=26_roi=Location not in atlas_peak=[-22_-84_-4].nii'
+% 'masks/glm0_light_sphere_t=5.435_extent=24_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii'
+% 'masks/glm0_light_sphere_t=4.905_extent=26_roi=Frontal_Inf_Tri_L_peak=[-56_14_28].nii'
+% 'masks/glm0_light_sphere_t=5.276_extent=27_roi=Frontal_Inf_Oper_R_peak=[48_18_26].nii'
+%
+mask = 'masks/glm0_light_sphere_t=5.435_extent=24_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii';
+
 %% load behavioral stuff
 
 % Load data
@@ -41,7 +54,8 @@ simulated = simulate_subjects(data, metadata, params, which_structures);
 %
 %bspmview('masks/prior_left_IFG.nii', 'masks/mean.nii');
 
-[m, V] = load_mask('masks/prior_left_IFG.nii'); % left IFG for now TODO right one too
+%[m, V] = load_mask('masks/prior_left_IFG.nii'); % left IFG for now TODO right one too
+[m, V] = load_mask(mask);
 betas = get_activations_submask(m, whole_brain_betas);
 assert(size(betas, 1) == size(data.which_rows, 1));
 
@@ -55,7 +69,7 @@ imagesc(betas(which_trials, :));
 xlabel('voxel');
 ylable('trial');
 
-%% run PCA 
+%% run PCA for all subjects together
 %
 [coeff,score,latent,tsquared,explained,mu] = pca(betas(which_trials, :));
 score(which_trials, :) = score; % include dummy trials for easier indexing
@@ -71,8 +85,67 @@ plot(explained,'-o');
 xlabel('PC');
 ylabel('% variance explained');
 
+%% alternative -- run PCA for each subject separately
+%
+score = [];
 
-%% plot PCs
+figure;
+
+who_idx = 0;
+for who = metadata.subjects
+    who_idx = who_idx + 1;
+    which = which_trials & strcmp(data.participant, who);
+    [coeff,s,latent,tsquared,explained,mu] = pca(betas(which, :)); 
+    
+    score(which, :) = s;
+    
+    subplot(1, metadata.N, who_idx);
+    plot(explained, '-o');
+    if who_idx == 1
+        ylabel('% variance explained');
+    end
+end
+
+%% plot PC1 over time
+%
+
+for condition = metadata.contextRoles
+
+    figure;
+
+    title(condition{1});
+    hold on;
+    
+    who_idx = 0;
+    for who = metadata.subjects
+        who_idx = who_idx + 1;
+
+        run_idx = 0;
+        for run = 1:metadata.runsPerSubject
+            which = which_trials & data.isTrain & data.runId == run & strcmp(data.contextRole, condition) & strcmp(data.participant, who);
+            if sum(which) == 0, continue; end % only blocks in that condition
+            run_idx = run_idx + 1;
+            %assert(sum(which) == metadata.trainingTrialsPerRun);
+
+            subplot(metadata.runsPerContext, metadata.N, (run_idx - 1) * metadata.N + who_idx);
+
+            plot(score(which, 1), '.-');
+
+            set(gca, 'xtick', []);
+            set(gca, 'ytick', []);
+            if run_idx == 1
+                title(who{1});
+            end
+        end
+
+    end
+
+    hold off;
+end
+
+
+
+%% plot top two PCs for each block for each subject, separted by condition, iteratively (one trial at a time -- press space)
 %
 
 for condition = metadata.contextRoles
