@@ -11,11 +11,6 @@
 % 'masks/glm0_light_sphere_t=4.905_extent=26_roi=Frontal_Inf_Tri_L_peak=[-56_14_28].nii'
 % 'masks/glm0_light_sphere_t=5.276_extent=27_roi=Frontal_Inf_Oper_R_peak=[48_18_26].nii'
 %
-%mask = 'masks/glm0_light_sphere_t=5.435_extent=24_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii';
-%mask = 'masks/glm0_light_sphere_t=4.905_extent=26_roi=Frontal_Inf_Tri_L_peak=[-56_14_28].nii';
-%mask = 'masks/glm0_light_sphere_t=5.276_extent=27_roi=Frontal_Inf_Oper_R_peak=[48_18_26].nii';
-mask = 'masks/glm0_light_sphere_t=5.687_extent=26_roi=Location not in atlas_peak=[-22_-84_-4].nii';
-
 sem = @(x) std(x) / sqrt(length(x));
 
 %% load behavioral stuff
@@ -60,25 +55,32 @@ simulated = simulate_subjects(data, metadata, params, which_structures);
 %bspmview('masks/prior_left_IFG.nii', 'masks/mean.nii');
 
 %[m, V] = load_mask('masks/prior_left_IFG.nii'); % left IFG for now TODO right one too
+%mask = 'masks/glm0_light_sphere_t=5.435_extent=24_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii';
+%mask = 'masks/glm0_light_sphere_t=4.905_extent=26_roi=Frontal_Inf_Tri_L_peak=[-56_14_28].nii';
+mask = 'masks/glm0_light_sphere_t=5.276_extent=27_roi=Frontal_Inf_Oper_R_peak=[48_18_26].nii';
+%mask = 'masks/glm0_light_sphere_t=5.687_extent=26_roi=Location not in atlas_peak=[-22_-84_-4].nii';
 [m, V] = load_mask(mask);
 betas = get_activations_submask(m, whole_brain_betas);
 assert(size(betas, 1) == size(data.which_rows, 1));
 
-%% restrict to relevant trials
+% restrict to relevant trials
 %
 which_trials = data.which_rows; % & data.isTrain; % Look at training trials only
 
+%{
 figure;
 title('Data in voxel space');
 imagesc(betas(which_trials, :));
 xlabel('voxel');
-ylable('trial');
+ylabel('trial');
+%}
 
-%% run PCA for all subjects together
+% run PCA for all subjects together
 %
 [coeff,score,latent,tsquared,explained,mu] = pca(betas(which_trials, :));
 score(which_trials, :) = score; % include dummy trials for easier indexing
 
+%{
 figure;
 title('Data in PC space (top 3 PCs)');
 imagesc(score(:,1:3));
@@ -89,6 +91,60 @@ figure;
 plot(explained,'-o');
 xlabel('PC');
 ylabel('% variance explained');
+%}
+
+
+% PC1 over time for each condition, collapsed across subjects & blocks
+%
+figure;
+
+subplot(1,3,1);
+plot(explained,'-o');
+xlabel('PC');
+ylabel('% variance explained');
+
+
+subplot(1,3,2);
+hold on;
+
+cond_idx = 0;
+for condition = metadata.contextRoles
+    cond_idx = cond_idx + 1;
+
+    pc1 = [];
+    for t = 1:metadata.trainingTrialsPerRun
+        which = which_trials & data.isTrain & data.trialId == t & strcmp(data.contextRole, condition);
+        pc1 = [pc1, score(which, 1)];       
+    end
+    
+    errorbar(mean(pc1), sem(pc1));
+end
+
+legend(metadata.contextRoles);
+hold off;
+title(mask, 'interpreter', 'none');
+xlabel('trial #');
+ylabel('PC 1');
+
+
+subplot(1,3,3); % now collapse across time too
+
+pc1 = [];
+for condition = metadata.contextRoles
+    which = which_trials & data.isTrain & strcmp(data.contextRole, condition);
+    pc1  = [pc1, score(which, 1)];
+end
+h = bar(mean(pc1), 'FaceColor',[0 .5 .5]);
+hold on;
+errorbar(mean(pc1), sem(pc1), '.', 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+hold off;
+xticklabels(metadata.contextRoles);
+ylabel('PC 1');
+
+
+
+
+
 
 %% alternative -- run PCA for each subject separately
 % CURIOUSLY -- almost the same result!
@@ -111,6 +167,7 @@ for who = metadata.subjects
         ylabel('% variance explained');
     end
 end
+
 
 %% plot PC1 over time for each condition, for each subject for each block
 %
@@ -148,28 +205,6 @@ for condition = metadata.contextRoles
 
     hold off;
 end
-
-
-%% PC1 over time for each condition, collapsed across subjects & blocks
-%
-figure;
-hold on;
-
-cond_idx = 0;
-for condition = metadata.contextRoles
-    cond_idx = cond_idx + 1;
-
-    pc1 = [];
-    for t = 1:metadata.trainingTrialsPerRun
-        which = which_trials & data.isTrain & data.trialId == t & strcmp(data.contextRole, condition);
-        pc1 = [pc1, score(which, 1)];       
-    end
-    
-    errorbar(mean(pc1), sem(pc1));
-end
-
-legend(metadata.contextRoles);
-hold off;
 
 
 %% plot top two PCs for each block for each subject, separted by condition, iteratively (one trial at a time -- press space)
