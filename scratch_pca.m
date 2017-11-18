@@ -11,7 +11,12 @@
 % 'masks/glm0_light_sphere_t=4.905_extent=26_roi=Frontal_Inf_Tri_L_peak=[-56_14_28].nii'
 % 'masks/glm0_light_sphere_t=5.276_extent=27_roi=Frontal_Inf_Oper_R_peak=[48_18_26].nii'
 %
-mask = 'masks/glm0_light_sphere_t=5.435_extent=24_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii';
+%mask = 'masks/glm0_light_sphere_t=5.435_extent=24_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii';
+%mask = 'masks/glm0_light_sphere_t=4.905_extent=26_roi=Frontal_Inf_Tri_L_peak=[-56_14_28].nii';
+%mask = 'masks/glm0_light_sphere_t=5.276_extent=27_roi=Frontal_Inf_Oper_R_peak=[48_18_26].nii';
+mask = 'masks/glm0_light_sphere_t=5.687_extent=26_roi=Location not in atlas_peak=[-22_-84_-4].nii';
+
+sem = @(x) std(x) / sqrt(length(x));
 
 %% load behavioral stuff
 
@@ -86,6 +91,7 @@ xlabel('PC');
 ylabel('% variance explained');
 
 %% alternative -- run PCA for each subject separately
+% CURIOUSLY -- almost the same result!
 %
 score = [];
 
@@ -106,7 +112,7 @@ for who = metadata.subjects
     end
 end
 
-%% plot PC1 over time
+%% plot PC1 over time for each condition, for each subject for each block
 %
 
 for condition = metadata.contextRoles
@@ -143,6 +149,27 @@ for condition = metadata.contextRoles
     hold off;
 end
 
+
+%% PC1 over time for each condition, collapsed across subjects & blocks
+%
+figure;
+hold on;
+
+cond_idx = 0;
+for condition = metadata.contextRoles
+    cond_idx = cond_idx + 1;
+
+    pc1 = [];
+    for t = 1:metadata.trainingTrialsPerRun
+        which = which_trials & data.isTrain & data.trialId == t & strcmp(data.contextRole, condition);
+        pc1 = [pc1, score(which, 1)];       
+    end
+    
+    errorbar(mean(pc1), sem(pc1));
+end
+
+legend(metadata.contextRoles);
+hold off;
 
 
 %% plot top two PCs for each block for each subject, separted by condition, iteratively (one trial at a time -- press space)
