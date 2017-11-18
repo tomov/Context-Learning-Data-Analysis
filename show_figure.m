@@ -60,7 +60,7 @@ end
 switch figure_name
     
     case 'Figure_curves'
-        figure('pos', [100 100 693+20 360] * 3/4);
+        figure('pos', [100 100 693+20 320] * 3/4);
         
         %
         % Learning curves
@@ -91,6 +91,7 @@ switch figure_name
                 model_corr_n = [];
                 for who = metadata.subjects
                     which = data.which_rows & data.isTrain & data.trialId == n & strcmp(data.participant, who);
+                    assert(sum(which) == 9);
                     
                     subj_corr_n = strcmp(data.response.keys(which), data.corrAns(which)); % accuracy on trial n for subject who, averaged across blocks
                     sim_subj_corr_n = strcmp(simulated.keys(which), data.corrAns(which)); % accuracy on trial n for model for subject who, averaged across blocks
@@ -117,8 +118,10 @@ switch figure_name
             %title('Average per-trial accuracy');
             if group == 1
                 title('Behavioral pilot');
+                text(-4, 1.05, 'A', 'FontSize', 20, 'FontWeight', 'bold')
             else
                 title('fMRI');
+                text(-4, 1.05, 'B', 'FontSize', 20, 'FontWeight', 'bold')
             end
             xlabel('trial #');
             ylabel('accuracy');
@@ -126,6 +129,138 @@ switch figure_name
         end
         
     
+    % statistics regarding learning and performance on the training trials
+    %
+    case 'Learning_stats'
+        
+        for group = 1:2
+            if group == 1
+                % pilot subjects
+                [data, metadata] = load_data(fullfile('data', 'pilot.csv'), false);
+                disp('\n\n\n --------------------------------------- PILOT -----------------\n\n');
+            else
+                % fmri subjects
+                [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
+                disp('\n\n\n --------------------------------------- fMRI -----------------\n\n');
+            end
+            
+            second_half_corr = [];
+            for who = metadata.subjects
+                % accuracy during the second half of training, collapsed across
+                % blocks and trials
+                %
+                which = data.which_rows & data.isTrain & data.trialId > (metadata.trainingTrialsPerRun / 2) & strcmp(data.participant, who);
+                assert(sum(which) == 90);
+
+                subj_2nd_half_corr = strcmp(data.response.keys(which), data.corrAns(which)); % accuracy on trial n for subject who, averaged across blocks
+
+                second_half_corr = [second_half_corr, mean(subj_2nd_half_corr)];
+            end
+
+            disp(second_half_corr);
+            fprintf('accuracy during 2nd half of training: %.6f +- %.6f\n', mean(second_half_corr), sem(second_half_corr));
+            disp('t-test: is accuracy = 50%');
+            [h, p, ci, stats] = ttest(second_half_corr, 0.5)
+        end
+        
+        
+    % statistics showing the generalization pattern on the test trials is real
+    %
+    case 'generalization_stats'
+        human_choices = [];      
+        
+        % irrelevant condition
+        % does old cue cause sickness more than the new cue, in either
+        % context?
+        %
+        condition = 'irrelevant';
+        which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
+
+        x1c1 = []; x1c3 = []; x3c1 = []; x3c3 = [];
+        for who = metadata.subjects
+            x1c1 = [x1c1, data.chose_sick(which_rows & data.cueId == 0 & data.contextId == 0 & strcmp(data.participant, who))];
+            x1c3 = [x1c3, data.chose_sick(which_rows & data.cueId == 0 & data.contextId == 2 & strcmp(data.participant, who))];
+            x3c1 = [x3c1, data.chose_sick(which_rows & data.cueId == 2 & data.contextId == 0 & strcmp(data.participant, who))];
+            x3c3 = [x3c3, data.chose_sick(which_rows & data.cueId == 2 & data.contextId == 2 & strcmp(data.participant, who))];
+        end
+        assert(isequal(size(x1c1), [metadata.runsPerContext metadata.N]));
+        assert(isequal(size(x1c3), [metadata.runsPerContext metadata.N]));
+        assert(isequal(size(x3c1), [metadata.runsPerContext metadata.N]));
+        assert(isequal(size(x3c3), [metadata.runsPerContext metadata.N]));
+        
+        old_cue = [x1c1; x1c3];
+        new_cue = [x3c1; x3c3];
+        
+        old_cue = mean(old_cue); % collapse across blocks & context (c1 or c3)
+        new_cue = mean(new_cue);
+        assert(numel(old_cue) == metadata.N);
+        assert(numel(new_cue) == metadata.N);
+
+        disp('IRRELEVANT condition t-test: is old cue more predictive of sickness than new cue?');
+        [h, p, ci, stats] = ttest2(old_cue, new_cue)
+        
+        % modulatory condition
+        % does old cue-context pair cause sickness more than the other
+        % three pairs?
+        %
+        condition = 'modulatory';
+        which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
+
+        x1c1 = []; x1c3 = []; x3c1 = []; x3c3 = [];
+        for who = metadata.subjects
+            x1c1 = [x1c1, data.chose_sick(which_rows & data.cueId == 0 & data.contextId == 0 & strcmp(data.participant, who))];
+            x1c3 = [x1c3, data.chose_sick(which_rows & data.cueId == 0 & data.contextId == 2 & strcmp(data.participant, who))];
+            x3c1 = [x3c1, data.chose_sick(which_rows & data.cueId == 2 & data.contextId == 0 & strcmp(data.participant, who))];
+            x3c3 = [x3c3, data.chose_sick(which_rows & data.cueId == 2 & data.contextId == 2 & strcmp(data.participant, who))];
+        end
+        assert(isequal(size(x1c1), [metadata.runsPerContext metadata.N]));
+        assert(isequal(size(x1c3), [metadata.runsPerContext metadata.N]));
+        assert(isequal(size(x3c1), [metadata.runsPerContext metadata.N]));
+        assert(isequal(size(x3c3), [metadata.runsPerContext metadata.N]));
+        
+        old_pair = [x1c1];
+        new_pairs = [x3c1; x1c3; x3c3];
+        
+        old_pair = mean(old_pair); % collapse across blocks & pair (c1 or c3)
+        new_pairs = mean(new_pairs);
+        assert(numel(old_pair) == metadata.N);
+        assert(numel(new_pairs) == metadata.N);
+
+        disp('MODULATORY condition t-test: is old pair more predictive of sickness than new pairs?');
+        [h, p, ci, stats] = ttest2(old_pair, new_pairs)        
+        
+
+        % additive condition
+        % does old context cause sickness more than the new context, for either
+        % cues?
+        %
+        condition = 'additive';
+        which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
+
+        x1c1 = []; x1c3 = []; x3c1 = []; x3c3 = [];
+        for who = metadata.subjects
+            x1c1 = [x1c1, data.chose_sick(which_rows & data.cueId == 0 & data.contextId == 0 & strcmp(data.participant, who))];
+            x1c3 = [x1c3, data.chose_sick(which_rows & data.cueId == 0 & data.contextId == 2 & strcmp(data.participant, who))];
+            x3c1 = [x3c1, data.chose_sick(which_rows & data.cueId == 2 & data.contextId == 0 & strcmp(data.participant, who))];
+            x3c3 = [x3c3, data.chose_sick(which_rows & data.cueId == 2 & data.contextId == 2 & strcmp(data.participant, who))];
+        end
+        assert(isequal(size(x1c1), [metadata.runsPerContext metadata.N]));
+        assert(isequal(size(x1c3), [metadata.runsPerContext metadata.N]));
+        assert(isequal(size(x3c1), [metadata.runsPerContext metadata.N]));
+        assert(isequal(size(x3c3), [metadata.runsPerContext metadata.N]));
+        
+        old_context = [x1c1; x3c1];
+        new_context = [x1c3; x3c3];
+        
+        old_context = mean(old_context); % collapse across blocks & context (c1 or c3)
+        new_context = mean(new_context);
+        assert(numel(old_context) == metadata.N);
+        assert(numel(new_context) == metadata.N);
+
+        disp('ADDITIVE condition t-test: is old context more predictive of sickness than new context?');
+        [h, p, ci, stats] = ttest2(old_context, new_context)
+        
+        
     case 'Figure_3'
         
         %
@@ -150,7 +285,10 @@ switch figure_name
         ylabel('Posterior probability');
         legend({'M1', 'M2', 'M3'}, 'Position', [0.15 0.3 1 1]);
         ylim([0 1.1]);
-        set(gca,'fontsize',13);    
+        set(gca,'fontsize',13);
+        
+        text(0.1, 1.25, 'A', 'FontSize', 20, 'FontWeight', 'bold')
+
         
         %
         % Figure 3B: Choice probabilities on test trials for model vs. humans
@@ -237,6 +375,9 @@ switch figure_name
         set(gca,'fontsize',13);
         
         %print(gcf, 'untitled.pdf', '-dpdf', '-bestfit');
+        
+        text(0.1, 1.25, 'B', 'FontSize', 20, 'FontWeight', 'bold')
+
         
         
     case 'Figure_3_stats'        
@@ -333,7 +474,9 @@ switch figure_name
         ylabel('Posterior probability');
         legend({'M1', 'M2', 'M3'}, 'Position', [0.15 0.3 1 1]);
         ylim([0 1.1]);
-        set(gca,'fontsize',13);    
+        set(gca,'fontsize',13);
+        
+        text(0.1, 1.25, 'A', 'FontSize', 20, 'FontWeight', 'bold')
         
         %
         % Figure 3B: Choice probabilities on test trials for model vs. humans
@@ -418,6 +561,10 @@ switch figure_name
         legend({'x_1c_1', 'x_1c_3', 'x_3c_1', 'x_3c_3'}, 'Position', [0.07 -0.095 1 1]);
         ylim([0 1.1]);
         set(gca,'fontsize',13);
+        
+        
+        text(0.1, 1.25, 'B', 'FontSize', 20, 'FontWeight', 'bold')
+
         
         %print(gcf, 'untitled.pdf', '-dpdf', '-bestfit');
         

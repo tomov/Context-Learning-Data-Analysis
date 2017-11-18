@@ -8,6 +8,8 @@ function Neural = rdms_get_spheres_from_contrast(data, metadata, which_rows, EXP
 % EXPT = experiment structure, e.g. context_expt()
 % model = GLM number, e.g. 154
 % contrast = contrast, e.g. 'KL_weights - KL_structures'
+%            OR a .nii file e.g. with an already computed contrast tmap => it takes that to be the
+%            contrast directly (without having to recompute it)
 % p = optional p-value threshold
 % direct = sign of the activations; should be one of +, -, or +/-
 % alpha = significance level for cluster FWE correction, default 0.05 in bspmview

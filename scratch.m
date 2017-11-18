@@ -2,6 +2,16 @@
 %whole_brain_betas = get_betas('masks/mask.nii', 'trial_onset', data, metadata, false);
 %betas1 = get_activations_submask(m, whole_brain_betas);
 
+%bspmview('masks/prior_left_IFG.nii', 'masks/mean.nii');
+%bspmview('rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 'masks/mean.nii');
+%bspmview('rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 'masks/mean.nii');
+
+
+
+%[m, V] = load_mask('masks/prior_left_IFG.nii');
+%whole_brain_betas = get_betas('masks/mask.nii', 'trial_onset', data, metadata, false);
+%betas1 = get_activations_submask(m, whole_brain_betas);
+
 %{
 [file, name] = create_mask_from_contrast(context_expt(), 154, 'KL_structures', 0.001, '+', 0.05, 20, 1);
 check_mask(file);
