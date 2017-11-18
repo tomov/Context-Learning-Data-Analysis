@@ -79,24 +79,40 @@ for condition = metadata.contextRoles
 
     figure;
 
+    title(condition{1});
     hold on;
+    
+    for t = 1:metadata.trainingTrialsPerRun
 
-    for who = metadata.subjects
-        
-        for run = 1:metadata.runsPerSubject
-            which = which_trials & data.isTrain & data.runId == run & strcmp(data.contextRole, condition) & strcmp(data.participant, who);
-            if sum(which) == 0, continue; end % only blocks in that condition
-            assert(sum(which) == metadata.trainingTrialsPerRun);
-            
-            
-            plot(score(which, 1), score(which, 2), '.-');
-%            break;
+        who_idx = 0;
+        for who = metadata.subjects
+            who_idx = who_idx + 1;
+
+            run_idx = 0;
+            for run = 1:metadata.runsPerSubject
+                which = which_trials & data.isTrain & data.trialId <= t & data.runId == run & strcmp(data.contextRole, condition) & strcmp(data.participant, who);
+                if sum(which) == 0, continue; end % only blocks in that condition
+                run_idx = run_idx + 1;
+                %assert(sum(which) == metadata.trainingTrialsPerRun);
+
+                subplot(metadata.runsPerContext, metadata.N, (run_idx - 1) * metadata.N + who_idx);
+
+                plot(score(which, 1), score(which, 2), '.-');
+                
+                set(gca, 'xtick', []);
+                set(gca, 'ytick', []);
+                if run_idx == 1
+                    title(who{1});
+                end
+%                break;
+            end
+
+            %break;
         end
         
-        break;
+        pause;
     end
 
-    title(condition{1});
     hold off;
 end
 
