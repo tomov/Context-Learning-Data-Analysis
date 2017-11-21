@@ -4,11 +4,10 @@
 %bspmview('rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 'masks/mean.nii');
 
 % get spherical masks from the peak voxels in the clusters in that tmap
-%create_sphere_masks_from_contrast('rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.001, '+', 0.05, 20, 3, 1.814);
+%create_sphere_masks_from_contrast('rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.001, '+', 0.05, 20, 1, 1.814);
 % -> 
 % 'masks/glm0_light_sphere_t=5.687_extent=26_roi=Location not in atlas_peak=[-22_-84_-4].nii'
 % 'masks/glm0_light_sphere_t=5.435_extent=24_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii'
-% 'masks/glm0_light_sphere_t=4.905_extent=26_roi=Frontal_Inf_Tri_L_peak=[-56_14_28].nii'
 % 'masks/glm0_light_sphere_t=5.276_extent=27_roi=Frontal_Inf_Oper_R_peak=[48_18_26].nii'
 %
 sem = @(x) std(x) / sqrt(length(x));
@@ -56,9 +55,8 @@ simulated = simulate_subjects(data, metadata, params, which_structures);
 
 %[m, V] = load_mask('masks/prior_left_IFG.nii'); % left IFG for now TODO right one too
 %mask = 'masks/glm0_light_sphere_t=5.435_extent=24_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii';
-%mask = 'masks/glm0_light_sphere_t=4.905_extent=26_roi=Frontal_Inf_Tri_L_peak=[-56_14_28].nii';
-mask = 'masks/glm0_light_sphere_t=5.276_extent=27_roi=Frontal_Inf_Oper_R_peak=[48_18_26].nii';
-%mask = 'masks/glm0_light_sphere_t=5.687_extent=26_roi=Location not in atlas_peak=[-22_-84_-4].nii';
+%mask = 'masks/glm0_light_sphere_t=5.276_extent=27_roi=Frontal_Inf_Oper_R_peak=[48_18_26].nii';
+mask = 'masks/glm0_light_sphere_t=5.687_extent=26_roi=Location not in atlas_peak=[-22_-84_-4].nii';
 [m, V] = load_mask(mask);
 betas = get_activations_submask(m, whole_brain_betas);
 assert(size(betas, 1) == size(data.which_rows, 1));
