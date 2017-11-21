@@ -201,6 +201,68 @@ ylabel('PC 1');
 %}
 
 
+%% second half vs. first half of block
+%
+figure;
+
+pc1_first_half = [];
+pc1_second_half = [];
+for condition = metadata.contextRoles
+    which = which_trials & data.isTrain & strcmp(data.contextRole, condition) & data.trialId <= 10;
+    s = nan(metadata.runsPerContext * metadata.trainingTrialsPerRun / 2, metadata.N); % average within subject
+    for who_idx = 1:metadata.N
+        s(:, who_idx) = score(which & strcmp(data.participant, metadata.subjects{who_idx}), 1);
+    end
+    assert(isequal(size(s), [metadata.runsPerContext * metadata.trainingTrialsPerRun / 2, metadata.N]));    
+    pc1_first_half  = [pc1_first_half, mean(s)'];
+    
+    which = which_trials & data.isTrain & strcmp(data.contextRole, condition) & data.trialId > 10;
+    s = nan(metadata.runsPerContext * metadata.trainingTrialsPerRun / 2, metadata.N); % average within subject
+    for who_idx = 1:metadata.N
+        s(:, who_idx) = score(which & strcmp(data.participant, metadata.subjects{who_idx}), 1);
+    end
+    assert(isequal(size(s), [metadata.runsPerContext * metadata.trainingTrialsPerRun / 2, metadata.N]));    
+    pc1_second_half  = [pc1_second_half, mean(s)'];
+end
+pc1_means = [mean(pc1_first_half); mean(pc1_second_half)];
+pc1_sems = [sem(pc1_first_half); sem(pc1_second_half)];
+
+h = bar(pc1_means);
+xs = sort([h(1).XData + h(1).XOffset, h(2).XData + h(2).XOffset, h(3).XData + h(3).XOffset]);
+pc1_means = pc1_means'; pc1_means = pc1_means(:);
+pc1_sems = pc1_sems'; pc1_sems = pc1_sems(:);
+
+hold on;
+errorbar(xs, pc1_means(:), pc1_sems(:), '.', 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+hold off;
+%xticklabels(metadata.contextRoles);
+ylabel('PC 1');
+legend(metadata.contextRoles);
+xticklabels({'1st half', '2nd half'});
+
+
+%% two-way anova -- is PC1 changing over time in the different conditions?
+% rows = 1st half vs. 2nd half;
+% columns = irrelevant, modulatory, addditive
+pc1 = [pc1_first_half; pc1_second_half];
+[p,tbl] = anova2(pc1, metadata.N);
+
+
+%% one-way anova -- is PC different across conditions?
+% columns = irrelevant, modulatory, addditive
+pc1 = [pc1_first_half; pc1_second_half];
+[p,tbl] = anova1(pc1);
+
+
+%% one-way anova -- is PC1 different across conditions in the 2nd half?
+% columns = irrelevant, modulatory, addditive
+[p,tbl] = anova1(pc1_second_half);
+
+
+
+%{
+
+
 %% PC1 over time for each condition for each subject, collapsed across
 % blocks
 %
@@ -232,49 +294,6 @@ end
 
 
 
-%% second half vs. first half of block
-%
-figure;
-
-pc1_first_half = [];
-pc1_second_half = [];
-for condition = metadata.contextRoles
-    which = which_trials & data.isTrain & strcmp(data.contextRole, condition) & data.trialId <= 10;
-    s = nan(metadata.runsPerContext * metadata.trainingTrialsPerRun / 2, metadata.N); % average within subject
-    for who_idx = 1:metadata.N
-        s(:, who_idx) = score(which & strcmp(data.participant, metadata.subjects{who_idx}), 1);
-    end
-    assert(isequal(size(s), [metadata.runsPerContext * metadata.trainingTrialsPerRun / 2, metadata.N]));    
-    pc1_first_half  = [pc1_first_half, mean(s)'];
-    
-    which = which_trials & data.isTrain & strcmp(data.contextRole, condition) & data.trialId > 10;
-    s = nan(metadata.runsPerContext * metadata.trainingTrialsPerRun / 2, metadata.N); % average within subject
-    for who_idx = 1:metadata.N
-        s(:, who_idx) = score(which & strcmp(data.participant, metadata.subjects{who_idx}), 1);
-    end
-    assert(isequal(size(s), [metadata.runsPerContext * metadata.trainingTrialsPerRun / 2, metadata.N]));    
-    pc1_second_half  = [pc1_second_half, mean(s)'];
-end
-pc1_means = [mean(pc1_first_half); mean(pc1_second_half)];
-pc1_sems = [sem(pc1_first_half); sem(pc1_second_half)];
-
-h = bar(pc1_means, 'FaceColor',[0 .5 .5]);
-xs = sort([h(1).XData + h(1).XOffset, h(2).XData + h(2).XOffset, h(3).XData + h(3).XOffset]);
-pc1_means = pc1_means'; pc1_means = pc1_means(:);
-pc1_sems = pc1_sems'; pc1_sems = pc1_sems(:);
-
-hold on;
-errorbar(xs, pc1_means(:), pc1_sems(:), '.', 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
-hold off;
-%xticklabels(metadata.contextRoles);
-ylabel('PC 1');
-
-
-
-
-
-
-%{
 
 
 %% classifier: multi-class SVM  ... okay per-trial classifier is completely useless
