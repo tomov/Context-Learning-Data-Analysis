@@ -55,8 +55,8 @@ simulated = simulate_subjects(data, metadata, params, which_structures);
 
 %[m, V] = load_mask('masks/prior_left_IFG.nii'); % left IFG for now TODO right one too
 %mask = 'masks/glm0_light_sphere_t=5.435_extent=24_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii';
-%mask = 'masks/glm0_light_sphere_t=5.276_extent=27_roi=Frontal_Inf_Oper_R_peak=[48_18_26].nii';
-mask = 'masks/glm0_light_sphere_t=5.687_extent=26_roi=Location not in atlas_peak=[-22_-84_-4].nii';
+mask = 'masks/glm0_light_sphere_t=5.276_extent=27_roi=Frontal_Inf_Oper_R_peak=[48_18_26].nii';
+%mask = 'masks/glm0_light_sphere_t=5.687_extent=26_roi=Location not in atlas_peak=[-22_-84_-4].nii';
 [m, V] = load_mask(mask);
 betas = get_activations_submask(m, whole_brain_betas);
 assert(size(betas, 1) == size(data.which_rows, 1));
@@ -101,7 +101,7 @@ plot(explained,'-o');
 xlabel('PC');
 ylabel('% variance explained');
 
-
+% training trials
 subplot(1,3,2);
 hold on;
 
@@ -121,11 +121,38 @@ end
 legend(metadata.contextRoles);
 hold off;
 title(mask, 'interpreter', 'none');
-xlabel('trial #');
+xlabel('training trial #');
 ylabel('PC 1');
 
 
-subplot(1,3,3); % now collapse across time too
+%{
+% test trials -- not pretty; not enough power
+subplot(1,5,3);
+hold on;
+
+cond_idx = 0;
+for condition = metadata.contextRoles
+    cond_idx = cond_idx + 1;
+
+    pc1 = [];
+    for t = 1:metadata.testTrialsPerRun
+        which = which_trials & data.isTest & data.trialId == t & strcmp(data.contextRole, condition);
+        pc1 = [pc1, score(which, 1)];       
+    end
+    
+    errorbar(mean(pc1), sem(pc1));
+end
+
+legend(metadata.contextRoles);
+hold off;
+title(mask, 'interpreter', 'none');
+xlabel('test trial #');
+ylabel('PC 1');
+%}
+
+
+% collapsed across time; training only
+subplot(1,3,3);
 
 pc1 = [];
 for condition = metadata.contextRoles
@@ -138,6 +165,174 @@ errorbar(mean(pc1), sem(pc1), '.', 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, '
 hold off;
 xticklabels(metadata.contextRoles);
 ylabel('PC 1');
+
+
+%{
+% collapsed across time; test only -- not pretty; not enough power
+subplot(1,5,5);
+
+pc1 = [];
+for condition = metadata.contextRoles
+    which = which_trials & data.isTest & strcmp(data.contextRole, condition);
+    pc1  = [pc1, score(which, 1)];
+end
+h = bar(mean(pc1), 'FaceColor',[0 .5 .5]);
+hold on;
+errorbar(mean(pc1), sem(pc1), '.', 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+hold off;
+xticklabels(metadata.contextRoles);
+ylabel('PC 1');
+%}
+
+
+
+%% classifier: multi-class SVM 
+% error = 0.5731 w t f
+%
+
+
+X = betas(which_trials & data.isTrain, :);
+Y = data.condition(which_trials & data.isTrain);
+
+Mdl = fitcecoc(X,Y)
+
+Mdl.ClassNames
+CodingMat = Mdl.CodingMatrix
+
+isLoss = resubLoss(Mdl)
+
+% TODO cross-validate
+
+
+
+
+%{
+
+
+%% neural network classifier
+% accuracy = chance...
+%
+
+inputs = betas;
+
+targets = nan(size(inputs, 1), 3);
+for i = 1:size(inputs, 1)
+    switch data.condition{i}
+        case 'irrelevant'
+            targets(i,:) = [1 0 0];
+        case 'modulatory'
+            targets(i,:) = [0 1 0];
+        case 'additive'
+            targets(i,:) = [0 0 1];
+    end
+end
+
+% only useful trials
+inputs = inputs(which_trials & data.isTrain, :);
+targets = targets(which_trials & data.isTrain, :);
+
+
+
+inputs = inputs'; % ugh MATLAB
+targets = targets';
+
+% from https://github.com/tomov/food-recognition/blob/master/neural_train.m
+
+% Create a Pattern Recognition Network
+hiddenLayerSize = 8; % TODO param
+net = patternnet(hiddenLayerSize);
+
+% Set up Division of Data for Training, Validation, Testing
+net.divideParam.trainRatio = 70/100;
+net.divideParam.valRatio = 15/100;
+net.divideParam.testRatio = 15/100;
+net.trainParam.showWindow = false; % don't show GUI on NCF
+
+% Train the Network
+[net,tr] = train(net,inputs,targets);
+
+% Test the Network
+outputs = net(inputs);
+errors = gsubtract(targets,outputs);
+performance = perform(net,targets,outputs);
+
+% View the Network
+%view(net)
+
+% View confusion matrix
+[c,cm,ind,per] = confusion(targets,outputs);
+
+% patternnet wants column feature vectors, so we rotated those
+% but the rest of the code expects them to be rotated
+% so we undo that...
+% 
+inputs = inputs';
+targets = targets';
+outputs = outputs';
+
+accuracy = classify_get_accuracy(outputs, targets);
+fprintf('Success rate = %.2f%%\n', accuracy);    
+
+classifier = net;
+
+
+
+
+
+%% classify w/ multi-class GLM
+% jk doesn't work b/c of macOS Sierra... but i thought I fixed this?? well
+% sheeeeiiit...
+%
+
+inputs = betas;
+
+targets = nan(size(inputs, 1), 3);
+for i = 1:size(inputs, 1)
+    switch data.condition{i}
+        case 'irrelevant'
+            targets(i,:) = [1 0 0];
+        case 'modulatory'
+            targets(i,:) = [0 1 0];
+        case 'additive'
+            targets(i,:) = [0 0 1];
+    end
+end
+
+% use important trials only TODO crossvalidate
+%training_trials = which_trials & data.isTrain & data.runId ~= 9;
+%test_trails = which_trials & data.isTrain & data.runId == 9;
+
+inputs = inputs(which_trials & data.isTrain, :);
+targets = targets(which_trials & data.isTrain, :);
+
+% from classfy_train.m
+opts.alpha = 1; % 0 = ridge penalty; 1 = lasso penalty (force betas to zero); default = 1
+opts.mtype = 'ungrouped'; % 'grouped' = for multinomial, all betas are in our out together; default = 'ungrouped'
+opts.nlambda = 1000; % # lambdas to use; default = 100
+opts.lambda_min = 0.00000001; % as a fraction of lambda_max which is derived from the data; default = 0.0001
+options = glmnetSet(opts);
+
+% each run is a separate fold TODO rm
+%
+foldid = data.runId(which_trials & data.isTrain);
+%foldid = arrayfun(@(x) find(x == runs), foldid);
+disp('folds:');
+disp(foldid);
+
+% x = inputs
+% y = targets
+%
+parallel = false;
+keep = true;
+CVfit = cvglmnet(inputs, targets, 'multinomial', options, 'deviance', [], foldid, parallel, keep);
+disp(CVfit);
+
+outputs = cvglmnetPredict(CVfit, inputs, CVfit.lambda_1se, 'response');
+
+accuracy = classify_get_accuracy(outputs, targets);
+fprintf('Success rate (lambda = %.4f) is %.2f%%\n', CVfit.lambda_1se, accuracy);
+
+classifier = CVfit;
 
 
 
@@ -249,3 +444,5 @@ for condition = metadata.contextRoles
     hold off;
 end
 
+
+%}
