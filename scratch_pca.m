@@ -112,7 +112,17 @@ for condition = metadata.contextRoles
     pc1 = [];
     for t = 1:metadata.trainingTrialsPerRun
         which = which_trials & data.isTrain & data.trialId == t & strcmp(data.contextRole, condition);
-        pc1 = [pc1, score(which, 1)];       
+        
+        s = nan(metadata.runsPerContext, metadata.N); % average within subject
+        for who_idx = 1:metadata.N
+            s(:, who_idx) = score(which & strcmp(data.participant, metadata.subjects{who_idx}), 1);
+        end
+        disp(s);
+        assert(isequal(size(s), [metadata.runsPerContext, metadata.N]));
+        %pc1 = [pc1, score(which, 1)];  WRONG -- do NOT take SEMs across
+        %blocks and subjects ... instead, average first within subject
+        %(i.e. across blocks), then report SEM across subjects:
+        pc1 = [pc1, mean(s)'];
     end
     
     errorbar(mean(pc1), sem(pc1));
@@ -185,23 +195,33 @@ ylabel('PC 1');
 %}
 
 
-
-%% classifier: multi-class SVM 
-% error = 0.5731 w t f
+%% second half vs. first half of block
 %
 
+pc1_first_half = [];
+pc1_second_half = [];
+for condition = metadata.contextRoles
+    which = which_trials & data.isTrain & strcmp(data.contextRole, condition) & data.trialId <= 10;
+    pc1_first_half  = [pc1_first_half, score(which, 1)];
+    
+    which = which_trials & data.isTrain & strcmp(data.contextRole, condition) & data.trialId > 10;
+    pc1_second_half  = [pc1_second_half, score(which, 1)];
+end
+pc1_means = [mean(pc1_first_half); mean(pc1_second_half)];
+pc1_sems = [sem(pc1_first_half); sem(pc1_second_half)];
 
-X = betas(which_trials & data.isTrain, :);
-Y = data.condition(which_trials & data.isTrain);
+h = bar(pc1_means, 'FaceColor',[0 .5 .5]);
+xs = sort([h(1).XData + h(1).XOffset, h(2).XData + h(2).XOffset, h(3).XData + h(3).XOffset]);
+pc1_means = pc1_means'; pc1_means = pc1_means(:);
+pc1_sems = pc1_sems'; pc1_sems = pc1_sems(:);
 
-Mdl = fitcecoc(X,Y)
+hold on;
+errorbar(xs, pc1_means(:), pc1_sems(:), '.', 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+hold off;
+%xticklabels(metadata.contextRoles);
+ylabel('PC 1');
 
-Mdl.ClassNames
-CodingMat = Mdl.CodingMatrix
 
-isLoss = resubLoss(Mdl)
-
-% TODO cross-validate
 
 
 
@@ -209,8 +229,42 @@ isLoss = resubLoss(Mdl)
 %{
 
 
+%% classifier: multi-class SVM  ... okay per-trial classifier is completely useless
+% error = 0.5731 w t f
+%
+accTrain = [];
+accTest = [];
+
+for run = 1:metadata.runsPerSubject
+    fprintf('------- leave out run = %d\n', run);
+    
+    which = which_trials & data.isTrain & data.runId ~= run;
+    X = betas(which, :);
+    Y = data.condition(which);
+
+    Mdl = fitcecoc(X,Y);
+
+    isLoss = resubLoss(Mdl);
+    fprintf('          training accuracy: %.3f\n', 1 - isLoss);
+    accTrain = [accTrain, 1 - isLoss];
+    
+    
+    % validate on left out run
+    %
+    which = which_trials & data.isTrain & data.runId == run;
+    X = betas(which, :);
+    Y = data.condition(which);
+    
+    y = predict(Mdl, X);
+    acc = mean(strcmp(Y, y));
+   
+    fprintf('          test accuracy: %.3f\n', acc);
+    accTest = [accTest, acc];
+end
+
+
 %% neural network classifier
-% accuracy = chance...
+% accuracy = chance... per-trial tho!
 %
 
 inputs = betas;
