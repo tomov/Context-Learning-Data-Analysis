@@ -117,7 +117,6 @@ for condition = metadata.contextRoles
         for who_idx = 1:metadata.N
             s(:, who_idx) = score(which & strcmp(data.participant, metadata.subjects{who_idx}), 1);
         end
-        disp(s);
         assert(isequal(size(s), [metadata.runsPerContext, metadata.N]));
         %pc1 = [pc1, score(which, 1)];  WRONG -- do NOT take SEMs across
         %blocks and subjects ... instead, average first within subject
@@ -125,7 +124,7 @@ for condition = metadata.contextRoles
         pc1 = [pc1, mean(s)'];
     end
     
-    errorbar(mean(pc1), sem(pc1));
+    errorbar(mean(pc1), sem(pc1)); % average across subjects
 end
 
 legend(metadata.contextRoles);
@@ -167,7 +166,13 @@ subplot(1,3,3);
 pc1 = [];
 for condition = metadata.contextRoles
     which = which_trials & data.isTrain & strcmp(data.contextRole, condition);
-    pc1  = [pc1, score(which, 1)];
+    
+    s = nan(metadata.runsPerContext * metadata.trainingTrialsPerRun, metadata.N); % average within subject
+    for who_idx = 1:metadata.N
+        s(:, who_idx) = score(which & strcmp(data.participant, metadata.subjects{who_idx}), 1);
+    end
+    assert(isequal(size(s), [metadata.runsPerContext * metadata.trainingTrialsPerRun, metadata.N]));
+    pc1 = [pc1, mean(s)'];
 end
 h = bar(mean(pc1), 'FaceColor',[0 .5 .5]);
 hold on;
@@ -175,6 +180,7 @@ errorbar(mean(pc1), sem(pc1), '.', 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, '
 hold off;
 xticklabels(metadata.contextRoles);
 ylabel('PC 1');
+
 
 
 %{
@@ -195,17 +201,59 @@ ylabel('PC 1');
 %}
 
 
+%% PC1 over time for each condition for each subject, collapsed across
+% blocks
+%
+figure;
+
+for who_idx = 1:metadata.N
+    who = metadata.subjects{who_idx};
+
+    subplot(4,5,who_idx);
+    
+    hold on;
+
+    cond_idx = 0;
+    for condition = metadata.contextRoles
+        cond_idx = cond_idx + 1;
+
+        pc1 = [];
+        for t = 1:metadata.trainingTrialsPerRun
+            which = which_trials & data.isTrain & data.trialId == t & strcmp(data.contextRole, condition) & strcmp(data.participant, who);
+            pc1 = [pc1, score(which, 1)];
+        end
+        %errorbar(mean(pc1), sem(pc1)); % average across blocks
+        plot(mean(pc1));
+    end
+    
+    hold off;
+    set(gca, 'xtick', []);
+end
+
+
+
 %% second half vs. first half of block
 %
+figure;
 
 pc1_first_half = [];
 pc1_second_half = [];
 for condition = metadata.contextRoles
     which = which_trials & data.isTrain & strcmp(data.contextRole, condition) & data.trialId <= 10;
-    pc1_first_half  = [pc1_first_half, score(which, 1)];
+    s = nan(metadata.runsPerContext * metadata.trainingTrialsPerRun / 2, metadata.N); % average within subject
+    for who_idx = 1:metadata.N
+        s(:, who_idx) = score(which & strcmp(data.participant, metadata.subjects{who_idx}), 1);
+    end
+    assert(isequal(size(s), [metadata.runsPerContext * metadata.trainingTrialsPerRun / 2, metadata.N]));    
+    pc1_first_half  = [pc1_first_half, mean(s)'];
     
     which = which_trials & data.isTrain & strcmp(data.contextRole, condition) & data.trialId > 10;
-    pc1_second_half  = [pc1_second_half, score(which, 1)];
+    s = nan(metadata.runsPerContext * metadata.trainingTrialsPerRun / 2, metadata.N); % average within subject
+    for who_idx = 1:metadata.N
+        s(:, who_idx) = score(which & strcmp(data.participant, metadata.subjects{who_idx}), 1);
+    end
+    assert(isequal(size(s), [metadata.runsPerContext * metadata.trainingTrialsPerRun / 2, metadata.N]));    
+    pc1_second_half  = [pc1_second_half, mean(s)'];
 end
 pc1_means = [mean(pc1_first_half); mean(pc1_second_half)];
 pc1_sems = [sem(pc1_first_half); sem(pc1_second_half)];
