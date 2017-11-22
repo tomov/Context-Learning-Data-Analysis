@@ -66,7 +66,7 @@ assert(size(betas, 1) == size(data.which_rows, 1));
 masks = {'masks/glm0_light_sphere_t=5.435_extent=24_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii', ...
          'masks/glm0_light_sphere_t=5.276_extent=27_roi=Frontal_Inf_Oper_R_peak=[48_18_26].nii', ...
          'masks/glm0_light_sphere_t=5.687_extent=26_roi=Location not in atlas_peak=[-22_-84_-4].nii'};
-%masks = masks(2);
+masks = masks(2);
      
 betas = [];
 for mask = masks
@@ -223,8 +223,12 @@ figure;
 
 pc1_first_half = [];
 pc1_second_half = [];
+
+pc1_first_half_notcollapsed = [];
+pc1_second_half_notcollapsed = [];
 for condition = metadata.contextRoles
     which = which_trials & data.isTrain & strcmp(data.contextRole, condition) & data.trialId <= 10;
+    pc1_first_half_notcollapsed  = [pc1_first_half_notcollapsed, score(which, 1)];
     s = nan(metadata.runsPerContext * metadata.trainingTrialsPerRun / 2, metadata.N); % average within subject
     for who_idx = 1:metadata.N
         s(:, who_idx) = score(which & strcmp(data.participant, metadata.subjects{who_idx}), 1);
@@ -233,6 +237,7 @@ for condition = metadata.contextRoles
     pc1_first_half  = [pc1_first_half, mean(s)'];
     
     which = which_trials & data.isTrain & strcmp(data.contextRole, condition) & data.trialId > 10;
+    pc1_second_half_notcollapsed  = [pc1_second_half_notcollapsed, score(which, 1)];
     s = nan(metadata.runsPerContext * metadata.trainingTrialsPerRun / 2, metadata.N); % average within subject
     for who_idx = 1:metadata.N
         s(:, who_idx) = score(which & strcmp(data.participant, metadata.subjects{who_idx}), 1);
@@ -267,7 +272,9 @@ pc1 = [pc1_first_half; pc1_second_half];
 %% one-way anova -- is PC different across conditions?
 % columns = irrelevant, modulatory, addditive
 pc1 = [pc1_first_half; pc1_second_half];
+pc1 = [pc1_first_half_notcollapsed; pc1_second_half_notcollapsed];
 [p,tbl] = anova1(pc1);
+
 
 
 %% one-way anova -- is PC1 different across conditions in the 2nd half?
@@ -279,6 +286,9 @@ pc1 = [pc1_first_half; pc1_second_half];
 
 %% should we z-score? plot all the data! rows = subjects, columns = runs
 % --> of course they're super correlated ... b/c we're correlating them... z o m f g 
+% also, you're an idiot if you z-score for each run, then the average
+% activation in each run would be 0! how would you compare across runs of
+% different conditions?
 %
 
 figure;
@@ -299,7 +309,7 @@ end
 
 
 
-%{
+
 
 
 %% PC1 over time for each condition for each subject, collapsed across
@@ -334,8 +344,69 @@ end
 
 
 
+%% classifier: multi-class SVM
+%
+
+which = which_trials & data.isTrain;
+
+% average the betas
+X = [];
+Y = {};
+for who_idx = 1:metadata.N
+    who = metadata.subjects{who_idx};
+
+    for run = 1:metadata.runsPerSubject
+        which = which_trials & data.isTrain & data.runId == run & strcmp(data.participant, who);
+        
+        b = betas(which, :);
+        assert(size(b, 1) == metadata.trainingTrialsPerRun);
+        
+        conds = data.condition(which);
+        
+        X = [X; mean(b)];
+        Y = [Y; conds{1}];
+    end
+end
+
+t = templateSVM('Standardize',1);
+Mdl = fitcecoc(X,Y,'Learners',t,...
+    'ClassNames', metadata.contextRoles);
+
+isLoss = resubLoss(Mdl);
+%fprintf('          training accuracy: %.3f\n', 1 - isLoss); WRONG -- this is not accuracy!
+
+CVMdl = crossval(Mdl);
+oosLoss = kfoldLoss(CVMdl);
+
+%fprintf('          CV accuracy: %.3f\n', 1 - isLoss); WRONG -- this is not accuracy!
+
+% plot confusion matrix
+oofLabel = kfoldPredict(CVMdl);
+ConfMat = confusionmat(Y,oofLabel);
+
+% Convert the integer label vector to a class-identifier matrix.
+[n, p] = size(X);
+isLabels = metadata.contextRoles';
+nLabels = numel(isLabels)
+[~,grpOOF] = ismember(oofLabel,isLabels); 
+oofLabelMat = zeros(nLabels,n); 
+idxLinear = sub2ind([nLabels n],grpOOF,(1:n)'); 
+oofLabelMat(idxLinear) = 1; % Flags the row corresponding to the class 
+[~,grpY] = ismember(Y,isLabels); 
+YMat = zeros(nLabels,n); 
+idxLinearY = sub2ind([nLabels n],grpY,(1:n)'); 
+YMat(idxLinearY) = 1; 
+
+figure;
+plotconfusion(YMat,oofLabelMat);
+h = gca;
+h.XTickLabel = [num2cell(isLabels); {''}];
+h.YTickLabel = [num2cell(isLabels); {''}];
+
+
 
 %% classifier: multi-class SVM  ... okay per-trial classifier is completely useless
+% with leave-run-out cross-validation
 % error = 0.5731 w t f
 %
 accTrain = [];
@@ -351,7 +422,8 @@ for run = 1:metadata.runsPerSubject
     Mdl = fitcecoc(X,Y);
 
     isLoss = resubLoss(Mdl);
-    fprintf('          training accuracy: %.3f\n', 1 - isLoss);
+%    fprintf('          training accuracy: %.3f\n', 1 - isLoss); WRONG!
+%    THIS IS NOT ACCURACY!
     accTrain = [accTrain, 1 - isLoss];
     
     
@@ -364,7 +436,8 @@ for run = 1:metadata.runsPerSubject
     y = predict(Mdl, X);
     acc = mean(strcmp(Y, y));
    
-    fprintf('          test accuracy: %.3f\n', acc);
+%    fprintf('          test accuracy: %.3f\n', acc); WRONG!! THIS IS NOT
+%    ACCURACY!
     accTest = [accTest, acc];
 end
 
@@ -388,8 +461,56 @@ for i = 1:size(inputs, 1)
 end
 
 % only useful trials
-inputs = inputs(which_trials & data.isTrain, :);
-targets = targets(which_trials & data.isTrain, :);
+%inputs = inputs(which_trials & data.isTrain, :);
+%targets = targets(which_trials & data.isTrain, :);
+
+
+% nevermind -- average the betas
+% and not even betas but PC1
+X = [];
+Y = [];
+for who_idx = 1:metadata.N
+    who = metadata.subjects{who_idx};
+
+    for run = 1:metadata.runsPerSubject
+        which = which_trials & data.isTrain & data.runId == run & strcmp(data.participant, who);
+        
+        b = betas(which, :);
+        assert(size(b, 1) == metadata.trainingTrialsPerRun);
+        
+        tar = targets(which,:);
+        
+        %X = [X; mean(b)];
+        X = [X; mean(score(which, 1))];
+        Y = [Y; tar(1,:)];
+    end
+end
+inputs = X;
+targets = Y;
+
+
+% sanity check
+[~, id] = max(targets, [], 2);
+anovan(inputs, id);
+
+figure;
+subplot(1,3,1);
+hist(inputs(id == 1));
+title('irrelevant');
+subplot(1,3,2);
+hist(inputs(id == 2));
+title('modulatory');
+subplot(1,3,3);
+hist(inputs(id == 3));
+title('additive');
+
+% retarded classifier
+guess = nan(size(id));
+guess(inputs > 0) = 2;
+guess(inputs < 0) = 1;
+fprintf('dumb classifier accuracy: %f\n', sum(guess == id) / numel(guess));
+
+
 
 
 
@@ -493,6 +614,9 @@ accuracy = classify_get_accuracy(outputs, targets);
 fprintf('Success rate (lambda = %.4f) is %.2f%%\n', CVfit.lambda_1se, accuracy);
 
 classifier = CVfit;
+
+
+%{
 
 
 
