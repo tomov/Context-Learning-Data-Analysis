@@ -47,7 +47,7 @@ simulated = simulate_subjects(data, metadata, params, which_structures);
 %% load betas -- SLOW
 %
 
-%whole_brain_betas = get_betas('masks/mask.nii', 'trial_onset', data, metadata, false);
+whole_brain_betas = get_betas('masks/mask.nii', 'trial_onset', data, metadata, false);
 
 %% load mask & corresponding betas
 %
@@ -57,6 +57,7 @@ simulated = simulate_subjects(data, metadata, params, which_structures);
 %mask = 'masks/glm0_light_sphere_t=5.435_extent=24_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii';
 mask = 'masks/glm0_light_sphere_t=5.276_extent=27_roi=Frontal_Inf_Oper_R_peak=[48_18_26].nii';
 %mask = 'masks/glm0_light_sphere_t=5.687_extent=26_roi=Location not in atlas_peak=[-22_-84_-4].nii';
+
 [m, V] = load_mask(mask);
 betas = get_activations_submask(m, whole_brain_betas);
 assert(size(betas, 1) == size(data.which_rows, 1));
@@ -257,6 +258,29 @@ pc1 = [pc1_first_half; pc1_second_half];
 %% one-way anova -- is PC1 different across conditions in the 2nd half?
 % columns = irrelevant, modulatory, addditive
 [p,tbl] = anova1(pc1_second_half);
+
+
+
+
+%% should we z-score? plot all the data! rows = subjects, columns = runs
+% --> of course they're super correlated ... b/c we're correlating them... z o m f g 
+%
+
+figure;
+
+for who_idx = 1:metadata.N
+    who = metadata.subjects{who_idx};
+
+    for run = 1:metadata.runsPerSubject
+
+        b = betas(which_trials & data.isTrain & strcmp(data.participant, who) & data.runId == run, :);
+
+        subplot(metadata.N, metadata.runsPerSubject, run + (who_idx - 1) * metadata.runsPerSubject);
+        plot(b);
+        set(gca, 'xtick', []);
+        %set(gca, 'ytick', []);
+    end
+end
 
 
 
