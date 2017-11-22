@@ -53,13 +53,28 @@ whole_brain_betas = get_betas('masks/mask.nii', 'trial_onset', data, metadata, f
 %
 %bspmview('masks/prior_left_IFG.nii', 'masks/mean.nii');
 
+%{
 %[m, V] = load_mask('masks/prior_left_IFG.nii'); % left IFG for now TODO right one too
-%mask = 'masks/glm0_light_sphere_t=5.435_extent=24_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii';
+%mask = '';
 mask = 'masks/glm0_light_sphere_t=5.276_extent=27_roi=Frontal_Inf_Oper_R_peak=[48_18_26].nii';
 %mask = 'masks/glm0_light_sphere_t=5.687_extent=26_roi=Location not in atlas_peak=[-22_-84_-4].nii';
 
 [m, V] = load_mask(mask);
 betas = get_activations_submask(m, whole_brain_betas);
+assert(size(betas, 1) == size(data.which_rows, 1));
+%}
+masks = {'masks/glm0_light_sphere_t=5.435_extent=24_roi=Frontal_Inf_Tri_L_peak=[-36_12_24].nii', ...
+         'masks/glm0_light_sphere_t=5.276_extent=27_roi=Frontal_Inf_Oper_R_peak=[48_18_26].nii', ...
+         'masks/glm0_light_sphere_t=5.687_extent=26_roi=Location not in atlas_peak=[-22_-84_-4].nii'};
+%masks = masks(2);
+     
+betas = [];
+for mask = masks
+    [m, V] = load_mask(mask{1});
+    b = get_activations_submask(m, whole_brain_betas);
+    assert(size(b, 1) == size(data.which_rows, 1));
+    betas = [betas, b];
+end
 assert(size(betas, 1) == size(data.which_rows, 1));
 
 % restrict to relevant trials
