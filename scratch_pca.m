@@ -1,3 +1,12 @@
+% here's why the PCA stuff is not legit
+% the effect is driven by a few outliers
+% and the distribution of PC1 is not Gaussian (clearly b/c of the outliers)
+% -> the ANOVAs and t-tests get fooled; if you remove the outliers, the
+% conditions are indistinguishable;
+% a classifier is not able to distinguish on a per-run basis better than
+% chance (except for the few outliers)
+%
+
 % PCA stuff based on https://github.com/tomov/neurolab/tree/master/exercise
 
 % see the tmap from the prior RDMs (i.e. where the prior might be stored)
@@ -400,8 +409,6 @@ YMat(idxLinearY) = 1;
 figure;
 plotconfusion(YMat,oofLabelMat);
 h = gca;
-h.XTickLabel = [num2cell(isLabels); {''}];
-h.YTickLabel = [num2cell(isLabels); {''}];
 
 
 
@@ -447,6 +454,7 @@ end
 %
 
 inputs = betas;
+inputs = score(:,1); % or PC1 instead
 
 targets = nan(size(inputs, 1), 3);
 for i = 1:size(inputs, 1)
@@ -467,6 +475,7 @@ end
 
 % nevermind -- average the betas
 % and not even betas but PC1
+%{
 X = [];
 Y = [];
 for who_idx = 1:metadata.N
@@ -487,6 +496,7 @@ for who_idx = 1:metadata.N
 end
 inputs = X;
 targets = Y;
+%}
 
 
 % sanity check
@@ -494,15 +504,21 @@ targets = Y;
 anovan(inputs, id);
 
 figure;
-subplot(1,3,1);
-hist(inputs(id == 1));
-title('irrelevant');
-subplot(1,3,2);
-hist(inputs(id == 2));
-title('modulatory');
-subplot(1,3,3);
-hist(inputs(id == 3));
-title('additive');
+hold on;
+for i = 1:3
+    subplot(1,3,i);
+    hist(inputs(id == i), 30);
+    title(metadata.contextRoles{i});
+end
+%{
+H = [inputs(id == 1), inputs(id == 2), inputs(id == 3)];
+[ns,xs] = hist(H);
+hold on;
+bar(xs, ns(:,1), 'facecolor', 'blue', 'facealpha', 0.4, 'edgecolor', 'none');
+bar(xs, ns(:,2), 'facecolor', 'yellow', 'facealpha', 0.4, 'edgecolor', 'none');
+hold off;
+box off;
+%}
 
 % retarded classifier
 guess = nan(size(id));
