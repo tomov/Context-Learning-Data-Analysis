@@ -169,7 +169,7 @@ for who = metadata.subjects
             % See what the model predicts for the test trials of that run
             %
             %[test_choices, test_values, test_valuess] = ...
-            test_results = model_test(test_x, test_k, train_results.P_n, train_results.ww_n, subject_params);
+            test_results = model_test(test_x, test_k, train_results, subject_params);
 
             model_test_choices = test_results.choices > rand;
             model_test_response_keys = {};

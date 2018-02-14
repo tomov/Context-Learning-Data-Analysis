@@ -56,7 +56,7 @@ for g=3:3 % for each group
     train_results = model_train(x{g}, c{g}, r{g}, [learning_rate, softmax_temp], [1 1 1 0], false);
 
     %[test_choices] =
-    test_results = model_test(test_x, test_c, train_results.P_n, train_results.ww_n, [learning_rate, softmax_temp]);
+    test_results = model_test(test_x, test_c, train_results, [learning_rate, softmax_temp]);
     for n = 1:size(test_x, 1)
         x_n = test_x(n, :)';
         c_n = test_c(n, :);

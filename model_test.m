@@ -1,5 +1,5 @@
-function test_results = model_test(x, k, P_n, ww_n, params)
-%function [choices, values, valuess] = model_test(x, k, P_n, ww_n, params)
+function test_results = model_test(x, k, train_results, params)
+%function [choices, values, valuess] = model_test(x, k, train_results.P_n, train_results.ww_n, params)
 
 % Kalman filter to predict outcomes based on a learned posterior over
 % causal structures and weights for each causal structure. Learning them
@@ -24,10 +24,10 @@ K = 3;          % # of contexts
 % predict
 predict = @(V_n) 1 ./ (1 + exp(-2 * inv_softmax_temp * V_n + inv_softmax_temp)); % predicts by mapping the expectation to an outcome
 
-value = @(x_n, xx_n, xb_n, k_n, c_n) (x_n' * ww_n{1}) * P_n(1) + ... % M1 
-                                     (xb_n' * ww_n{2}(:, k_n)) * P_n(2) + ... % M2
-                                     (xx_n' * ww_n{3}) * P_n(3) + ... % M3   
-                                     (c_n' * ww_n{4}) * P_n(4); % M4
+value = @(x_n, xx_n, xb_n, k_n, c_n) (x_n' * train_results.ww_n{1}) * train_results.P_n(1) + ... % M1 
+                                     (xb_n' * train_results.ww_n{2}(:, k_n)) * train_results.P_n(2) + ... % M2
+                                     (xx_n' * train_results.ww_n{3}) * train_results.P_n(3) + ... % M3   
+                                     (c_n' * train_results.ww_n{4}) * train_results.P_n(4); % M4
 
 choices = []; % history of choices
 values = []; % history of predicted outcomes, weighted sum across all models (causal structures)
@@ -47,7 +47,7 @@ for n = 1:N
     out = predict(V_n);
     choices = [choices; out];
     values = [values; V_n];
-    valuess = [valuess; x_n' * ww_n{1}, xb_n' * ww_n{2}(:, k_n), xx_n' * ww_n{3}, c_n' * ww_n{4}];    
+    valuess = [valuess; x_n' * train_results.ww_n{1}, xb_n' * train_results.ww_n{2}(:, k_n), xx_n' * train_results.ww_n{3}, c_n' * train_results.ww_n{4}];    
 end
 
 test_results.choices = choices;
