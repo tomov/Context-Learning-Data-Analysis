@@ -1,4 +1,5 @@
-function [choices, values, valuess] = model_test(x, k, P_n, ww_n, params)
+function test_results = model_test(x, k, P_n, ww_n, params)
+%function [choices, values, valuess] = model_test(x, k, P_n, ww_n, params)
 
 % Kalman filter to predict outcomes based on a learned posterior over
 % causal structures and weights for each causal structure. Learning them
@@ -48,3 +49,7 @@ for n = 1:N
     values = [values; V_n];
     valuess = [valuess; x_n' * ww_n{1}, xb_n' * ww_n{2}(:, k_n), xx_n' * ww_n{3}, c_n' * ww_n{4}];    
 end
+
+test_results.choices = choices;
+test_results.values = values;
+test_results.valuess = valuess;

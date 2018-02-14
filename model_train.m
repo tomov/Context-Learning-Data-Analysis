@@ -1,4 +1,5 @@
-function [choices, P_n, ww_n, P, ww_after, values, valuess, likelihoods, new_values, new_valuess, Sigma_after, lambdas, ww_before, Sigma_before] = model_train(x, k, r, params, which_structures, DO_PRINT)
+function train_results = model_train(x, k, r, params, which_structures, DO_PRINT)
+%function [choices, P_n, ww_n, P, ww_after, values, valuess, likelihoods, new_values, new_valuess, Sigma_after, lambdas, ww_before, Sigma_before] = model_train(x, k, r, params, which_structures, DO_PRINT)
 
 % Kalman filter to learn the context-cue-reward associations & posteriors
 % for each causal structure
@@ -236,3 +237,19 @@ end
 
 
 assert(mean(sum(valuess(2:end,:) .* P(1:end-1,:), 2) == values(2:end)) == 1);
+
+
+train_results.choices = choices;
+train_results.P_n = P_n;
+train_results.ww_n = ww_n;
+train_results.P = P;
+train_results.ww_after = ww_after;
+train_results.values = values;
+train_results.valuess = valuess;
+train_results.likelihoods = likelihoods;
+train_results.new_values = new_values;
+train_results.new_valuess = new_valuess;
+train_results.Sigma_after = Sigma_after;
+train_results.lambdas = lambdas;
+train_results.ww_before = ww_before;
+train_results.Sigma_before = Sigma_before;

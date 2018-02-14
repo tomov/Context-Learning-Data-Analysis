@@ -52,16 +52,18 @@ Ms = [];
 for g=3:3 % for each group
     fprintf('\n\n ---------------- GROUP %d ------------------\n\n', g);
 
-    [choices, P_n, ww_n, P, ww, values, valuess, likelihoods, new_values, new_valuess, Sigma, lambdas] = model_train(x{g}, c{g}, r{g}, [learning_rate, softmax_temp], [1 1 1 0], false);
+    %[choices, P_n, ww_n, P, ww, values, valuess, likelihoods, new_values, new_valuess, Sigma, lambdas] = 
+    train_results = model_train(x{g}, c{g}, r{g}, [learning_rate, softmax_temp], [1 1 1 0], false);
 
-    [test_choices] = model_test(test_x, test_c, P_n, ww_n, [learning_rate, softmax_temp]);
+    %[test_choices] =
+    test_results = model_test(test_x, test_c, train_results.P_n, train_results.ww_n, [learning_rate, softmax_temp]);
     for n = 1:size(test_x, 1)
         x_n = test_x(n, :)';
         c_n = test_c(n, :);
-        out = test_choices(n);
+        out = test_results.choices(n);
         fprintf('TEST predction for x = %d, c = %d is %f\n', find(x_n), c_n, out);
     end
-    Ms = [Ms; test_choices'];
+    Ms = [Ms; test_results.choices'];
     
     % Plot posterior probability P(M | h_1:n)
     %
@@ -69,7 +71,7 @@ for g=3:3 % for each group
         figure;
 
         subplot(3, 2, 1);
-        plot(P, 'o-', 'LineWidth', 2);
+        plot(train_results.P, 'o-', 'LineWidth', 2);
         xlabel('n (trial #)');
         ylabel('P(M | h_{1:n})');
         title('Posterior probability after each trial');
@@ -78,7 +80,7 @@ for g=3:3 % for each group
         % Plot weight matrix ww for M1
         %
         subplot(3, 2, 2);
-        plot(ww{1}, 'o-', 'LineWidth', 2);
+        plot(train_results.ww_after{1}, 'o-', 'LineWidth', 2);
         xlabel('n (trial #)');
         ylabel('ww_n');
         title('Weight matrix on each trial for M1');
@@ -87,7 +89,7 @@ for g=3:3 % for each group
         % Plot weight matrix ww for M2
         %
         subplot(3, 2, 3);
-        plot(ww{2}, 'o-', 'LineWidth', 2);
+        plot(train_results.ww_after{2}, 'o-', 'LineWidth', 2);
         xlabel('n (trial #)');
         ylabel('ww_n');
         title('Weight matrix on each trial for M2');
@@ -96,7 +98,7 @@ for g=3:3 % for each group
         % Plot weight matrix ww for M3
         %
         subplot(3, 2, 4);
-        plot(ww{3}, 'o-', 'LineWidth', 2);
+        plot(train_results.ww_after{3}, 'o-', 'LineWidth', 2);
         xlabel('n (trial #)');
         ylabel('ww_n');
         title('Weight matrix on each trial for M3');
@@ -105,7 +107,7 @@ for g=3:3 % for each group
         % Plot weight matrix ww for M4
         %
         subplot(3, 2, 5);
-        plot(ww{4}, 'o-', 'LineWidth', 2);
+        plot(train_results.ww_after{4}, 'o-', 'LineWidth', 2);
         xlabel('n (trial #)');
         ylabel('ww_n');
         title('Weight matrix on each trial for M4');
