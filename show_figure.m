@@ -1,5 +1,6 @@
 function show_figure(figure_name)
 
+utils; % include some nifty lambdas
 sem = @(x) std(x) / sqrt(length(x));
 
 % Generate figures from the paper.
@@ -24,13 +25,14 @@ if exist(filename, 'file') ~= 2
 
     % Load parameters
     %
-    load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts_5_prior.mat'), 'results', 'results_options');
+    %load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts_5_prior.mat'), 'results', 'results_options');
+    load(fullfile('results', 'fit_params_results.mat'), 'results', 'results_options');        
     params = results(1).x;
     options = results_options(1);
     
     % OVERRIDE -- use pilot params as before
     %
-    params = [0.1249 2.0064];
+    %params = [0.1249 2.0064];
     options.isFmriData = false;
     options.fixedEffects = true;
     
@@ -59,7 +61,7 @@ end
 %
 switch figure_name
     
-    case 'Figure_curves'
+    case 'fig:curves'
         figure('pos', [100 100 693+20 320] * 3/4);
         
         %
@@ -127,12 +129,12 @@ switch figure_name
             ylabel('accuracy');
             set(gca,'fontsize',13);
         end
-        
+
     
     % statistics regarding learning and performance on the training trials
     %
-    case 'Learning_stats'
-        
+    case 'learning_stats'
+
         for group = 1:2
             if group == 1
                 % pilot subjects
@@ -161,9 +163,41 @@ switch figure_name
             fprintf('accuracy during 2nd half of training: %.6f +- %.6f\n', mean(second_half_corr), sem(second_half_corr));
             disp('t-test: is accuracy = 50%');
             [h, p, ci, stats] = ttest(second_half_corr, 0.5)
+
+            if group == 1 
+                % pilot subjects
+                report.pilot_mean_second_half_corr = mean(second_half_corr) * 100;
+                report.pilot_sem_second_half_corr = sem(second_half_corr) * 100;
+                report.pilot_t_df = stats.df;
+                report.pilot_t_tstat = stats.tstat;
+                report.pilot_t_p = p;
+                report.pilot_t_p_less_than_pow10 = ceil(log10(p));
+            else
+                % fmri subjects
+                report.fmri_mean_second_half_corr = mean(second_half_corr) * 100;
+                report.fmri_sem_second_half_corr = sem(second_half_corr) * 100;
+                report.fmri_t_df = stats.df;
+                report.fmri_t_tstat = stats.tstat;
+                report.fmri_t_p = p;
+                report.fmri_t_p_less_than_pow10 = ceil(log10(p));
+            end
         end
+
+        paragraph = 'Average accuracy during the second half of training was $%.1f \\pm %.1f\\%%$ ($t_{%d} = %.1f, p < 10^{%d}$, one-sample \\textit{t}-test against 50\\%%) for the pilot subjects, and $%.1f \\pm %.1f\\%%$ ($t_{%d} = %.1f, p < 10^{%d}$, one-sample \\textit{t}-test against 50\\%%) for the scanned subjects, well above chance.\n\n';
+        fprintf(paragraph, ...
+                report.pilot_mean_second_half_corr, ...
+                report.pilot_sem_second_half_corr, ...
+                report.pilot_t_df, ...
+                report.pilot_t_tstat, ...
+                report.pilot_t_p_less_than_pow10, ...
+                report.fmri_mean_second_half_corr, ...
+                report.fmri_sem_second_half_corr, ...
+                report.fmri_t_df, ...
+                report.fmri_t_tstat, ...
+                report.fmri_t_p_less_than_pow10);
         
-        
+       
+
     % statistics showing the generalization pattern on the test trials is real
     %
     case 'generalization_stats'
@@ -198,6 +232,11 @@ switch figure_name
 
         disp('IRRELEVANT condition t-test: is old cue more predictive of sickness than new cue?');
         [h, p, ci, stats] = ttest2(old_cue, new_cue)
+
+        report.irr_t_df = stats.df;
+        report.irr_t_tstat = stats.tstat;
+        report.irr_t_p = p;
+        report.irr_t_p_pow10 = ceil(log10(p));
         
         % modulatory condition
         % does old cue-context pair cause sickness more than the other
@@ -229,6 +268,11 @@ switch figure_name
         disp('MODULATORY condition t-test: is old pair more predictive of sickness than new pairs?');
         [h, p, ci, stats] = ttest2(old_pair, new_pairs)        
         
+        report.mod_t_df = stats.df;
+        report.mod_t_tstat = stats.tstat;
+        report.mod_t_p = p;
+        report.mod_t_p_pow10 = ceil(log10(p));
+        
 
         % additive condition
         % does old context cause sickness more than the new context, for either
@@ -259,9 +303,128 @@ switch figure_name
 
         disp('ADDITIVE condition t-test: is old context more predictive of sickness than new context?');
         [h, p, ci, stats] = ttest2(old_context, new_context)
+
+        report.add_t_df = stats.df;
+        report.add_t_tstat = stats.tstat;
+        report.add_t_p = p;
+        report.add_t_p_pow10 = ceil(log10(p));
+
+
+        paragraph = 'The new cue $x_3$, on the other hand, was judged to be much less predictive of sickness in either context ($t_{38} = 9.51, p < 10^{-10}$, paired \\textit{t}-test). Conversely, on blocks during which context acted like another cue (Figure~\\ref{fig:behavior}B, additive training), subjects guessed that both cues would cause sickness in the old context $c_1$ (circle for $x_3 c_1$), but not in the new context $c_3$ ($t_{38} = 11.1, p < 10^{-12}$, paired \\textit{t}-test). Generalization in both of these conditions was different from what one would expect if subjects treated each cue-context pair as a unique stimulus independent from the other pairs, which is similar to the generalization pattern on modulatory blocks (Figure~\\ref{fig:behavior}B, modulatory training). On these blocks, subjects judged that the old cue is predictive of sickness in the old context significantly more compared to the remaining cue-context pairs ($t_{38} = 9.01, p < 10^{-10}$, paired \\textit{t}-test)\n';
+        fprintf(paragraph, ...
+                report.irr_t_df, ...
+                report.irr_t_tstat, ...
+                report.irr_t_p_pow10, ...
+                report.add_t_df, ...
+                report.add_t_tstat, ...
+                report.add_t_p_pow10, ...
+                report.mod_t_df, ...
+                report.mod_t_tstat, ...
+                report.mod_t_p_pow10);
+       
+
+
+    % how well does the model correlate with subject test phase choices
+    %
+    case 'model_stats'
+        % order is important
+        which_structuress = {[1 1 1 0], [1 0 0 0], [0 1 0 0], [0 0 1 0]};
+
+        for i = 1:numel(which_structuress) 
+            which_structures = which_structuress{i};
+
+            [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
+            simulated = simulate_subjects(data, metadata, params, which_structures);        
+
+            %
+            % Choice probabilities in test phase for SUBJECTS
+            %
+
+            Ms = [];
+            SEMs = [];
+            for context = metadata.contextRoles
+                which = data.which_rows & data.isTrain == 0 & strcmp(data.contextRole, context);
+
+                x1c1 = strcmp(data.response.keys(which & data.cueId == 0 & data.contextId == 0), 'left');
+                x1c2 = strcmp(data.response.keys(which & data.cueId == 0 & data.contextId == 2), 'left');
+                x2c1 = strcmp(data.response.keys(which & data.cueId == 2 & data.contextId == 0), 'left');
+                x2c2 = strcmp(data.response.keys(which & data.cueId == 2 & data.contextId == 2), 'left');
+
+            %    M = mean([x1c1 x1c2 x2c1 x2c2]);
+            %    SEM = std([x1c1 x1c2 x2c1 x2c2]) / sqrt(length(x1c1));
+                M = get_means(x1c1, x1c2, x2c1, x2c2);
+                SEM = get_sems(x1c1, x1c2, x2c1, x2c2);
+                Ms = [Ms; M];
+                SEMs = [SEMs; SEM];
+            end
+
+            subject_Ms = Ms; % for stats
+
+            %
+            % TRUE Choice probabilities in test phase for MODEL
+            %
+
+            Ms = [];
+            SEMs = [];
+            for context = metadata.contextRoles
+                which = data.which_rows & data.isTrain == 0 & strcmp(data.contextRole, context);
+
+                x1c1 = simulated.pred(which & data.cueId == 0 & data.contextId == 0);
+                x1c2 = simulated.pred(which & data.cueId == 0 & data.contextId == 2);
+                x2c1 = simulated.pred(which & data.cueId == 2 & data.contextId == 0);
+                x2c2 = simulated.pred(which & data.cueId == 2 & data.contextId == 2);
+
+                %M = mean([x1c1 x1c2 x2c1 x2c2]);
+                %SEM = std([x1c1 x1c2 x2c1 x2c2]) / sqrt(length(x1c1));
+                M = get_means(x1c1, x1c2, x2c1, x2c2);
+                SEM = get_sems(x1c1, x1c2, x2c1, x2c2);
+                Ms = [Ms; M];
+                SEMs = [SEMs; SEM];
+            end
+
+            model_Ms = Ms; % for stats
+
+            % correlate average subject choices with model choices 
+            %
+            [r, p] = corrcoef(subject_Ms(:), model_Ms(:));
+            r = r(1,2);
+            p = p(1,2);
+
+            switch i
+                case 1
+                    report.full_r = r;
+                    report.full_p = p;
+                    report.full_p_pow10 = ceil(log10(p));
+                case 2
+                    report.M1_r = r;
+                    report.M1_p = p;
+                    report.M1_p_pow10 = ceil(log10(p));
+                case 3
+                    report.M2_r = r;
+                    report.M2_p = p;
+                    report.M2_p_pow10 = ceil(log10(p));
+                case 4
+                    report.M3_r = r;
+                    report.M3_p = p;
+                    report.M3_p_pow10 = ceil(log10(p));
+            end
+        end
+
+        fprintf('Correlation between model and subject test behavior: r = %f, p = %.10f (p = 10^%f)\n', r, p, log10(p));
+
+        paragraph = 'Using parameters fit with data from the behavioral pilot version of the study, the model quantitatively accounted for the generalization pattern on the test trials choices of subjects in the fMRI portion of the study (Figure~\\ref{fig:behavior}B; $r = %.2f, p < 10^{%d}$). As expected, the stimulus-outcome contingencies induced the model to infer a different causal structure in each of the three conditions (Figure~\\ref{fig:behavior}A), leading to the distinct response patterns on the simulated test trials. For comparison, we also ran versions of the model using a single causal structure. Theories corresponding to each of these sub-models have been put forward in the literature as explanations of the role of context during learning, however neither of them has been able to provide a comprehensive account of the behavioral findings on its own. Accordingly, model performance was markedly worse when the hypothesis space was restricted to a single causal structure: the correlation coefficients were $r = %.2f$ for the irrelevant context structure ($M_1$; $p = %.2f$), $r = %.2f$ for the modulatory context structure ($M_2$; $p < %.2f$), and $r = %.2f$ for  the additive context structure ($M_3$; $p < %.4f$).\n';
+        fprintf(paragraph, ...
+                report.full_r, ...
+                report.full_p_pow10, ...
+                report.M1_r, ...
+                report.M1_p, ...
+                report.M2_r, ...
+                10^report.M2_p_pow10, ...
+                report.M3_r, ...
+                10^report.M3_p_pow10);
+
         
-        
-    case 'Figure_3'
+    case 'fig:behavior'
         
         %
         % Figure 3A: Posterior probabilities over structures in each condition
@@ -403,7 +566,377 @@ switch figure_name
 
         
         
-    case 'Figure_3_stats'        
+    case 'searchlight_posterior'
+        bspmview('rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', '../neural/mean.nii');
+        
+    case 'searchlight_prior'
+        bspmview('rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', '../neural/mean.nii');
+        
+    case 'KL_structures'
+        ccnl_view(context_expt(), 154, 'KL_structures');
+        
+    case 'KL_weights'
+        ccnl_view(context_expt(), 154, 'KL_weights');
+        
+    case 'KL_structures - KL_weights'
+        ccnl_view(context_expt(), 154, 'KL_structures - KL_weights');
+
+    case 'KL_weights - KL_structures'
+        ccnl_view(context_expt(), 154, 'KL_weights - KL_structures');
+        
+
+    case 'fig:fmri-results'
+    %case 'glm154'
+        figure('pos', [100 100 693+20 492]);
+        
+        fontsize = 12;
+        
+        %
+        % Top left: structures 
+        %
+
+        subplot(2, 2, 1);
+        
+        imshow('images/KL_structures_pos.png'); % from GLM 154
+        title('Causal structure update', 'FontSize', fontsize);
+       
+        %
+        % Top right: weights 
+        %
+        
+        subplot(2, 2, 2);
+        
+        imshow('images/KL_weights_pos.png'); % from GLM 154
+        title('Associative weights update', 'FontSize', fontsize);
+        
+        %
+        % Bottom left: contrast
+        %
+        
+        subplot(2, 2, 3);
+        
+        imshow('images/KL_structures-KL_weights.png'); % from GLM 154
+        title({'Causal structure update >'; 'associative weights update'}, 'FontSize', fontsize);
+        
+        %
+        % Bottom right: KL structures ~ test choice log likelihood
+        %
+
+        subplot(2, 2, 4);
+        
+        load results/betas_to_behavior_glm154_KL_structures_sphere_KL_structures.mat
+        %which = 1:numel(region);
+        assert(numel(region) == 14);
+        which = [1:7 12 14]; % exclude motor and visual areas
+        % exclude motor & cerebellum, also reorder them
+       % which = [1 4 2 6 5 3];
+        
+        region = region(which);
+        means = means(which);
+        sems = sems(which);
+        ps = ps(which);
+        mni = mni(which, :);
+
+        h = bar(means, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
+        xs = h(1).XData;
+        hold on;
+        errorbar(xs, means, sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+        for i = 1:numel(xs)
+            if ps(i) < 0.05
+                assert(ps(i) >= 0.01);
+                text(xs(i) - 0.08, means(i) + sems(i) * 1.1, '*', 'FontSize', fontsize);
+            end
+        end
+        hold off;
+
+        set(gca, 'xtick', xs);
+        ylabel('Fisher z-transformed r');
+        
+        neural_names = {};
+        for i = 1:numel(region)
+            hemisphere = [];
+            if mni(i, 1) < 0
+                hemisphere = 'L';
+            else
+                hemisphere = 'R';
+            end
+            roi = aal2_label_to_roi_name(region{i});
+            comma = strfind(roi, ','); % trim the super long names
+            if ~isempty(comma)
+                roi = roi(1:comma(1)-1);
+            end
+            neural_names{i} = [roi, ' (', hemisphere, ')'];
+        end
+        % screw that, just hardcode the names
+        neural_names = { ...
+            'IFG pars orbitalis (R)', ...
+            'Angular gyrus (R)', ...
+            'IFG pars opercularis (R)', ...
+            'Frontal Pole (L)', ...
+            'Angular gyrus (L)', ...
+            'Middle orbital gyrus (R)', ...
+            'IFG pars opercularis (L)', ...
+            'Inferior temporal gyrus (R)', ...
+            'Lingual gyrus (R)', ...
+            'Middle temporal gyrus (L)'};
+        
+        xticklabels(neural_names);
+        xtickangle(30);
+        title('Structure updating predicts test choices', 'FontSize', fontsize);
+
+        % label subplots A,B,C,D
+        ax1 = axes('Position',[0 0 1 1],'Visible','off');
+        axes(ax1);
+        text(0.1, 0.95, 'A', 'FontSize', 20, 'FontWeight', 'bold');
+        text(0.51, 0.95, 'B', 'FontSize', 20, 'FontWeight', 'bold');
+        text(0.1, 0.47, 'C', 'FontSize', 20, 'FontWeight', 'bold');
+        text(0.51, 0.47, 'D', 'FontSize', 20, 'FontWeight', 'bold');
+        
+
+    case 'fig:rsa'
+        
+        figure('pos', [100 100 693+20 492]);
+        
+        fontsize = 12;
+        
+        %
+        % Top left: structures 
+        %
+
+        subplot(1, 2, 1);
+        
+        imshow('images/searchlight_prior.png');
+        title('Causal structure prior', 'FontSize', fontsize);
+        
+        g = subplot(1, 2, 2);
+        
+        imshow('images/searchlight_posterior.png');
+        title('Causal structure posterior', 'FontSize', fontsize);
+        p = get(g, 'position');
+        p([3 4]) = p([3 4]) * 1.025;
+        p(2) = p(2) - 0.01;
+        set(g, 'position', p);
+        
+        % label subplots A,B,C,D
+        ax1 = axes('Position',[0 0 1 1],'Visible','off');
+        axes(ax1);
+        text(0.1, 0.7, 'A', 'FontSize', 20, 'FontWeight', 'bold');
+        text(0.54, 0.7, 'B', 'FontSize', 20, 'FontWeight', 'bold');
+
+        
+        
+        
+
+
+
+
+
+
+
+        
+    case '_Figure_4A_Neuron_DEPRECATED'
+        ccnl_view(context_expt(), 123, 'surprise');
+        
+    case '_Figure_4C_Neuron_DEPRECATED'
+        ccnl_view(context_expt(), 148, 'KL_weights');
+        
+
+    case '_Figure_4A_stats_Neuron_DEPRECATED'        
+        
+        %
+        % Correlate D_KL and wrong answers
+        %
+        s = simulated.surprise(data.which_rows & data.isTrain);
+        model_keys = simulated.keys(data.which_rows & data.isTrain);
+        corr_ans = data.corrAns(data.which_rows & data.isTrain);
+        model_corr = strcmp(model_keys, corr_ans);
+        d = ~model_corr;
+        [r, p] = corrcoef([s, d]);
+        r = r(1,2);
+        p = p(1,2);
+        fprintf('Correlation D_KL and model errors (TRAINING TRIALS): r = %f, p = %f\n', r, p);
+        
+        s = simulated.surprise(data.which_rows & data.isTrain);
+        d = ~data.response.corr(data.which_rows & data.isTrain);
+        [r, p] = corrcoef([s, d]);
+        r = r(1,2);
+        p = p(1,2);
+        fprintf('Correlation D_KL and human errors (TRAINING TRIALS): r = %f, p = %f\n', r, p);
+                
+        
+        
+        
+        
+    case '_Figure_4_Neuron_DEPRECATED'
+        figure;
+        
+        %
+        % Top row: weights
+        %
+
+        % Plot saved brain activation map for weights KL
+        %
+        subplot(2, 2, 3);
+        
+        %imshow('images/kl-weights.png'); % from glm 148, 'KL_weights'
+        imshow('images/kl-weights-surface.png'); % from glm 148, 'KL_weights'
+        title('Associative weights', 'FontSize', 10);
+        
+        % Plot fisher Z-transformed correlation coefficients between
+        % per-run log likelihood of subject test choices and temporal beta for
+        % weights KL
+        %
+        load(fullfile('results', 'kl_weights.mat')); % computed by kl_weights.m
+
+        subplot(3, 4, 11);
+        
+        assert(isequal(rois{1}, 'Temporal_Inf_L'));
+        rs1 = all_fisher_rs{1};
+        [rs1, subj_ids] = sort(rs1);
+        
+        bar(rs1, 'EdgeColor', 'none');
+        set(gca, 'XTick', 1:1:20);
+        %xticklabels(subj_ids);
+        xticklabels({[]});
+        
+        xlabel('Subject', 'FontSize', 10);
+        ylabel('Correlation with behavior', 'FontSize', 10);
+        xlim([0 21]);
+        ylim([-0.75 1.1]);
+        title('L Inf Temporal Gyrus', 'FontSize', 10);
+        set(gca, 'xtick', []);
+
+        % same for parietal betas
+        %
+        subplot(3, 4, 12);
+        
+        assert(isequal(rois{2}, 'Parietal_Inf_L'));
+        rs2 = all_fisher_rs{2};
+        [rs2, subj_ids] = sort(rs2);
+        
+        bar(rs2, 'EdgeColor', 'none');
+        set(gca, 'XTick', 1:1:20);
+        %xticklabels(subj_ids);
+        xticklabels({[]});
+        
+        xlabel('Subject', 'FontSize', 10);
+        %ylabel('Correlation with behavior');
+        xlim([0 21]);
+        ylim([-0.75 1.1]);
+        title('L Angular Gyrus', 'FontSize', 10);
+        set(gca, 'xtick', []);
+        
+        %
+        % Bottom row: posterior
+        %
+        
+        % Plot saved brain activation map for posterior KL
+        %
+        subplot(2, 2, 1);
+        
+        %imshow('images/kl-posterior.png'); % from glm 123, 'surprise'
+        imshow('images/kl-structures-surface.png'); % from glm 123, 'surprise'
+        title('Causal structures', 'FontSize', 10);
+        
+        % Plot fisher Z-transformed correlation coefficients between
+        % per-run log likelihood of subject test choices and AG beta for
+        % posterior KL
+        %
+        load(fullfile('results', 'kl_posterior.mat')); % computed by kl_weights.m
+
+        subplot(2, 2, 2);
+        
+        assert(isequal(rois{1}, 'Parietal_Sup_R'));
+        rs = all_fisher_rs{1};
+        [rs, subj_ids] = sort(rs);
+        
+        bar(rs, 'EdgeColor', 'none');
+        set(gca, 'XTick', 1:1:20);
+        %xticklabels(subj_ids);
+        xticklabels({[]});
+        
+        xlabel('Subject', 'FontSize', 10);
+        ylabel('Correlation with behavior', 'FontSize', 10);
+        xlim([0 21]);
+        ylim([-0.75 1.1]);
+        title('R Angular Gyrus', 'FontSize', 10);
+        set(gca, 'xtick', []);
+        %set(gca,'fontsize',13);
+        
+        %print(gcf, 'Figure_4B.png', '-dpng', '-r300');
+        %print(gcf, 'images/fmri-results.pdf', '-dpdf', '-bestfit');
+        
+        
+        
+        
+        
+        
+        
+    case '_Figure_4B_DEPRECATED'     
+        
+        % Plot showing the least-squares lines relating AG KL beta to the structure learning effect, one line per subject, plus a thicker line showing the average linear relationship.    
+        %
+        z_scored = false;
+        
+        load('kl_analysis.mat'); % as output by kl_structure_learning.m
+
+        handle = figure;
+        set(handle, 'Position', [500, 500, 200, 200])
+        
+        assert(strcmp(rois{1}, 'Angular_R'));
+        KL_betas_AG = kl_betas(:, :, 1);
+        slopes = nan(1, n_subjects);
+        intercepts = intercepts(1, n_subjects);
+        xs = nan(n_runs, n_subjects);
+        
+        for subj_idx = 1:n_subjects
+            %x = structure_learnings(:, subj_idx);   <-- not good with timeouts
+            x = test_liks(:, subj_idx);
+            y = KL_betas_AG(:, subj_idx);
+
+            if z_scored
+                x = zscore(x);
+                y = zscore(y);
+            end
+            xs(:, subj_idx) = x;
+            
+            fit = polyfit(x, y, 1);
+            slopes(subj_idx) = fit(1);
+            intercepts(subj_idx) = fit(2);
+            
+            hold on;
+            yfit = polyval(fit, x);
+            plot(x, yfit, 'Color', [0.5 0.5 0.5]);
+            hold off;
+        end
+        
+        %x = [-2 0];
+        %hold on;
+        %for subj_idx = 1:n_subjects
+        %    plot(x, x * slopes(subj_idx) + intercepts(subj_idx), 'Color', 'blue');
+        %end
+        
+        max_x = max(xs(:));
+        
+        hold on;
+        x_limits = [-1.6 max_x];
+        plot(x_limits, x_limits * mean(slopes) + mean(intercepts), 'LineWidth', 2, 'Color', 'blue');
+        hold off;
+        
+        xlim(x_limits);
+        title('Right Angular Gyrus');
+        if z_scored
+            xlabel('Test choice likelihood (Z-scored)');
+            ylabel('Beta for KL divergence (Z-scored)');
+            ylim([-1 1]);
+        else
+            xlabel('Test choice likelihood');
+            ylabel('Beta for KL divergence');
+            ylim([-30 35]);
+        end
+
+
+    case '_Figure_3_stats_DEPRECATED'        
         
         %
         % Correlate model with subject choices
@@ -463,14 +996,15 @@ switch figure_name
             total_loglik = model_likfun(data, metadata, params, which_structuress{i}, data.which_rows, false);
             fprintf('Total log likelihood for %s = %f; BIC = %f (on whatever it was fit)\n', structure_names{i}, total_loglik, bic);
         end
-        
+       
+        % TODO
         assert(false, 'THESE ARE DEPRECATED -- use the stats from plot_behavior.m; you have to change which_structures e.g. to [1 0 0 0] for M1 only');
         
         
         
     % same as Figure 3 except for pilot data
     %
-    case 'Figure_S1'
+    case '_Figure_S1_DEPRECATED'
         
         [data, metadata] = load_data(fullfile('data', 'pilot.csv'), false);
         simulated = simulate_subjects(data, metadata, params, which_structures);
@@ -591,376 +1125,6 @@ switch figure_name
         
         %print(gcf, 'untitled.pdf', '-dpdf', '-bestfit');
         
-        
-        
-    case 'searchlight_posterior'
-        bspmview('rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', '../neural/mean.nii');
-        
-    case 'searchlight_prior'
-        bspmview('rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', '../neural/mean.nii');
-        
-    case 'KL_structures'
-        ccnl_view(context_expt(), 154, 'KL_structures');
-        
-    case 'KL_weights'
-        ccnl_view(context_expt(), 154, 'KL_weights');
-        
-    case 'KL_structures - KL_weights'
-        ccnl_view(context_expt(), 154, 'KL_structures - KL_weights');
-
-    case 'KL_weights - KL_structures'
-        ccnl_view(context_expt(), 154, 'KL_weights - KL_structures');
-        
-
-    case 'glm154'
-        figure('pos', [100 100 693+20 492]);
-        
-        fontsize = 12;
-        
-        %
-        % Top left: structures 
-        %
-
-        subplot(2, 2, 1);
-        
-        imshow('images/KL_structures_pos.png'); % from GLM 154
-        title('Causal structure update', 'FontSize', fontsize);
-       
-        %
-        % Top right: weights 
-        %
-        
-        subplot(2, 2, 2);
-        
-        imshow('images/KL_weights_pos.png'); % from GLM 154
-        title('Associative weights update', 'FontSize', fontsize);
-        
-        %
-        % Bottom left: contrast
-        %
-        
-        subplot(2, 2, 3);
-        
-        imshow('images/KL_structures-KL_weights.png'); % from GLM 154
-        title({'Causal structure update >'; 'associative weights update'}, 'FontSize', fontsize);
-        
-        %
-        % Bottom right: KL structures ~ test choice log likelihood
-        %
-
-        subplot(2, 2, 4);
-        
-        load results/betas_to_behavior_glm154_KL_structures_sphere_KL_structures.mat
-        %which = 1:numel(region);
-        assert(numel(region) == 14);
-        which = [1:7 12 14]; % exclude motor and visual areas
-        % exclude motor & cerebellum, also reorder them
-       % which = [1 4 2 6 5 3];
-        
-        region = region(which);
-        means = means(which);
-        sems = sems(which);
-        ps = ps(which);
-        mni = mni(which, :);
-
-        h = bar(means, 'FaceColor', [0.5 0.5 0.5], 'EdgeColor', [0.5 0.5 0.5]);
-        xs = h(1).XData;
-        hold on;
-        errorbar(xs, means, sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
-        for i = 1:numel(xs)
-            if ps(i) < 0.05
-                assert(ps(i) >= 0.01);
-                text(xs(i) - 0.08, means(i) + sems(i) * 1.1, '*', 'FontSize', fontsize);
-            end
-        end
-        hold off;
-
-        set(gca, 'xtick', xs);
-        ylabel('Fisher z-transformed r');
-        
-        neural_names = {};
-        for i = 1:numel(region)
-            hemisphere = [];
-            if mni(i, 1) < 0
-                hemisphere = 'L';
-            else
-                hemisphere = 'R';
-            end
-            roi = aal2_label_to_roi_name(region{i});
-            comma = strfind(roi, ','); % trim the super long names
-            if ~isempty(comma)
-                roi = roi(1:comma(1)-1);
-            end
-            neural_names{i} = [roi, ' (', hemisphere, ')'];
-        end
-        % screw that, just hardcode the names
-        neural_names = { ...
-            'IFG pars orbitalis (R)', ...
-            'Angular gyrus (R)', ...
-            'IFG pars opercularis (R)', ...
-            'Frontal Pole (L)', ...
-            'Angular gyrus (L)', ...
-            'Middle orbital gyrus (R)', ...
-            'IFG pars opercularis (L)', ...
-            'Inferior temporal gyrus (R)', ...
-            'Lingual gyrus (R)', ...
-            'Middle temporal gyrus (L)'};
-        
-        xticklabels(neural_names);
-        xtickangle(30);
-        title('Structure updating predicts test choices', 'FontSize', fontsize);
-
-        % label subplots A,B,C,D
-        ax1 = axes('Position',[0 0 1 1],'Visible','off');
-        axes(ax1);
-        text(0.1, 0.95, 'A', 'FontSize', 20, 'FontWeight', 'bold');
-        text(0.51, 0.95, 'B', 'FontSize', 20, 'FontWeight', 'bold');
-        text(0.1, 0.47, 'C', 'FontSize', 20, 'FontWeight', 'bold');
-        text(0.51, 0.47, 'D', 'FontSize', 20, 'FontWeight', 'bold');
-        
-
-    case 'searchlight'
-        
-        figure('pos', [100 100 693+20 492]);
-        
-        fontsize = 12;
-        
-        %
-        % Top left: structures 
-        %
-
-        subplot(1, 2, 1);
-        
-        imshow('images/searchlight_prior.png');
-        title('Causal structure prior', 'FontSize', fontsize);
-        
-        g = subplot(1, 2, 2);
-        
-        imshow('images/searchlight_posterior.png');
-        title('Causal structure posterior', 'FontSize', fontsize);
-        p = get(g, 'position');
-        p([3 4]) = p([3 4]) * 1.025;
-        p(2) = p(2) - 0.01;
-        set(g, 'position', p);
-        
-        % label subplots A,B,C,D
-        ax1 = axes('Position',[0 0 1 1],'Visible','off');
-        axes(ax1);
-        text(0.1, 0.7, 'A', 'FontSize', 20, 'FontWeight', 'bold');
-        text(0.54, 0.7, 'B', 'FontSize', 20, 'FontWeight', 'bold');
-
-        
-        
-        
-
-
-
-
-
-
-
-        
-    case 'Figure_4A_Neuron'
-        ccnl_view(context_expt(), 123, 'surprise');
-        
-    case 'Figure_4C_Neuron'
-        ccnl_view(context_expt(), 148, 'KL_weights');
-        
-
-    case 'Figure_4A_stats_Neuron'        
-        
-        %
-        % Correlate D_KL and wrong answers
-        %
-        s = simulated.surprise(data.which_rows & data.isTrain);
-        model_keys = simulated.keys(data.which_rows & data.isTrain);
-        corr_ans = data.corrAns(data.which_rows & data.isTrain);
-        model_corr = strcmp(model_keys, corr_ans);
-        d = ~model_corr;
-        [r, p] = corrcoef([s, d]);
-        r = r(1,2);
-        p = p(1,2);
-        fprintf('Correlation D_KL and model errors (TRAINING TRIALS): r = %f, p = %f\n', r, p);
-        
-        s = simulated.surprise(data.which_rows & data.isTrain);
-        d = ~data.response.corr(data.which_rows & data.isTrain);
-        [r, p] = corrcoef([s, d]);
-        r = r(1,2);
-        p = p(1,2);
-        fprintf('Correlation D_KL and human errors (TRAINING TRIALS): r = %f, p = %f\n', r, p);
-                
-        
-        
-        
-        
-    case 'Figure_4_Neuron'
-        figure;
-        
-        %
-        % Top row: weights
-        %
-
-        % Plot saved brain activation map for weights KL
-        %
-        subplot(2, 2, 3);
-        
-        %imshow('images/kl-weights.png'); % from glm 148, 'KL_weights'
-        imshow('images/kl-weights-surface.png'); % from glm 148, 'KL_weights'
-        title('Associative weights', 'FontSize', 10);
-        
-        % Plot fisher Z-transformed correlation coefficients between
-        % per-run log likelihood of subject test choices and temporal beta for
-        % weights KL
-        %
-        load(fullfile('results', 'kl_weights.mat')); % computed by kl_weights.m
-
-        subplot(3, 4, 11);
-        
-        assert(isequal(rois{1}, 'Temporal_Inf_L'));
-        rs1 = all_fisher_rs{1};
-        [rs1, subj_ids] = sort(rs1);
-        
-        bar(rs1, 'EdgeColor', 'none');
-        set(gca, 'XTick', 1:1:20);
-        %xticklabels(subj_ids);
-        xticklabels({[]});
-        
-        xlabel('Subject', 'FontSize', 10);
-        ylabel('Correlation with behavior', 'FontSize', 10);
-        xlim([0 21]);
-        ylim([-0.75 1.1]);
-        title('L Inf Temporal Gyrus', 'FontSize', 10);
-        set(gca, 'xtick', []);
-
-        % same for parietal betas
-        %
-        subplot(3, 4, 12);
-        
-        assert(isequal(rois{2}, 'Parietal_Inf_L'));
-        rs2 = all_fisher_rs{2};
-        [rs2, subj_ids] = sort(rs2);
-        
-        bar(rs2, 'EdgeColor', 'none');
-        set(gca, 'XTick', 1:1:20);
-        %xticklabels(subj_ids);
-        xticklabels({[]});
-        
-        xlabel('Subject', 'FontSize', 10);
-        %ylabel('Correlation with behavior');
-        xlim([0 21]);
-        ylim([-0.75 1.1]);
-        title('L Angular Gyrus', 'FontSize', 10);
-        set(gca, 'xtick', []);
-        
-        %
-        % Bottom row: posterior
-        %
-        
-        % Plot saved brain activation map for posterior KL
-        %
-        subplot(2, 2, 1);
-        
-        %imshow('images/kl-posterior.png'); % from glm 123, 'surprise'
-        imshow('images/kl-structures-surface.png'); % from glm 123, 'surprise'
-        title('Causal structures', 'FontSize', 10);
-        
-        % Plot fisher Z-transformed correlation coefficients between
-        % per-run log likelihood of subject test choices and AG beta for
-        % posterior KL
-        %
-        load(fullfile('results', 'kl_posterior.mat')); % computed by kl_weights.m
-
-        subplot(2, 2, 2);
-        
-        assert(isequal(rois{1}, 'Parietal_Sup_R'));
-        rs = all_fisher_rs{1};
-        [rs, subj_ids] = sort(rs);
-        
-        bar(rs, 'EdgeColor', 'none');
-        set(gca, 'XTick', 1:1:20);
-        %xticklabels(subj_ids);
-        xticklabels({[]});
-        
-        xlabel('Subject', 'FontSize', 10);
-        ylabel('Correlation with behavior', 'FontSize', 10);
-        xlim([0 21]);
-        ylim([-0.75 1.1]);
-        title('R Angular Gyrus', 'FontSize', 10);
-        set(gca, 'xtick', []);
-        %set(gca,'fontsize',13);
-        
-        %print(gcf, 'Figure_4B.png', '-dpng', '-r300');
-        %print(gcf, 'images/fmri-results.pdf', '-dpdf', '-bestfit');
-        
-        
-        
-        
-        
-        
-        
-    case 'Figure_4B_OLD'     
-        
-        % Plot showing the least-squares lines relating AG KL beta to the structure learning effect, one line per subject, plus a thicker line showing the average linear relationship.    
-        %
-        z_scored = false;
-        
-        load('kl_analysis.mat'); % as output by kl_structure_learning.m
-
-        handle = figure;
-        set(handle, 'Position', [500, 500, 200, 200])
-        
-        assert(strcmp(rois{1}, 'Angular_R'));
-        KL_betas_AG = kl_betas(:, :, 1);
-        slopes = nan(1, n_subjects);
-        intercepts = intercepts(1, n_subjects);
-        xs = nan(n_runs, n_subjects);
-        
-        for subj_idx = 1:n_subjects
-            %x = structure_learnings(:, subj_idx);   <-- not good with timeouts
-            x = test_liks(:, subj_idx);
-            y = KL_betas_AG(:, subj_idx);
-
-            if z_scored
-                x = zscore(x);
-                y = zscore(y);
-            end
-            xs(:, subj_idx) = x;
-            
-            fit = polyfit(x, y, 1);
-            slopes(subj_idx) = fit(1);
-            intercepts(subj_idx) = fit(2);
-            
-            hold on;
-            yfit = polyval(fit, x);
-            plot(x, yfit, 'Color', [0.5 0.5 0.5]);
-            hold off;
-        end
-        
-        %x = [-2 0];
-        %hold on;
-        %for subj_idx = 1:n_subjects
-        %    plot(x, x * slopes(subj_idx) + intercepts(subj_idx), 'Color', 'blue');
-        %end
-        
-        max_x = max(xs(:));
-        
-        hold on;
-        x_limits = [-1.6 max_x];
-        plot(x_limits, x_limits * mean(slopes) + mean(intercepts), 'LineWidth', 2, 'Color', 'blue');
-        hold off;
-        
-        xlim(x_limits);
-        title('Right Angular Gyrus');
-        if z_scored
-            xlabel('Test choice likelihood (Z-scored)');
-            ylabel('Beta for KL divergence (Z-scored)');
-            ylim([-1 1]);
-        else
-            xlabel('Test choice likelihood');
-            ylabel('Beta for KL divergence');
-            ylim([-30 35]);
-        end
-
 end
 
 
