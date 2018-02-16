@@ -435,6 +435,7 @@ switch figure_name
         
         subplot(2, 1, 1);
 
+        %{
         P_means = [];
         for condition = metadata.contextRoles
             which_rows = data.which_rows & data.isTrain & data.trialId == 20 & strcmp(data.contextRole, condition);
@@ -451,6 +452,7 @@ switch figure_name
         set(gca,'fontsize',13);
         
         text(0.1, 1.25, 'A', 'FontSize', 20, 'FontWeight', 'bold')
+        %}
 
         
         %
@@ -458,6 +460,9 @@ switch figure_name
         %
         
         subplot(2, 1, 2);
+
+        %simulated = simulate_subjects(data, metadata, params, which_structures);        
+        simulated = simulate_subjects(data, metadata, params, 'Q');  % TODO rm for q learning
         
         % Choice probabilities for model
         %
@@ -491,7 +496,7 @@ switch figure_name
                 % fmri subjects
                 [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
             end
-            simulated = simulate_subjects(data, metadata, params, which_structures);        
+            %simulated = simulate_subjects(data, metadata, params, which_structures);        
             
             % Choice probabilities for human subjects
             %

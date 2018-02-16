@@ -61,6 +61,8 @@ simulated.Sigma_posterior = []; % Sigma after update for all structures concaten
 simulated.Sigma_prior = []; % Sigmadefore update for all structures concatenated
 simulated.lambdas = []; % lambdas at each trial
 
+simulated.Q_values = []; % TODO hack fixme rm for q learning
+
 % we either have the same params for all subjects (fixed effects)
 % or a set of parameters for each subject (random effects)
 %
@@ -93,111 +95,140 @@ for who = metadata.subjects
             % Get the training & test stimuli sequences for that run
             %
             [train_x, train_k, train_r, test_x, test_k] = convert_run(data, metadata, who, run);
-            
-            % For a given run of a given subject, run the model on the same
-            % sequence of stimuli and see what it does.
-            %
-            %[choices, P_n, ww_n, P, ww_after, values, valuess, likelihoods, new_values, new_valuess, Sigma_after, lambdas, ww_before, Sigma_before] = ...
-            train_results = model_train(train_x, train_k, train_r, subject_params, which_structures, false);
 
-            model_choices = train_results.choices > rand;
-            model_response_keys = {};
-            model_response_keys(model_choices) = {'left'};
-            model_response_keys(~model_choices) = {'right'};
-            simulated.keys(which_train) = model_response_keys;
-            simulated.pred(which_train) = train_results.choices;
-            simulated.P1(which_train) = train_results.P(:,1);
-            simulated.P2(which_train) = train_results.P(:,2);
-            simulated.P3(which_train) = train_results.P(:,3);
-            simulated.P4(which_train) = train_results.P(:,4);
-            simulated.P(which_train, :) = train_results.P;
-            priors = which_structures / sum(which_structures);
-            Q = [priors; train_results.P(1:end-1,:)];
-            simulated.Q1(which_train) = Q(:,1);
-            simulated.Q2(which_train) = Q(:,2);
-            simulated.Q3(which_train) = Q(:,3);
-            simulated.Q4(which_train) = Q(:,4);
-            simulated.Q(which_train, :) = Q;
-            simulated.ww_after{1}(which_train, :) = train_results.ww_after{1};
-            simulated.ww_after{2}(which_train, :) = train_results.ww_after{2};
-            simulated.ww_after{3}(which_train, :) = train_results.ww_after{3};
-            simulated.ww_after{4}(which_train, :) = train_results.ww_after{4};
-            simulated.ww_before{1}(which_train, :) = train_results.ww_before{1};
-            simulated.ww_before{2}(which_train, :) = train_results.ww_before{2};
-            simulated.ww_before{3}(which_train, :) = train_results.ww_before{3};
-            simulated.ww_before{4}(which_train, :) = train_results.ww_before{4};
-            simulated.values(which_train, :) = train_results.values;
-            simulated.valuess(which_train, :) = train_results.valuess;
-            surprise = KL_divergence(train_results.P, Q);
-            simulated.surprise(which_train, :) = surprise;
-            simulated.likelihoods(which_train, :) = train_results.likelihoods;
-            simulated.new_values(which_train, :) = train_results.new_values;
-            simulated.new_valuess(which_train, :) = train_results.new_valuess;
-            simulated.Sigma_after{1}(:, :, which_train) = train_results.Sigma_after{1};
-            simulated.Sigma_after{2}(:, :, which_train) = train_results.Sigma_after{2};
-            simulated.Sigma_after{3}(:, :, which_train) = train_results.Sigma_after{3};
-            simulated.Sigma_before{1}(:, :, which_train) = train_results.Sigma_before{1};
-            simulated.Sigma_before{2}(:, :, which_train) = train_results.Sigma_before{2};
-            simulated.Sigma_before{3}(:, :, which_train) = train_results.Sigma_before{3};
-            simulated.lambdas(which_train, :) = train_results.lambdas;
-            
-            % Concatenate weights 
+
+            % TODO FIXME hack
             %
-            dim = 0;
-            for M = 1:3
-                dim = dim + size(train_results.ww_before{M}, 2); 
-            end
-            simulated.ww_prior(which_train, :) = zeros(sum(which_train), dim);
-            simulated.ww_posterior(which_train, :) = zeros(sum(which_train), dim);
-            simulated.Sigma_prior(:, :, which_train) = zeros(dim, dim, sum(which_train));
-            simulated.Sigma_posterior(:, :, which_train) = zeros(dim, dim, sum(which_train));
-            
-            dim = 0;
-            for M = 1:3
-                dims = dim + 1 : dim + size(train_results.ww_before{M}, 2);
+            if ischar(which_structures)
+
+                train_results = q_train(train_x, train_k, train_r, subject_params, false);
+
+                model_choices = train_results.choices > rand;
+                model_response_keys = {};
+                model_response_keys(model_choices) = {'left'};
+                model_response_keys(~model_choices) = {'right'};
+                simulated.keys(which_train) = model_response_keys;
+                simulated.pred(which_train) = train_results.choices;
+                simulated.values(which_train, :) = train_results.values;
+                simulated.Q_values(:, :, which_train) = train_results.Qs;
+           
+                test_results = q_test(test_x, test_k, train_results, subject_params, false);
+
+                model_test_choices = test_results.choices > rand;
+                model_test_response_keys = {};
+                model_test_response_keys(model_test_choices) = {'left'};
+                model_test_response_keys(~model_test_choices) = {'right'};
+                simulated.keys(which_test) = model_test_response_keys;
+                simulated.pred(which_test) = test_results.choices;
+                simulated.values(which_test, :) = test_results.values;
+
+            else
+                % For a given run of a given subject, run the model on the same
+                % sequence of stimuli and see what it does.
+                %
+                %[choices, P_n, ww_n, P, ww_after, values, valuess, likelihoods, new_values, new_valuess, Sigma_after, lambdas, ww_before, Sigma_before] = ...
+                train_results = model_train(train_x, train_k, train_r, subject_params, which_structures, false);
+
+                model_choices = train_results.choices > rand;
+                model_response_keys = {};
+                model_response_keys(model_choices) = {'left'};
+                model_response_keys(~model_choices) = {'right'};
+                simulated.keys(which_train) = model_response_keys;
+                simulated.pred(which_train) = train_results.choices;
+                simulated.P1(which_train) = train_results.P(:,1);
+                simulated.P2(which_train) = train_results.P(:,2);
+                simulated.P3(which_train) = train_results.P(:,3);
+                simulated.P4(which_train) = train_results.P(:,4);
+                simulated.P(which_train, :) = train_results.P;
+                priors = which_structures / sum(which_structures);
+                Q = [priors; train_results.P(1:end-1,:)];
+                simulated.Q1(which_train) = Q(:,1);
+                simulated.Q2(which_train) = Q(:,2);
+                simulated.Q3(which_train) = Q(:,3);
+                simulated.Q4(which_train) = Q(:,4);
+                simulated.Q(which_train, :) = Q;
+                simulated.ww_after{1}(which_train, :) = train_results.ww_after{1};
+                simulated.ww_after{2}(which_train, :) = train_results.ww_after{2};
+                simulated.ww_after{3}(which_train, :) = train_results.ww_after{3};
+                simulated.ww_after{4}(which_train, :) = train_results.ww_after{4};
+                simulated.ww_before{1}(which_train, :) = train_results.ww_before{1};
+                simulated.ww_before{2}(which_train, :) = train_results.ww_before{2};
+                simulated.ww_before{3}(which_train, :) = train_results.ww_before{3};
+                simulated.ww_before{4}(which_train, :) = train_results.ww_before{4};
+                simulated.values(which_train, :) = train_results.values;
+                simulated.valuess(which_train, :) = train_results.valuess;
+                surprise = KL_divergence(train_results.P, Q);
+                simulated.surprise(which_train, :) = surprise;
+                simulated.likelihoods(which_train, :) = train_results.likelihoods;
+                simulated.new_values(which_train, :) = train_results.new_values;
+                simulated.new_valuess(which_train, :) = train_results.new_valuess;
+                simulated.Sigma_after{1}(:, :, which_train) = train_results.Sigma_after{1};
+                simulated.Sigma_after{2}(:, :, which_train) = train_results.Sigma_after{2};
+                simulated.Sigma_after{3}(:, :, which_train) = train_results.Sigma_after{3};
+                simulated.Sigma_before{1}(:, :, which_train) = train_results.Sigma_before{1};
+                simulated.Sigma_before{2}(:, :, which_train) = train_results.Sigma_before{2};
+                simulated.Sigma_before{3}(:, :, which_train) = train_results.Sigma_before{3};
+                simulated.lambdas(which_train, :) = train_results.lambdas;
                 
-                simulated.ww_prior(which_train, dims) = train_results.ww_before{M};
-                simulated.Sigma_prior(dims, dims, which_train) = train_results.Sigma_before{M};
+                % Concatenate weights 
+                %
+                dim = 0;
+                for M = 1:3
+                    dim = dim + size(train_results.ww_before{M}, 2); 
+                end
+                simulated.ww_prior(which_train, :) = zeros(sum(which_train), dim);
+                simulated.ww_posterior(which_train, :) = zeros(sum(which_train), dim);
+                simulated.Sigma_prior(:, :, which_train) = zeros(dim, dim, sum(which_train));
+                simulated.Sigma_posterior(:, :, which_train) = zeros(dim, dim, sum(which_train));
                 
-                simulated.ww_posterior(which_train, dims) = train_results.ww_after{M};
-                simulated.Sigma_posterior(dims, dims, which_train) = train_results.Sigma_after{M};
+                dim = 0;
+                for M = 1:3
+                    dims = dim + 1 : dim + size(train_results.ww_before{M}, 2);
+                    
+                    simulated.ww_prior(which_train, dims) = train_results.ww_before{M};
+                    simulated.Sigma_prior(dims, dims, which_train) = train_results.Sigma_before{M};
+                    
+                    simulated.ww_posterior(which_train, dims) = train_results.ww_after{M};
+                    simulated.Sigma_posterior(dims, dims, which_train) = train_results.Sigma_after{M};
+                    
+                    dim = dim + size(train_results.ww_before{M}, 2); 
+                end
                 
-                dim = dim + size(train_results.ww_before{M}, 2); 
-            end
-            
 
-            % See what the model predicts for the test trials of that run
-            %
-            %[test_choices, test_values, test_valuess] = ...
-            test_results = model_test(test_x, test_k, train_results, subject_params);
+                % See what the model predicts for the test trials of that run
+                %
+                %[test_choices, test_values, test_valuess] = ...
+                test_results = model_test(test_x, test_k, train_results, subject_params);
 
-            model_test_choices = test_results.choices > rand;
-            model_test_response_keys = {};
-            model_test_response_keys(model_test_choices) = {'left'};
-            model_test_response_keys(~model_test_choices) = {'right'};
-            simulated.keys(which_test) = model_test_response_keys;
-            simulated.pred(which_test) = test_results.choices;
-            simulated.values(which_test, :) = test_results.values;
-            simulated.valuess(which_test, :) = test_results.valuess;
+                model_test_choices = test_results.choices > rand;
+                model_test_response_keys = {};
+                model_test_response_keys(model_test_choices) = {'left'};
+                model_test_response_keys(~model_test_choices) = {'right'};
+                simulated.keys(which_test) = model_test_response_keys;
+                simulated.pred(which_test) = test_results.choices;
+                simulated.values(which_test, :) = test_results.values;
+                simulated.valuess(which_test, :) = test_results.valuess;
 
-            % Get the subject's responses too.
-            %
-            resp = data.response.keys(which_train);
-            human_choices = strcmp(resp, 'left'); % sick == 1            
+                % Get the subject's responses too.
+                %
+                resp = data.response.keys(which_train);
+                human_choices = strcmp(resp, 'left'); % sick == 1            
 
-            % compute the KL divergence for the weights
-            %
-            ww_prior = [train_results.ww_before{1} train_results.ww_before{2} train_results.ww_before{3}];
-            Sigma_prior = nan(size(ww_prior, 2), size(ww_prior, 2), size(ww_prior, 1));
-            for i = 1:size(Sigma_prior, 3)
-                Sigma_prior(:,:,i) = blkdiag(train_results.Sigma_before{1}(:,:,i), train_results.Sigma_before{2}(:,:,i), train_results.Sigma_before{3}(:,:,i));
-            end
-            ww_posterior = [train_results.ww_after{1} train_results.ww_after{2} train_results.ww_after{3}];
-            Sigma_posterior = nan(size(ww_posterior, 2), size(ww_posterior, 2), size(ww_posterior, 1));
-            for i = 1:size(Sigma_posterior, 3)
-                Sigma_posterior(:,:,i) = blkdiag(train_results.Sigma_after{1}(:,:,i), train_results.Sigma_after{2}(:,:,i), train_results.Sigma_after{3}(:,:,i));
-            end
-            simulated.KL_weights(which_train, :) = KL_divergence_gauss(ww_posterior, Sigma_posterior, ww_prior, Sigma_prior);
+                % compute the KL divergence for the weights
+                %
+                ww_prior = [train_results.ww_before{1} train_results.ww_before{2} train_results.ww_before{3}];
+                Sigma_prior = nan(size(ww_prior, 2), size(ww_prior, 2), size(ww_prior, 1));
+                for i = 1:size(Sigma_prior, 3)
+                    Sigma_prior(:,:,i) = blkdiag(train_results.Sigma_before{1}(:,:,i), train_results.Sigma_before{2}(:,:,i), train_results.Sigma_before{3}(:,:,i));
+                end
+                ww_posterior = [train_results.ww_after{1} train_results.ww_after{2} train_results.ww_after{3}];
+                Sigma_posterior = nan(size(ww_posterior, 2), size(ww_posterior, 2), size(ww_posterior, 1));
+                for i = 1:size(Sigma_posterior, 3)
+                    Sigma_posterior(:,:,i) = blkdiag(train_results.Sigma_after{1}(:,:,i), train_results.Sigma_after{2}(:,:,i), train_results.Sigma_after{3}(:,:,i));
+                end
+                simulated.KL_weights(which_train, :) = KL_divergence_gauss(ww_posterior, Sigma_posterior, ww_prior, Sigma_prior);
+
+            end % end TODO fixme hack
 
         end
     end
