@@ -313,7 +313,7 @@ switch figure_name
         models(5).name = 'Q learning';
         models(5).params_file = fullfile('results', 'fit_params_results_simple_q.mat');
         models(5).params_idx = 1;
-        %}
+        }
 
         [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
 
@@ -329,27 +329,57 @@ switch figure_name
             test_loglik = model_likfun(data, metadata, params, options.which_structures, data.which_rows, true);
 
             bic = results(models(i).params_idx).bic;
-            pxp = 0; % TODO
 
+            % sumarize for table
+            %
             models(i).params = params;
             models(i).params_string = sprintf(models(i).params_format, params);
             models(i).bic = bic;
-            models(i).pxp = pxp;
+            models(i).pxp = NaN;
             models(i).total_loglik = total_loglik;
             models(i).test_loglik = test_loglik;
             models(i).r = r;
             models(i).p = p;
             models(i).p_pow10 = ceil(log10(p));
-
-            %{
-            $M_1, M_2, M_3$ & 0.1249 & 2.0064 & 1670 & 0.3855 & -1711 &  $r = 0.96, p < 10^{-6}$ \\
-            $M_1$                  &  0.0161 & 1.2323 & 2631 &  0.2048 & -2687 & $r = 0.61, p = 0.036$ \\
-            $M_2$                  &  0.9997 & 1.7433 & 1828 &  0.2049 & -1895 & $r = 0.73, p = 0.008$ \\
-            $M_3$                  &  0.0130 & 1.7508 & 2184 &  0.2048 & -2180 & $r = 0.91, p = 0.00004$ \\
-            %}
         end
+    
+        % compute BIC for each subject manually (b/c we did fixed effects => have only one set of params & bic's)
+        % need this to compute the PXPs
+        % TODO dedupe with fit_param.m random effects'
+        % TODO is this necessary? 
+        %
+        %{
+        [data, metadata] = load_data(fullfile('data', 'pilot.csv'), false);
+
+        lmes = []; % log model evidence
+        for i = 1:numel(models)
+            K = length(params);
+            subj_bics = []; % bic for each subject using the shared fixed effects params
+            for who = metadata.subjects % only include "good" subjects
+                which_rows = strcmp(data.participant, who);
+                N = sum(which_rows);
+
+                subj_loglik = model_likfun(data, metadata, params, models(i).which_structures, which_rows, false); % from mfit_optimize.m
+                subj_bic = K*log(N) - 2*subj_loglik;
+                subj_bics = [subj_bics; subj_bic];
+            end
+            lmes = [lmes, -0.5 * subj_bics];
+            fprintf('Model %d bics\n', i);
+            disp(subj_bics);
+        end
+        assert(size(lmes, 1) == numel(metadata.subjects)); % rows = subjects
+        assert(size(lmes, 2) == numel(models)); % cols = models
+        %}
+
+        %[alpha,exp_r,xp,pxp,bor] = bms(lmes); % splitting into 10 subjects
+        [alpha,exp_r,xp,pxp,bor] = bms(-0.5 * [models.bic]);  % using 1 "supersubject"
+        disp('PXP');
+        disp(pxp);
+
+        save('shit.mat');
 
         for i = 1:numel(models)
+            models(i).pxp = pxp(i);
             fprintf('$%s$ & %s & %.0f & %.4f & %.0f & $r = %.2f, p = %f$ \\ \n', ...
                 models(i).name, ...
                 models(i).params_string, ...
