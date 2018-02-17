@@ -80,7 +80,7 @@ for who = metadata.subjects
     else
         subject_params = params(s_id, :);
     end
-    if DO_PRINT, fprintf('Simulating subj %s with params [%f %f]\n', who{1}, subject_params); end
+    if DO_PRINT, fprintf('Simulating subj %s with params [%s]\n', who{1}, sprintf('%f', subject_params)); end
     
     % Simulate each run separately
     %

@@ -8,132 +8,39 @@ sem = @(x) std(x) / sqrt(length(x));
 % figure_name = which figure to show, e.g. Figure_3A
 %
 
-rng default; % be consistent please
-
 % set nicer colors
 C = linspecer(3);
-set(0,'DefaultAxesColorOrder',C)
-
-filename = 'show_figure.mat';
-
-% Try to load cached figure data
-%
-if exist(filename, 'file') ~= 2
-    % Load data
-    %
-    [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
-
-    % Load parameters
-    %
-    %load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts_5_prior.mat'), 'results', 'results_options');
-    load(fullfile('results', 'fit_params_results.mat'), 'results', 'results_options');        
-    params = results(1).x;
-    options = results_options(1);
+set(0,'DefaultAxesColorOrder',C);
     
-    % OVERRIDE -- use pilot params as before
-    %
-    %params = [0.1249 2.0064];
-    options.isFmriData = false;
-    options.fixedEffects = true;
-    
-    disp('Using parameters:');
-    disp(params);
-    disp('generated with options:');
-    disp(options);
-    % safeguards
-    %assert(options.isFmriData == true);
-    %assert(~options.fixedEffects);
-    assert(isequal(options.which_structures, [1 1 1 0]));
-    which_structures = logical([1 1 1 0]);
-
-    % Run the model with the parameters
-    %
-    simulated = simulate_subjects(data, metadata, params, which_structures);
-    
-    fprintf('Saving data to %s\n', filename);
-    save(filename, 'data', 'metadata', 'simulated', 'results', 'params', 'options', 'which_structures'); % cache to file
-else
-    fprintf('Loading data from %s\n', filename);
-    load(filename, 'data', 'metadata', 'simulated', 'results', 'params', 'options', 'which_structures');
-end
 
 % Plot figure(s)
 %
 switch figure_name
     
     case 'fig:curves'
-        figure('pos', [100 100 693+20 320] * 3/4);
-        
         %
-        % Learning curves
+        % Learning curves, model vs. subjects
         % 
-        %figure;
-            
-        for group = 1:2
-            if group == 1
-                % pilot subjects
-                [data, metadata] = load_data(fullfile('data', 'pilot.csv'), false);
-            else
-                % fmri subjects
-                [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
-            end
-            simulated = simulate_subjects(data, metadata, params, which_structures);        
-            
-            % average learning curve
-            %
-            human_correct = [];
-            model_correct = [];
-            
-            human_correct_sem = [];
-            model_correct_sem = [];
-
-            for n = 1:metadata.trainingTrialsPerRun
-
-                human_corr_n = []; % accuracy on trial n for each subject, averaged across blocks
-                model_corr_n = [];
-                for who = metadata.subjects
-                    which = data.which_rows & data.isTrain & data.trialId == n & strcmp(data.participant, who);
-                    assert(sum(which) == 9);
-                    
-                    subj_corr_n = strcmp(data.response.keys(which), data.corrAns(which)); % accuracy on trial n for subject who, averaged across blocks
-                    sim_subj_corr_n = strcmp(simulated.keys(which), data.corrAns(which)); % accuracy on trial n for model for subject who, averaged across blocks
-                    
-                    human_corr_n = [human_corr_n, mean(subj_corr_n)];
-                    model_corr_n = [model_corr_n, mean(sim_subj_corr_n)];
-                end                
-                
-                human_correct = [human_correct mean(human_corr_n)];
-                model_correct = [model_correct mean(model_corr_n)];
-                
-                human_correct_sem = [human_correct_sem sem(human_corr_n)];
-                model_correct_sem = [model_correct_sem sem(model_corr_n)];
-            end
-
-            subplot(1,2,group);
-            plot(model_correct, '.-', 'LineWidth', 2); % == mean(human_correct_all_runs)
-            %errorbar(1:metadata.trainingTrialsPerRun, model_correct, model_correct_sem, 'o-', 'LineWidth', 2);
-            hold on;
-            plot(human_correct, '.-', 'LineWidth', 2); % == mean(model_correct_all_runs)
-            %errorbar(1:metadata.trainingTrialsPerRun, human_correct, human_correct_sem, 'o-', 'LineWidth', 2);
-            hold off;
-            legend({'model', 'subjects'}, 'Position', [0.30 0.05 1 1]);
-            %title('Average per-trial accuracy');
-            if group == 1
-                title('Behavioral pilot');
-                text(-4, 1.05, 'A', 'FontSize', 20, 'FontWeight', 'bold')
-            else
-                title('fMRI');
-                text(-4, 1.05, 'B', 'FontSize', 20, 'FontWeight', 'bold')
-            end
-            xlabel('trial #');
-            ylabel('accuracy');
-            set(gca,'fontsize',13);
-        end
+        figure('pos', [100 100 693+20 320] * 3/4);
+     
+        % pilot 
+        [data, metadata, simulated] = simulate_subjects_helper(false);
+        subplot(1,2,1);
+        plot_curves_helper(data, metadata, simulated);
+        title('Behavioral pilot');
+        text(-4, 1.05, 'A', 'FontSize', 20, 'FontWeight', 'bold')
+           
+        % fmri
+        [data, metadata, simulated] = simulate_subjects_helper(true);
+        subplot(1,2,2);
+        plot_curves_helper(data, metadata, simulated);
+        title('fMRI');
+        text(-4, 1.05, 'B', 'FontSize', 20, 'FontWeight', 'bold')
 
     
     % statistics regarding learning and performance on the training trials
     %
-    case 'learning_stats'
+    case 'stats:learning'
 
         for group = 1:2
             if group == 1
@@ -200,8 +107,10 @@ switch figure_name
 
     % statistics showing the generalization pattern on the test trials is real
     %
-    case 'generalization_stats'
+    case 'stats:generalization'
         human_choices = [];      
+
+        [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
         
         % irrelevant condition
         % does old cue cause sickness more than the new cue, in either
@@ -326,69 +235,14 @@ switch figure_name
 
     % how well does the model correlate with subject test phase choices
     %
-    case 'model_stats'
+    case 'stats:model'
         % order is important
         which_structuress = {[1 1 1 0], [1 0 0 0], [0 1 0 0], [0 0 1 0]};
 
         for i = 1:numel(which_structuress) 
             which_structures = which_structuress{i};
 
-            [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
-            simulated = simulate_subjects(data, metadata, params, which_structures);        
-
-            %
-            % Choice probabilities in test phase for SUBJECTS
-            %
-
-            Ms = [];
-            SEMs = [];
-            for context = metadata.contextRoles
-                which = data.which_rows & data.isTrain == 0 & strcmp(data.contextRole, context);
-
-                x1c1 = strcmp(data.response.keys(which & data.cueId == 0 & data.contextId == 0), 'left');
-                x1c2 = strcmp(data.response.keys(which & data.cueId == 0 & data.contextId == 2), 'left');
-                x2c1 = strcmp(data.response.keys(which & data.cueId == 2 & data.contextId == 0), 'left');
-                x2c2 = strcmp(data.response.keys(which & data.cueId == 2 & data.contextId == 2), 'left');
-
-            %    M = mean([x1c1 x1c2 x2c1 x2c2]);
-            %    SEM = std([x1c1 x1c2 x2c1 x2c2]) / sqrt(length(x1c1));
-                M = get_means(x1c1, x1c2, x2c1, x2c2);
-                SEM = get_sems(x1c1, x1c2, x2c1, x2c2);
-                Ms = [Ms; M];
-                SEMs = [SEMs; SEM];
-            end
-
-            subject_Ms = Ms; % for stats
-
-            %
-            % TRUE Choice probabilities in test phase for MODEL
-            %
-
-            Ms = [];
-            SEMs = [];
-            for context = metadata.contextRoles
-                which = data.which_rows & data.isTrain == 0 & strcmp(data.contextRole, context);
-
-                x1c1 = simulated.pred(which & data.cueId == 0 & data.contextId == 0);
-                x1c2 = simulated.pred(which & data.cueId == 0 & data.contextId == 2);
-                x2c1 = simulated.pred(which & data.cueId == 2 & data.contextId == 0);
-                x2c2 = simulated.pred(which & data.cueId == 2 & data.contextId == 2);
-
-                %M = mean([x1c1 x1c2 x2c1 x2c2]);
-                %SEM = std([x1c1 x1c2 x2c1 x2c2]) / sqrt(length(x1c1));
-                M = get_means(x1c1, x1c2, x2c1, x2c2);
-                SEM = get_sems(x1c1, x1c2, x2c1, x2c2);
-                Ms = [Ms; M];
-                SEMs = [SEMs; SEM];
-            end
-
-            model_Ms = Ms; % for stats
-
-            % correlate average subject choices with model choices 
-            %
-            [r, p] = corrcoef(subject_Ms(:), model_Ms(:));
-            r = r(1,2);
-            p = p(1,2);
+            [r, p] = get_test_choice_correlations(i, which_structures);
 
             switch i
                 case 1
@@ -423,7 +277,29 @@ switch figure_name
                 report.M3_r, ...
                 10^report.M3_p_pow10);
 
+
+    case 'tab:models'
+
+        headings = 'Hypotheses & $\\sigma_w^2$ & $\\beta$ & BIC & PXP & Log lik & Pearson''s r \\\\';
         
+        which_structuress = {[1 0 0 0], [0 1 0 0], [0 0 1 0], 'simple_Q'};
+        structure_names = {'M1, M2, M3', 'M_1', 'M_2', 'M_3', 'Q Learning'};
+   
+        assert(numel(which_structures) == numel(structure_names));
+        for i = 1:numel(structure_names)
+            which_structures = which_structuress{i};
+
+            [r, p] = get_test_choice_correlations();
+            
+            %{
+            $M_1, M_2, M_3$ & 0.1249 & 2.0064 & 1670 & 0.3855 & -1711 &  $r = 0.96, p < 10^{-6}$ \\
+            $M_1$                  &  0.0161 & 1.2323 & 2631 &  0.2048 & -2687 & $r = 0.61, p = 0.036$ \\
+            $M_2$                  &  0.9997 & 1.7433 & 1828 &  0.2049 & -1895 & $r = 0.73, p = 0.008$ \\
+            $M_3$                  &  0.0130 & 1.7508 & 2184 &  0.2048 & -2180 & $r = 0.91, p = 0.00004$ \\
+            %}
+        end
+       
+
     case 'fig:behavior'
         
         %
@@ -432,10 +308,12 @@ switch figure_name
         
         figure;
         %set(handle, 'Position', [500, 500, 450, 200])
+       
+        which_structures = logical([1 1 1 0]);
+        [data, metadata, simulated] = simulate_subjects_helper();        
         
         subplot(2, 1, 1);
 
-        %{
         P_means = [];
         for condition = metadata.contextRoles
             which_rows = data.which_rows & data.isTrain & data.trialId == 20 & strcmp(data.contextRole, condition);
@@ -452,7 +330,6 @@ switch figure_name
         set(gca,'fontsize',13);
         
         text(0.1, 1.25, 'A', 'FontSize', 20, 'FontWeight', 'bold')
-        %}
 
         
         %
@@ -461,8 +338,68 @@ switch figure_name
         
         subplot(2, 1, 2);
 
-        %simulated = simulate_subjects(data, metadata, params, which_structures);        
-        simulated = simulate_subjects(data, metadata, params, 'Q');  % TODO rm for q learning
+        % Choice probabilities for model
+        %
+        model_means = [];
+        for condition = metadata.contextRoles
+            which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
+            
+            x1c1 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 0);
+            x1c3 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 2);
+            x3c1 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 0);
+            x3c3 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 2);
+
+            model_means = [model_means; mean(x1c1) mean(x1c3) mean(x3c1) mean(x3c3)];
+        end
+        
+        plot_behavior_helper(model_means);
+        
+
+    case '_simple_q_behavior'
+
+        % behavioral plot for simple Q learning as suggested by reviewer 1
+        %
+
+        % load params
+        %
+        fit_params_filename = fullfile('results', 'fit_params_results_simple_q.mat');
+        if exist(fit_params_filename, 'file') ~= 2
+            fprintf('Could not find saved fit param results for simple q learning in %s; recomputing...\n', fit_params_filename);
+            [results, results_options, mfit_datas] = fit_params(0, 1, {'simple_Q'}, 5);
+            save(fit_params_filename, 'results', 'results_options');
+        else
+            fprintf('Loading fit param results for simple q learning from %s...\n', fit_params_filename);
+            load(fit_params_filename, 'results', 'results_options');
+        end
+
+        params = results(1).x;
+        options = results_options(1);
+
+       
+        % plot learning curves
+        %
+
+        % pilot 
+        [data, metadata, simulated] = simulate_subjects_helper(false, fullfile('results', 'fit_params_results_simple_q.mat'), 1, 'simple_Q');
+        subplot(2,2,1);
+        plot_curves_helper(data, metadata, simulated);
+        title('Behavioral pilot');
+        text(-4, 1.05, 'A', 'FontSize', 20, 'FontWeight', 'bold')
+           
+        % fmri
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_q.mat'), 1, 'simple_Q');
+        subplot(2,2,2);
+        plot_curves_helper(data, metadata, simulated);
+        title('fMRI');
+        text(-4, 1.05, 'B', 'FontSize', 20, 'FontWeight', 'bold')
+
+        % plot test choices
+        %
+
+        subplot(2,1,2); 
+
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_q.mat'), 1, 'simple_Q');
+        subplot(2,2,2);
         
         % Choice probabilities for model
         %
@@ -478,98 +415,7 @@ switch figure_name
             model_means = [model_means; mean(x1c1) mean(x1c3) mean(x3c1) mean(x3c3)];
         end
         
-        % Plot model choices probabilities
-        %
-        h = bar(model_means);
-
-        hold on;
-        
-        % plot both pilot and fmri subjects' choices
-        %
-        group_x_offs = [-0.02, 0.02];
-        group_color = {[0.5 0.5 0.5], [0 0 0]};
-        for group = 1:2
-            if group == 1
-                % pilot subjects
-                [data, metadata] = load_data(fullfile('data', 'pilot.csv'), false);
-            else
-                % fmri subjects
-                [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
-            end
-            %simulated = simulate_subjects(data, metadata, params, which_structures);        
-            
-            % Choice probabilities for human subjects
-            %
-            human_choices = [];        
-            for condition = metadata.contextRoles
-                which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
-
-                x1c1 = []; x1c3 = []; x3c1 = []; x3c3 = [];
-                for who = metadata.subjects
-                    x1c1 = [x1c1, data.chose_sick(which_rows & data.cueId == 0 & data.contextId == 0 & strcmp(data.participant, who))];
-                    x1c3 = [x1c3, data.chose_sick(which_rows & data.cueId == 0 & data.contextId == 2 & strcmp(data.participant, who))];
-                    x3c1 = [x3c1, data.chose_sick(which_rows & data.cueId == 2 & data.contextId == 0 & strcmp(data.participant, who))];
-                    x3c3 = [x3c3, data.chose_sick(which_rows & data.cueId == 2 & data.contextId == 2 & strcmp(data.participant, who))];
-                end
-                assert(isequal(size(x1c1), [metadata.runsPerContext metadata.N]));
-                assert(isequal(size(x1c3), [metadata.runsPerContext metadata.N]));
-                assert(isequal(size(x3c1), [metadata.runsPerContext metadata.N]));
-                assert(isequal(size(x3c3), [metadata.runsPerContext metadata.N]));
-
-                human_choices = [human_choices; mean(x1c1); mean(x1c3); mean(x3c1); mean(x3c3)];
-            end
-
-            [human_sems, human_means] = wse(human_choices');
-
-
-            % Get x-coordinates of bar centers and "flatten" the human choice
-            % data so we can overlay it nicely
-            %
-            xs = sort([h(1).XData + h(1).XOffset, ...
-                       h(2).XData + h(2).XOffset, ...
-                       h(3).XData + h(3).XOffset, ...
-                       h(4).XData + h(4).XOffset]);
-            human_means = human_means'; human_means = human_means(:);
-            human_sems = human_sems'; human_sems = human_sems(:);        
-
-            % Plot human choices
-            %
-            errorbar(xs + group_x_offs(group), human_means, human_sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', group_color{group}, 'LineWidth', 1, 'Color', group_color{group}, 'AlignVertexCenters', 'off');
-            % the markers in the errorbar plot are misaligned from the error
-            % bars -- this hack adjusts them
-            xs_adjust = xs + 0.003;
-            %{
-            xs_adjust(1) = xs_adjust(1) + 0.0035;
-            xs_adjust(2) = xs_adjust(2) + 0.003;
-            xs_adjust(3) = xs_adjust(3) + 0.003;
-            xs_adjust(4) = xs_adjust(4) + 0.0025;
-            xs_adjust(5) = xs_adjust(5) + 0.004;
-            xs_adjust(6) = xs_adjust(6) + 0.004;
-            xs_adjust(7) = xs_adjust(7) + 0.0025;
-            xs_adjust(8) = xs_adjust(8) + 0.0025;
-            xs_adjust(9) = xs_adjust(9) + 0.003;
-            xs_adjust(10) = xs_adjust(10) + 0.004;
-            xs_adjust(11) = xs_adjust(11) + 0.003;
-            xs_adjust(12) = xs_adjust(12) + 0.0025;
-            %}
-            plot(xs_adjust + group_x_offs(group), human_means, 'o', 'MarkerSize', 5, 'MarkerFaceColor', group_color{group}, 'Color', group_color{group});
-        end
-        
-        
-        
-        hold off;
-        
-        xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
-        ylabel('Choice probability');
-        legend({'x_1c_1', 'x_1c_3', 'x_3c_1', 'x_3c_3'}, 'Position', [0.07 -0.095 1 1]);
-        ylim([0 1.1]);
-        set(gca,'fontsize',13);
-        
-        %print(gcf, 'untitled.pdf', '-dpdf', '-bestfit');
-        
-        text(0.1, 1.25, 'B', 'FontSize', 20, 'FontWeight', 'bold')
-
-        
+        plot_behavior_helper(model_means);
         
     case 'searchlight_posterior'
         bspmview('rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', '../neural/mean.nii');
@@ -1005,67 +851,99 @@ switch figure_name
         % TODO
         assert(false, 'THESE ARE DEPRECATED -- use the stats from plot_behavior.m; you have to change which_structures e.g. to [1 0 0 0] for M1 only');
         
-        
-        
-    % same as Figure 3 except for pilot data
+    end 
+
+
+end % show_figure()
+
+
+
+
+
+
+
+
+% helper for running model simulations
+%
+function [data, metadata, simulated, params, options, results, results_options] = simulate_subjects_helper(isFmri, params_file, params_idx, which_structures)
+
+    rng default; % so the simulations of actual model choices are consistent 
+
+    if nargin < 1
+        isFmri = true;
+    end
+    if nargin < 2 || isempty(params_file)
+        params_file = fullfile('results', 'fit_params_results.mat');
+    end
+    if nargin < 3 || isempty(params_idx)
+        params_idx = 1;
+    end
+    if nargin < 4 || isempty(which_structures)
+        which_structures = [1 1 1 0];
+    end
+
+    % Load data
     %
-    case '_Figure_S1_DEPRECATED'
-        
+    if isFmri
+        % fmri subjects
+        [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
+        disp('=== simulate subjects helper, fMRI csv\n');
+    else
+        % pilot subjects
         [data, metadata] = load_data(fullfile('data', 'pilot.csv'), false);
-        simulated = simulate_subjects(data, metadata, params, which_structures);
-        
-        %
-        % Figure 3A: Posterior probabilities over structures in each condition
-        %
-        
-        figure;
-        %set(handle, 'Position', [500, 500, 450, 200])
-        
-        subplot(2, 1, 1);
+        disp('=== simulate subjects helper, pilot csv\n');
+    end
 
-        P_means = [];
-        for condition = metadata.contextRoles
-            which_rows = data.which_rows & data.isTrain & data.trialId == 20 & strcmp(data.contextRole, condition);
-            
-            P = simulated.P(which_rows, which_structures);             
-            P_means = [P_means; mean(P, 1)];
-        end
+    % Load parameters
+    %
+    %load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts_5_prior.mat'), 'results', 'results_options');
+    load(params_file, 'results', 'results_options');
+    fprintf('using params from file %s\n', params_file);
+    params = results(params_idx).x;
+    options = results_options(params_idx);
 
-        bar(P_means);
-        xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
-        ylabel('Posterior probability');
-        legend({'M1', 'M2', 'M3'}, 'Position', [0.15 0.3 1 1]);
-        ylim([0 1.1]);
-        set(gca,'fontsize',13);
-        
-        text(0.1, 1.25, 'A', 'FontSize', 20, 'FontWeight', 'bold')
-        
-        %
-        % Figure 3B: Choice probabilities on test trials for model vs. humans
-        %
-        
-        subplot(2, 1, 2);
-        
-        % Choice probabilities for model
-        %
-        model_means = [];
-        for condition = metadata.contextRoles
-            which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
-            
-            x1c1 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 0);
-            x1c3 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 2);
-            x3c1 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 0);
-            x3c3 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 2);
+    %params = [0.1249 2.0064];
+    
+    disp('Using parameters:');
+    disp(params);
+    disp('generated with options:');
+    disp(options);
 
-            model_means = [model_means; mean(x1c1) mean(x1c3) mean(x3c1) mean(x3c3)];
-        end
+    % safeguards
+    %assert(options.isFmriData == true);
+    %assert(~options.fixedEffects);
+    assert(isequal(options.which_structures, which_structures)); % which_structures provided for sanity check only
 
+    % Run the model with the parameters
+    %
+    simulated = simulate_subjects(data, metadata, params, which_structures);
+end
+
+
+
+% helper f'n to plot behavioral results
+%
+function plot_behavior_helper(model_means)
+    % Plot model choices probabilities
+    %
+    h = bar(model_means);
+
+    hold on;
+
+    % plot both pilot and fmri subjects' choices
+    %
+    group_x_offs = [-0.02, 0.02];
+    group_color = {[0.5 0.5 0.5], [0 0 0]};
+    for group = 1:2
+
+        [data, metadata, simulated] = simulate_subjects_helper(group == 2);
+        
         % Choice probabilities for human subjects
         %
         human_choices = [];        
         for condition = metadata.contextRoles
             which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
-            
+
             x1c1 = []; x1c3 = []; x3c1 = []; x3c3 = [];
             for who = metadata.subjects
                 x1c1 = [x1c1, data.chose_sick(which_rows & data.cueId == 0 & data.contextId == 0 & strcmp(data.participant, who))];
@@ -1077,16 +955,13 @@ switch figure_name
             assert(isequal(size(x1c3), [metadata.runsPerContext metadata.N]));
             assert(isequal(size(x3c1), [metadata.runsPerContext metadata.N]));
             assert(isequal(size(x3c3), [metadata.runsPerContext metadata.N]));
-            
+
             human_choices = [human_choices; mean(x1c1); mean(x1c3); mean(x3c1); mean(x3c3)];
         end
-        
+
         [human_sems, human_means] = wse(human_choices');
-        
-        % Plot model choices probabilities
-        %
-        h = bar(model_means);
-        
+
+
         % Get x-coordinates of bar centers and "flatten" the human choice
         % data so we can overlay it nicely
         %
@@ -1096,14 +971,14 @@ switch figure_name
                    h(4).XData + h(4).XOffset]);
         human_means = human_means'; human_means = human_means(:);
         human_sems = human_sems'; human_sems = human_sems(:);        
-        
+
         % Plot human choices
         %
-        hold on;
-        errorbar(xs, human_means, human_sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+        errorbar(xs + group_x_offs(group), human_means, human_sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', group_color{group}, 'LineWidth', 1, 'Color', group_color{group}, 'AlignVertexCenters', 'off');
         % the markers in the errorbar plot are misaligned from the error
         % bars -- this hack adjusts them
-        xs_adjust = xs;
+        xs_adjust = xs + 0.003;
+        %{
         xs_adjust(1) = xs_adjust(1) + 0.0035;
         xs_adjust(2) = xs_adjust(2) + 0.003;
         xs_adjust(3) = xs_adjust(3) + 0.003;
@@ -1116,21 +991,142 @@ switch figure_name
         xs_adjust(10) = xs_adjust(10) + 0.004;
         xs_adjust(11) = xs_adjust(11) + 0.003;
         xs_adjust(12) = xs_adjust(12) + 0.0025;
-        plot(xs_adjust, human_means, 'o', 'MarkerSize', 5, 'MarkerFaceColor', [0 0 0], 'Color', [0 0 0]);
-        hold off;
-        xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
-        ylabel('Choice probability');
-        legend({'x_1c_1', 'x_1c_3', 'x_3c_1', 'x_3c_3'}, 'Position', [0.07 -0.095 1 1]);
-        ylim([0 1.1]);
-        set(gca,'fontsize',13);
-        
-        
-        text(0.1, 1.25, 'B', 'FontSize', 20, 'FontWeight', 'bold')
-
-        
-        %print(gcf, 'untitled.pdf', '-dpdf', '-bestfit');
-        
+        %}
+        plot(xs_adjust + group_x_offs(group), human_means, 'o', 'MarkerSize', 5, 'MarkerFaceColor', group_color{group}, 'Color', group_color{group});
+    end
+    
+    
+    
+    hold off;
+    
+    xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
+    ylabel('Choice probability');
+    legend({'x_1c_1', 'x_1c_3', 'x_3c_1', 'x_3c_3'}, 'Position', [0.07 -0.095 1 1]);
+    ylim([0 1.1]);
+    set(gca,'fontsize',13);
+    
+    %print(gcf, 'untitled.pdf', '-dpdf', '-bestfit');
+    
+    text(0.1, 1.25, 'B', 'FontSize', 20, 'FontWeight', 'bold')
 end
+
+
+
+% helper for plotting learning curves
+%
+function plot_curves_helper(data, metadata, simulated)
+    sem = @(x) std(x) / sqrt(length(x));
+
+    % average learning curve
+    %
+    human_correct = [];
+    model_correct = [];
+    
+    human_correct_sem = [];
+    model_correct_sem = [];
+
+    for n = 1:metadata.trainingTrialsPerRun
+
+        human_corr_n = []; % accuracy on trial n for each subject, averaged across blocks
+        model_corr_n = [];
+        for who = metadata.subjects
+            which = data.which_rows & data.isTrain & data.trialId == n & strcmp(data.participant, who);
+            assert(sum(which) == 9);
+            
+            subj_corr_n = strcmp(data.response.keys(which), data.corrAns(which)); % accuracy on trial n for subject who, averaged across blocks
+            sim_subj_corr_n = strcmp(simulated.keys(which), data.corrAns(which)); % accuracy on trial n for model for subject who, averaged across blocks
+            
+            human_corr_n = [human_corr_n, mean(subj_corr_n)];
+            model_corr_n = [model_corr_n, mean(sim_subj_corr_n)];
+        end                
+        
+        human_correct = [human_correct mean(human_corr_n)];
+        model_correct = [model_correct mean(model_corr_n)];
+        
+        human_correct_sem = [human_correct_sem sem(human_corr_n)];
+        model_correct_sem = [model_correct_sem sem(model_corr_n)];
+    end
+
+    plot(model_correct, '.-', 'LineWidth', 2); % == mean(human_correct_all_runs)
+    %errorbar(1:metadata.trainingTrialsPerRun, model_correct, model_correct_sem, 'o-', 'LineWidth', 2);
+    hold on;
+    plot(human_correct, '.-', 'LineWidth', 2); % == mean(model_correct_all_runs)
+    %errorbar(1:metadata.trainingTrialsPerRun, human_correct, human_correct_sem, 'o-', 'LineWidth', 2);
+    hold off;
+    legend({'model', 'subjects'}, 'Position', [0.30 0.05 1 1]);
+    %title('Average per-trial accuracy');
+    xlabel('trial #');
+    ylabel('accuracy');
+    set(gca,'fontsize',13);
+end
+
+
+
+
+% correlate model choices with subject choices on the test trials
+%
+function [r, p] = get_test_choice_correlations(params_idx, which_structures)
+    utils; % include some nifty lambdas
+
+    [data, metadata, simulated] = simulate_subjects_helper(true, [], params_idx, which_structures);
+
+    %
+    % Choice probabilities in test phase for SUBJECTS
+    %
+
+    Ms = [];
+    SEMs = [];
+    for context = metadata.contextRoles
+        which = data.which_rows & data.isTrain == 0 & strcmp(data.contextRole, context);
+
+        x1c1 = strcmp(data.response.keys(which & data.cueId == 0 & data.contextId == 0), 'left');
+        x1c2 = strcmp(data.response.keys(which & data.cueId == 0 & data.contextId == 2), 'left');
+        x2c1 = strcmp(data.response.keys(which & data.cueId == 2 & data.contextId == 0), 'left');
+        x2c2 = strcmp(data.response.keys(which & data.cueId == 2 & data.contextId == 2), 'left');
+
+    %    M = mean([x1c1 x1c2 x2c1 x2c2]);
+    %    SEM = std([x1c1 x1c2 x2c1 x2c2]) / sqrt(length(x1c1));
+        M = get_means(x1c1, x1c2, x2c1, x2c2);
+        SEM = get_sems(x1c1, x1c2, x2c1, x2c2);
+        Ms = [Ms; M];
+        SEMs = [SEMs; SEM];
+    end
+
+    subject_Ms = Ms; % for stats
+
+    %
+    % TRUE Choice probabilities in test phase for MODEL
+    %
+
+    Ms = [];
+    SEMs = [];
+    for context = metadata.contextRoles
+        which = data.which_rows & data.isTrain == 0 & strcmp(data.contextRole, context);
+
+        x1c1 = simulated.pred(which & data.cueId == 0 & data.contextId == 0);
+        x1c2 = simulated.pred(which & data.cueId == 0 & data.contextId == 2);
+        x2c1 = simulated.pred(which & data.cueId == 2 & data.contextId == 0);
+        x2c2 = simulated.pred(which & data.cueId == 2 & data.contextId == 2);
+
+        %M = mean([x1c1 x1c2 x2c1 x2c2]);
+        %SEM = std([x1c1 x1c2 x2c1 x2c2]) / sqrt(length(x1c1));
+        M = get_means(x1c1, x1c2, x2c1, x2c2);
+        SEM = get_sems(x1c1, x1c2, x2c1, x2c2);
+        Ms = [Ms; M];
+        SEMs = [SEMs; SEM];
+    end
+
+    model_Ms = Ms; % for stats
+
+    % correlate average subject choices with model choices 
+    %
+    [r, p] = corrcoef(subject_Ms(:), model_Ms(:));
+    r = r(1,2);
+    p = p(1,2);
+end
+
+
+
 
 
 %{

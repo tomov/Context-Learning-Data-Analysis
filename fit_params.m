@@ -110,15 +110,23 @@ for isFmriData = isFmriDataRange
             %
             param = [];
 
-            param(1).name = 'prior variance';
-            param(1).logpdf = @(x) 1;  % log density function for prior
-            param(1).lb = 0; % lower bound
-            param(1).ub = 10; % upper bound TODO more?
+            if isequal(which_structures, 'simple_Q') % TODO fixme for q learning by reviewer 1
+                param(1).name = 'inverse softmax temperature'; 
+                param(1).logpdf = @(x) 1;  % log density function for prior
+                param(1).lb = 0;
+                param(1).ub = 10; % can't make it too large b/c you get prob = 0 and -Inf likelihiood which fmincon doesn't like
+            else
+                assert(~ischar(which_structures));
+                param(1).name = 'prior variance';
+                param(1).logpdf = @(x) 1;  % log density function for prior
+                param(1).lb = 0; % lower bound
+                param(1).ub = 10; % upper bound TODO more?
 
-            param(2).name = 'inverse softmax temperature'; 
-            param(2).logpdf = @(x) 1;  % log density function for prior
-            param(2).lb = 0;
-            param(2).ub = 10; % can't make it too large b/c you get prob = 0 and -Inf likelihiood which fmincon doesn't like
+                param(2).name = 'inverse softmax temperature'; 
+                param(2).logpdf = @(x) 1;  % log density function for prior
+                param(2).lb = 0;
+                param(2).ub = 10; % can't make it too large b/c you get prob = 0 and -Inf likelihiood which fmincon doesn't like
+            end
 
             % P(behavioral data | model)
             % the likelihood function takes in all the subject data every

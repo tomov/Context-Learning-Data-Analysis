@@ -7,9 +7,9 @@ function train_results = q_train(x, k, r, params, DO_PRINT)
 % r = vector where each element is the outcome on the given trial
 % 
 
-assert(numel(params) == 2);
-learning_rate = params(1);
-inv_softmax_temp = params(2);
+assert(numel(params) == 1);
+%learning_rate = params(1);
+inv_softmax_temp = params(1);
 
 predict = @(Q_n) 1 ./ (1 + exp(-2 * inv_softmax_temp * Q_n + inv_softmax_temp)); % predicts by mapping the expectation to an outcome
 
@@ -19,7 +19,7 @@ N = size(x, 1); % # of trials
 D = size(x, 2); % # of stimuli
 K = 3;          % # of contexts
 
-alpha = learning_rate;
+%alpha = learning_rate;
 
 % initialize Q learning
 %

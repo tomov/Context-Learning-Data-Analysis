@@ -6,9 +6,9 @@ function test_results = q_test(x, k, train_results, params, DO_PRINT)
 % k = vector where each element is the context index on the given trial
 % 
 
-assert(numel(params) == 2);
-learning_rate = params(1);
-inv_softmax_temp = params(2);
+assert(numel(params) == 1);
+%learning_rate = params(1);
+inv_softmax_temp = params(1);
 
 predict = @(Q_n) 1 ./ (1 + exp(-2 * inv_softmax_temp * Q_n + inv_softmax_temp)); % predicts by mapping the expectation to an outcome
 
