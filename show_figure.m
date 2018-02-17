@@ -8,10 +8,13 @@ sem = @(x) std(x) / sqrt(length(x));
 % figure_name = which figure to show, e.g. Figure_3A
 %
 
+rng default; % reproducibility
+
 % set nicer colors
 C = linspecer(3);
 set(0,'DefaultAxesColorOrder',C);
-    
+   
+
 
 % Plot figure(s)
 %
@@ -308,12 +311,11 @@ switch figure_name
         models(4).params_idx = 4;
         models(4).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
 
-        %{
         models(5).which_structures = 'simple_Q'; 
         models(5).name = 'Q learning';
         models(5).params_file = fullfile('results', 'fit_params_results_simple_q.mat');
+        models(5).params_format = '\\beta = %.4f';
         models(5).params_idx = 1;
-        }
 
         [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
 
@@ -376,8 +378,6 @@ switch figure_name
         disp('PXP');
         disp(pxp);
 
-        save('shit.mat');
-
         for i = 1:numel(models)
             models(i).pxp = pxp(i);
             fprintf('$%s$ & %s & %.0f & %.4f & %.0f & $r = %.2f, p = %f$ \\ \n', ...
@@ -388,7 +388,6 @@ switch figure_name
                 models(i).total_loglik, ...
                 models(i).r, ...
                 models(i).p);
-
         end
        
 
@@ -454,6 +453,7 @@ switch figure_name
 
         % plot learning curves
         %
+        figure;
 
         % pilot 
         [data, metadata, simulated] = simulate_subjects_helper(false, fullfile('results', 'fit_params_results_simple_q.mat'), 1, 'simple_Q');
@@ -472,10 +472,9 @@ switch figure_name
         % plot test choices
         %
 
-        subplot(2,1,2); 
 
         [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_q.mat'), 1, 'simple_Q');
-        subplot(2,2,2);
+        subplot(2,1,2);
         
         % Choice probabilities for model
         %
@@ -942,8 +941,6 @@ end % show_figure()
 % helper for running model simulations
 %
 function [data, metadata, simulated, params, options, results, results_options] = simulate_subjects_helper(isFmri, params_file, params_idx, which_structures)
-
-    rng default; % so the simulations of actual model choices are consistent 
 
     if nargin < 1
         isFmri = true;
