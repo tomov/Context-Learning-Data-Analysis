@@ -242,7 +242,7 @@ switch figure_name
         for i = 1:numel(which_structuress) 
             which_structures = which_structuress{i};
 
-            [r, p] = get_test_choice_correlations(i, which_structures);
+            [r, p] = get_test_choice_correlations([], i, which_structures);
 
             switch i
                 case 1
@@ -281,22 +281,84 @@ switch figure_name
     case 'tab:models'
 
         headings = 'Hypotheses & $\\sigma_w^2$ & $\\beta$ & BIC & PXP & Log lik & Pearson''s r \\\\';
-        
-        which_structuress = {[1 0 0 0], [0 1 0 0], [0 0 1 0], 'simple_Q'};
-        structure_names = {'M1, M2, M3', 'M_1', 'M_2', 'M_3', 'Q Learning'};
-   
-        assert(numel(which_structures) == numel(structure_names));
-        for i = 1:numel(structure_names)
-            which_structures = which_structuress{i};
+       
+        % order here is important
 
-            [r, p] = get_test_choice_correlations();
-            
+        models(1).which_structures = [1 1 1 0]; 
+        models(1).name = 'M1, M2, M3';
+        models(1).params_file = fullfile('results', 'fit_params_results.mat');
+        models(1).params_idx = 1;
+        models(1).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+
+        models(2).which_structures = [1 0 0 0]; 
+        models(2).name = 'M1';
+        models(2).params_file = fullfile('results', 'fit_params_results.mat');
+        models(2).params_idx = 2;
+        models(2).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+
+        models(3).which_structures = [0 1 0 0]; 
+        models(3).name = 'M2';
+        models(3).params_file = fullfile('results', 'fit_params_results.mat');
+        models(3).params_idx = 3;
+        models(3).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+
+        models(4).which_structures = [0 0 1 0]; 
+        models(4).name = 'M3';
+        models(4).params_file = fullfile('results', 'fit_params_results.mat');
+        models(4).params_idx = 4;
+        models(4).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+
+        %{
+        models(5).which_structures = 'simple_Q'; 
+        models(5).name = 'Q learning';
+        models(5).params_file = fullfile('results', 'fit_params_results_simple_q.mat');
+        models(5).params_idx = 1;
+        %}
+
+        [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
+
+        for i = 1:numel(models)
+            [r, p] = get_test_choice_correlations(models(i).params_file, models(i).params_idx, models(i).which_structures);
+           
+            load(models(i).params_file, 'results', 'results_options');
+            params = results(models(i).params_idx).x;
+            options = results_options(models(i).params_idx);
+            assert(isequal(models(i).which_structures, options.which_structures));
+
+            total_loglik = model_likfun(data, metadata, params, options.which_structures, data.which_rows, false);
+            test_loglik = model_likfun(data, metadata, params, options.which_structures, data.which_rows, true);
+
+            bic = results(models(i).params_idx).bic;
+            pxp = 0; % TODO
+
+            models(i).params = params;
+            models(i).params_string = sprintf(models(i).params_format, params);
+            models(i).bic = bic;
+            models(i).pxp = pxp;
+            models(i).total_loglik = total_loglik;
+            models(i).test_loglik = test_loglik;
+            models(i).r = r;
+            models(i).p = p;
+            models(i).p_pow10 = ceil(log10(p));
+
             %{
             $M_1, M_2, M_3$ & 0.1249 & 2.0064 & 1670 & 0.3855 & -1711 &  $r = 0.96, p < 10^{-6}$ \\
             $M_1$                  &  0.0161 & 1.2323 & 2631 &  0.2048 & -2687 & $r = 0.61, p = 0.036$ \\
             $M_2$                  &  0.9997 & 1.7433 & 1828 &  0.2049 & -1895 & $r = 0.73, p = 0.008$ \\
             $M_3$                  &  0.0130 & 1.7508 & 2184 &  0.2048 & -2180 & $r = 0.91, p = 0.00004$ \\
             %}
+        end
+
+        for i = 1:numel(models)
+            fprintf('$%s$ & %s & %.0f & %.4f & %.0f & $r = %.2f, p = %f$ \\ \n', ...
+                models(i).name, ...
+                models(i).params_string, ...
+                models(i).bic, ...
+                models(i).pxp, ...
+                models(i).total_loglik, ...
+                models(i).r, ...
+                models(i).p);
+
         end
        
 
@@ -360,22 +422,6 @@ switch figure_name
         % behavioral plot for simple Q learning as suggested by reviewer 1
         %
 
-        % load params
-        %
-        fit_params_filename = fullfile('results', 'fit_params_results_simple_q.mat');
-        if exist(fit_params_filename, 'file') ~= 2
-            fprintf('Could not find saved fit param results for simple q learning in %s; recomputing...\n', fit_params_filename);
-            [results, results_options, mfit_datas] = fit_params(0, 1, {'simple_Q'}, 5);
-            save(fit_params_filename, 'results', 'results_options');
-        else
-            fprintf('Loading fit param results for simple q learning from %s...\n', fit_params_filename);
-            load(fit_params_filename, 'results', 'results_options');
-        end
-
-        params = results(1).x;
-        options = results_options(1);
-
-       
         % plot learning curves
         %
 
@@ -1065,10 +1111,10 @@ end
 
 % correlate model choices with subject choices on the test trials
 %
-function [r, p] = get_test_choice_correlations(params_idx, which_structures)
+function [r, p] = get_test_choice_correlations(params_file, params_idx, which_structures)
     utils; % include some nifty lambdas
 
-    [data, metadata, simulated] = simulate_subjects_helper(true, [], params_idx, which_structures);
+    [data, metadata, simulated] = simulate_subjects_helper(true, params_file, params_idx, which_structures);
 
     %
     % Choice probabilities in test phase for SUBJECTS

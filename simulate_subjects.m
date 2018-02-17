@@ -99,7 +99,7 @@ for who = metadata.subjects
 
             % TODO FIXME hack
             %
-            if ischar(which_structures)
+            if isequal(which_structures, 'simple_Q') % TODO fixme for q learning by reviewer 1
 
                 train_results = q_train(train_x, train_k, train_r, subject_params, false);
 
@@ -123,6 +123,7 @@ for who = metadata.subjects
                 simulated.values(which_test, :) = test_results.values;
 
             else
+                assert(~ischar(which_structures));
                 % For a given run of a given subject, run the model on the same
                 % sequence of stimuli and see what it does.
                 %
