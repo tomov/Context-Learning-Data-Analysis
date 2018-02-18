@@ -172,6 +172,5 @@ for i = 1:size(region, 1)
     
 end
 
-save('shit.mat');
 
 %new_region'

@@ -32,7 +32,7 @@ switch figure_name
         plot_curves_helper(data, metadata, simulated);
         title('Behavioral pilot');
         text(-4, 1.05, 'A', 'FontSize', 20, 'FontWeight', 'bold')
-           
+
         % fmri
         [data, metadata, simulated] = simulate_subjects_helper(true);
         subplot(1,2,2);
@@ -40,7 +40,7 @@ switch figure_name
         title('fMRI');
         text(-4, 1.05, 'B', 'FontSize', 20, 'FontWeight', 'bold')
 
-    
+           
     % statistics regarding learning and performance on the training trials
     %
     case 'stats:learning'
@@ -317,6 +317,12 @@ switch figure_name
         models(5).params_format = '\\beta = %.4f';
         models(5).params_idx = 1;
 
+        models(6).which_structures = 'Q_learning'; 
+        models(6).name = 'Q learning 2';
+        models(6).params_file = fullfile('results', 'fit_params_results_q_learning.mat');
+        models(6).params_format = '\\alpha = %.4f, \\beta = %.4f';
+        models(6).params_idx = 1;
+
         [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
 
         for i = 1:numel(models)
@@ -347,10 +353,8 @@ switch figure_name
     
         % compute BIC for each subject manually (b/c we did fixed effects => have only one set of params & bic's)
         % need this to compute the PXPs
-        % TODO dedupe with fit_param.m random effects'
-        % TODO is this necessary? 
+        % TODO dedupe with fit_param.m random effects
         %
-        %{
         [data, metadata] = load_data(fullfile('data', 'pilot.csv'), false);
 
         lmes = []; % log model evidence
@@ -361,7 +365,7 @@ switch figure_name
                 which_rows = strcmp(data.participant, who);
                 N = sum(which_rows);
 
-                subj_loglik = model_likfun(data, metadata, params, models(i).which_structures, which_rows, false); % from mfit_optimize.m
+                subj_loglik = model_likfun(data, metadata, models(i).params, models(i).which_structures, which_rows, false); % from mfit_optimize.m
                 subj_bic = K*log(N) - 2*subj_loglik;
                 subj_bics = [subj_bics; subj_bic];
             end
@@ -371,13 +375,13 @@ switch figure_name
         end
         assert(size(lmes, 1) == numel(metadata.subjects)); % rows = subjects
         assert(size(lmes, 2) == numel(models)); % cols = models
-        %}
 
-        %[alpha,exp_r,xp,pxp,bor] = bms(lmes); % splitting into 10 subjects
-        [alpha,exp_r,xp,pxp,bor] = bms(-0.5 * [models.bic]);  % using 1 "supersubject"
+        [alpha,exp_r,xp,pxp,bor] = bms(lmes); % splitting into 10 subjects
+        %[alpha,exp_r,xp,pxp,bor] = bms(-0.5 * [models.bic]);  % using 1 "supersubject" <-- wrong; need nSubjects x models matrix
         disp('PXP');
         disp(pxp);
 
+        disp('Model & params & BIC & PXP & Log lik & Pearson''s r\n');
         for i = 1:numel(models)
             models(i).pxp = pxp(i);
             fprintf('$%s$ & %s & %.0f & %.4f & %.0f & $r = %.2f, p = %f$ \\ \n', ...
@@ -446,51 +450,66 @@ switch figure_name
         plot_behavior_helper(model_means);
         
 
-    case '_simple_q_behavior'
+    case '_q_behavior'
 
         % behavioral plot for simple Q learning as suggested by reviewer 1
         %
 
-        % plot learning curves
-        %
-        figure;
+        models(1).which_structures = 'simple_Q'; 
+        models(1).name = 'Q learning';
+        models(1).params_file = fullfile('results', 'fit_params_results_simple_q.mat');
+        models(1).params_format = '\\beta = %.4f';
+        models(1).params_idx = 1;
 
-        % pilot 
-        [data, metadata, simulated] = simulate_subjects_helper(false, fullfile('results', 'fit_params_results_simple_q.mat'), 1, 'simple_Q');
-        subplot(2,2,1);
-        plot_curves_helper(data, metadata, simulated);
-        title('Behavioral pilot');
-        text(-4, 1.05, 'A', 'FontSize', 20, 'FontWeight', 'bold')
-           
-        % fmri
-        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_q.mat'), 1, 'simple_Q');
-        subplot(2,2,2);
-        plot_curves_helper(data, metadata, simulated);
-        title('fMRI');
-        text(-4, 1.05, 'B', 'FontSize', 20, 'FontWeight', 'bold')
+        models(2).which_structures = 'Q_learning'; 
+        models(2).name = 'Q learning 2';
+        models(2).params_file = fullfile('results', 'fit_params_results_q_learning.mat');
+        models(2).params_format = '\\alpha = %.4f, \\beta = %.4f';
+        models(2).params_idx = 1;
 
-        % plot test choices
-        %
+        for i=1:numel(models)
 
+            % plot learning curves
+            %
+            figure;
 
-        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_q.mat'), 1, 'simple_Q');
-        subplot(2,1,2);
-        
-        % Choice probabilities for model
-        %
-        model_means = [];
-        for condition = metadata.contextRoles
-            which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
+            % pilot 
+            [data, metadata, simulated] = simulate_subjects_helper(false, models(i).params_file, models(i).params_idx, models(i).which_structures);
+            subplot(2,2,1);
+            plot_curves_helper(data, metadata, simulated);
+            title('Behavioral pilot');
+            text(-4, 1.05, 'A', 'FontSize', 20, 'FontWeight', 'bold')
+               
+            % fmri
+            [data, metadata, simulated] = simulate_subjects_helper(true, models(i).params_file, models(i).params_idx, models(i).which_structures);
+            subplot(2,2,2);
+            plot_curves_helper(data, metadata, simulated);
+            title('fMRI');
+            text(-4, 1.05, 'B', 'FontSize', 20, 'FontWeight', 'bold')
+
+            % plot test choices
+            %
+            [data, metadata, simulated] = simulate_subjects_helper(true, models(i).params_file, models(i).params_idx, models(i).which_structures);
+            subplot(2,1,2);
             
-            x1c1 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 0);
-            x1c3 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 2);
-            x3c1 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 0);
-            x3c3 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 2);
+            % Choice probabilities for model
+            %
+            model_means = [];
+            for condition = metadata.contextRoles
+                which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
+                
+                x1c1 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 0);
+                x1c3 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 2);
+                x3c1 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 0);
+                x3c3 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 2);
 
-            model_means = [model_means; mean(x1c1) mean(x1c3) mean(x3c1) mean(x3c3)];
+                model_means = [model_means; mean(x1c1) mean(x1c3) mean(x3c1) mean(x3c3)];
+            end
+            
+            plot_behavior_helper(model_means);
+
+            title(models(i).name);
         end
-        
-        plot_behavior_helper(model_means);
         
     case 'searchlight_posterior'
         bspmview('rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', '../neural/mean.nii');
@@ -1009,7 +1028,15 @@ function plot_behavior_helper(model_means)
     group_color = {[0.5 0.5 0.5], [0 0 0]};
     for group = 1:2
 
-        [data, metadata, simulated] = simulate_subjects_helper(group == 2);
+        if group == 1
+            % pilot subjects
+            [data, metadata] = load_data(fullfile('data', 'pilot.csv'), false);
+            disp('\n\n\n --------------------------------------- PILOT -----------------\n\n');
+        else
+            % fmri subjects
+            [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
+            disp('\n\n\n --------------------------------------- fMRI -----------------\n\n');
+        end
         
         % Choice probabilities for human subjects
         %

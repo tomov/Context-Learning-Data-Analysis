@@ -24,8 +24,8 @@ K = 3;          % # of contexts
 % predict
 predict = @(V_n) 1 ./ (1 + exp(-2 * inv_softmax_temp * V_n + inv_softmax_temp)); % predicts by mapping the expectation to an outcome
 
-value = @(x_n, xx_n, xb_n, k_n, c_n) (x_n' * train_results.ww_n{1}) * train_results.P_n(1) + ... % M1 
-                                     (xb_n' * train_results.ww_n{2}(:, k_n)) * train_results.P_n(2) + ... % M2
+value = @(x_n, xx_n, k_n, c_n) (x_n' * train_results.ww_n{1}) * train_results.P_n(1) + ... % M1 
+                                     (x_n' * train_results.ww_n{2}(:, k_n)) * train_results.P_n(2) + ... % M2
                                      (xx_n' * train_results.ww_n{3}) * train_results.P_n(3) + ... % M3   
                                      (c_n' * train_results.ww_n{4}) * train_results.P_n(4); % M4
 
@@ -39,15 +39,14 @@ for n = 1:N
     k_n = k(n); % context idx at trial n
     c_n = zeros(K, 1);
     c_n(k_n) = 1; % context vector like x_n
-    xb_n = [x_n; 1]; % stim vec + bias
     xx_n = [x_n; c_n]; % augmented stimulus + context vector
+
     
-    
-    V_n = value(x_n, xx_n, xb_n, k_n, c_n);
+    V_n = value(x_n, xx_n, k_n, c_n);
     out = predict(V_n);
     choices = [choices; out];
     values = [values; V_n];
-    valuess = [valuess; x_n' * train_results.ww_n{1}, xb_n' * train_results.ww_n{2}(:, k_n), xx_n' * train_results.ww_n{3}, c_n' * train_results.ww_n{4}];    
+    valuess = [valuess; x_n' * train_results.ww_n{1}, x_n' * train_results.ww_n{2}(:, k_n), xx_n' * train_results.ww_n{3}, c_n' * train_results.ww_n{4}];    
 end
 
 test_results.choices = choices;

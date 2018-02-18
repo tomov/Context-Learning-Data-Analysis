@@ -82,7 +82,6 @@ Model(model_idx).color = [0 1 0];
 % Posterior weights + Sigma: normalized correlation of posterior weights
 % WARNING: hardcoded ...
 %
-save('shit.mat')
 Sigma_posterior = reshape(simulated.Sigma_posterior, 100, 5228)';
 [posteriorRDMs, avgPosteriorRDM] = compute_rdms([simulated.ww_posterior Sigma_posterior], 'cosine', data, metadata, which_rows);
 model_idx = model_idx + 1;
