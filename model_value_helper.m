@@ -1,7 +1,7 @@
 % Helper f'n that predicts the value on the current trial
 %
-function [V, vals] = value_helper(x, w, stimulus, context, P)
-    for i = numel(P)
+function [V, vals] = model_value_helper(x, w, stimulus, context, P)
+    for i = 1:numel(P)
         if i == 2 
             % for M2, use weights for current context
             %

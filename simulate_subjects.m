@@ -34,10 +34,10 @@ end
 num_structures = 5;
 
 % backwards compatibility: correct for extra structures from old fits
-%if numel(which_structures) < num_structures
-%    which_structures = [which_structures zeros(1, num_structures - numel(which_structures))];
-%    warning('using which_structures with less elements than there are structures');
-%end
+if numel(which_structures) < num_structures
+    which_structures = [which_structures zeros(1, num_structures - numel(which_structures))];
+    warning('using which_structures with less elements than there are structures');
+end
 
 simulated.keys = {}; % equivalent to response.keys but for the model (i.e. the responses)
 simulated.pred = []; % the choice probability (not the actual choice) for each trial

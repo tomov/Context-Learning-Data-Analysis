@@ -54,7 +54,7 @@ predict = @(V_n) 1 ./ (1 + exp(-2 * inv_softmax_temp * V_n + inv_softmax_temp));
 N = size(stimuli, 1); % # of trials
 D = size(stimuli, 2); % # of stimuli
 K = 3;          % # of contexts
-num_structures = 4;
+num_structures = 5;
 
 sigma_r = sqrt(0.01);
 sigma_w = sqrt(prior_variance); % std for gaussian prior over weights, uncertainty; decreasing the learning rate
@@ -229,6 +229,7 @@ end
 
  
 assert(mean(sum(valuess(2:end,:) .* Posterior(1:end-1,:), 2) - values(2:end)) < 1e-6);
+
 
 train_results.choices = choices;
 train_results.P_n = P;
