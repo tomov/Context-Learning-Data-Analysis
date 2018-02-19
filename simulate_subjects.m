@@ -151,7 +151,7 @@ for who = metadata.subjects
                 % sequence of stimuli and see what it does.
                 %
                 %[choices, P_n, ww_n, P, ww_after, values, valuess, likelihoods, new_values, new_valuess, Sigma_after, lambdas, ww_before, Sigma_before] = ...
-                train_results = kalman_trian(train_x, train_k, train_r, subject_params, which_structures, false);
+                train_results = model_train(train_x, train_k, train_r, subject_params, which_structures, false);
 
                 model_choices = train_results.choices > rand;
                 model_response_keys = {};
@@ -192,7 +192,7 @@ for who = metadata.subjects
                 simulated.Sigma_before{1}(:, :, which_train) = train_results.Sigma_before{1};
                 simulated.Sigma_before{2}(:, :, which_train) = train_results.Sigma_before{2};
                 simulated.Sigma_before{3}(:, :, which_train) = train_results.Sigma_before{3};
-                simulated.lambdas(which_train, :) = train_results.lambdas;
+                %simulated.lambdas(which_train, :) = train_results.lambdas; TODO rm
                 
                 % Concatenate weights 
                 %

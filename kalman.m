@@ -45,7 +45,7 @@ function [x, P, z_mean, z_var] = kalman(z, x, P, F, B, u, Q, H, R)
 x = F * x + B * u;
 P = F * P * F' + Q;
 
-z_var = H * P * H' + R; % TODO why use this variance?
+z_var = H * P * H' + R; % TODO SAM why use this variance?
 
 % Observation update
 % Note x and P now correspond to x_hat_t|t and P_t|t

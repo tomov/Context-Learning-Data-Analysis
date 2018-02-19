@@ -1,4 +1,6 @@
-function train_results = kalman_train(stimuli, contexts, rewards, params, which_structures, DO_PRINT)
+function train_results = model_train_validate(stimuli, contexts, rewards, params, which_structures, DO_PRINT)
+% hybrid betweent the lame (old) & nice (new) kalman filter
+
 %function [choices, P_n, ww_n, P, ww_after, values, valuess, likelihoods, new_values, new_valuess, Sigma_after, lambdas, ww_before, Sigma_before] = model_train(x, k, r, params, which_structures, DO_PRINT)
 
 % Kalman filter to learn the context-cue-reward associations & posteriors
@@ -145,8 +147,8 @@ for n = 1:N % for each trial
     V_n = value(x_n, xx_n, k_n, c_n, ww_n, P_n);
 
     % REAL sanity
-    save('shit.mat');
     assert(abs(V - V_n) < 1e-6);
+    assert(sum(abs(P - P_n)) < 1e-6);
 
     out = predict(V_n);
     choices = [choices; out];
@@ -274,8 +276,9 @@ for n = 1:N % for each trial
         P_n = which_structures / sum(which_structures);
     end
 
-    save('shit.mat');
-    
+    assert(sum(abs(P - P_n)) < 1e-6);
+    assert(sum(abs(likelihood - liks)) < 1e-6);
+
     shit = [x_n' * ww_n{1}, x_n' * ww_n{2}(:,k_n), xx_n' * ww_n{3}, c_n' * ww_n{4}];
     wtf = [x_n' * SSigma_n{1} * x_n + sigma_r^2, x_n' * SSigma_n{2} * x_n + sigma_r^2, xx_n' * SSigma_n{3} * xx_n + sigma_r^2, c_n' * SSigma_n{4} * c_n + sigma_r^2];
     pdfs = [normpdf(r_n, x_n' * ww_n{1}, x_n' * SSigma_n{1} * x_n + sigma_r^2), ...
