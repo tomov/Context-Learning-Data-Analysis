@@ -134,7 +134,7 @@ for n = 1:N % for each trial
                 if k == contexts(n)
                     H = x{i}';
                 else
-                    continue; % TODO SAM bug!!!!!!! remove & compare w/ Sam's
+                    continue; % TODO SAM bug!!!!!!! my implementation has the continue; Sam's doesn't.... should remove & compare w/ Sam's... and rerun GLM & RSA
                     H = zeros(1, D); % inactive contexts updated with empty stimulus -> only covariance changes TODO 
                 end
                 F = eye(size(w{i}(:,k), 1));
@@ -163,6 +163,17 @@ for n = 1:N % for each trial
     end
     P = P .* liks;
     P = P / sum(P);
+    if isnan(P(1))
+        % edge case -- all likelihoods are 0, or the likelihoods of all
+        % non-zero P_n's are 0 => the P_n's become all 0 after this => then
+        % we divide by 0 and they all become NaNs
+        % in to fix, interpret this scenario as them being all "equally
+        % bad" => revert to the uniform
+        %
+        % TODO SAM ask sam what to do
+        %
+        P = which_structures / sum(which_structures);
+    end
 
     % log stuff
     %
