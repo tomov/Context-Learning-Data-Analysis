@@ -126,7 +126,7 @@ for n = 1:N % for each trial
     SSigma_n{1} = Sigma_n{1} + tau^2 * eye(D); % 1 / certainty for prediction x * w in M1
     SSigma_n{2} = Sigma_n{2}(:,:,k_n) + tau^2 * eye(D); % 1 / certainty for prediction x * w in M2
     SSigma_n{3} = Sigma_n{3} + tau^2 * eye(D + K); % 1 / certainty for prediction x * w in M3
-    SSigma_n{4} = Sigma_n{1} + tau^2 * eye(K); % 1 / certainty for prediction c * w in M4
+    SSigma_n{4} = Sigma_n{4} + tau^2 * eye(K); % 1 / certainty for prediction c * w in M4
 
     lambda = @(x_n, SSigma_n) x_n' * SSigma_n * x_n + sigma_r^2;
     gain = @(x_n, SSigma_n) SSigma_n * x_n / lambda(x_n, SSigma_n);
