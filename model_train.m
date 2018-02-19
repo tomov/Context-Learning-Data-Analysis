@@ -4,6 +4,13 @@ function train_results = model_train(stimuli, contexts, rewards, params, which_s
 % for each causal structure
 % See "Context-dependent learning and causal structure", Gershman, S.J. (2017)
 %
+% Causal structures:
+% M1 = irrelevant context
+% M2 = modulatory context
+% M3 = additive context
+% M4 = irrelevant cue = M1' of reviewer 2
+% M5 = modulatory cue = M2' of reviewer 2
+%
 % INPUT:
 % stimuli = x = matrix where each row is a stimulus vector for the given trial
 % contexts = k = vector where each element is the context index on the given trial
@@ -47,6 +54,7 @@ predict = @(V_n) 1 ./ (1 + exp(-2 * inv_softmax_temp * V_n + inv_softmax_temp));
 N = size(stimuli, 1); % # of trials
 D = size(stimuli, 2); % # of stimuli
 K = 3;          % # of contexts
+num_structures = 4;
 
 sigma_r = sqrt(0.01);
 sigma_w = sqrt(prior_variance); % std for gaussian prior over weights, uncertainty; decreasing the learning rate
@@ -58,11 +66,16 @@ w{1} = zeros(D, 1); % M1 weights: one per stimulus
 w{2} = zeros(D, K); % M2 weights: one per stimulus-context pair
 w{3} = zeros(D + K, 1); % M3 weights: one per stimulus + one per context
 w{4} = zeros(K, 1); % M4 weights: one per context
+w{5} = zeros(K, D); % M4 weights: one per stimulus-context pair
+
 S{1} = sigma_w^2 * eye(D);
 S{2} = repmat(sigma_w^2 * eye(D), 1, 1, K); % note the third dimension is the context
 S{3} = sigma_w^2 * eye(D + K);
 S{4} = sigma_w^2 * eye(K);
+S{5} = repmat(sigma_w^2 * eye(K), 1, 1, D); % note the third dimension is the cue
+
 P = which_structures / sum(which_structures);
+assert(numel(P) == num_structures);
 
 % Store history for plotting and analysis
 %
@@ -104,8 +117,9 @@ for n = 1:N % for each trial
     x{2} = x{1};
     x{3} = [x{1}; c];
     x{4} = c;
+    x{5} = c;
  
-    [V, vals] = value_helper(x, w, contexts(n), P);
+    [V, vals] = model_value_helper(x, w, stimuli(n,:), contexts(n), P);
 
     out = predict(V);
     choices = [choices; out];
@@ -125,7 +139,7 @@ for n = 1:N % for each trial
 
     % Kalman filter update 
     %
-    for i = 1:4
+    for i = 1:num_structures
         if i == 2
             % for M2, each context has a separate Kalman filter
             % Notice we update all of them but only the active one 'sees' the real stimulus, and we get the prediction from it
@@ -147,6 +161,27 @@ for n = 1:N % for each trial
                     r_var{i} = r_var_temp;
                 end
             end
+        elseif i == 5
+            % for M5 = M2', each cue has a separate Kalman filter
+            % Notice we update all of them but only the active one 'sees' the real context, and we get the prediction from it
+            %
+            for d = 1:D
+                if stimuli(n,d)
+                    H = x{i}';
+                else
+                    continue; % TODO SAM bug!!!!!!! see above
+                    H = zeros(1, K);
+                end
+                F = eye(size(w{i}(:,d), 1));
+                B = zeros(size(F));
+                u = zeros(size(w{i}(:,d)));
+                Q = eye(size(w{i}(:,d), 1)) * tau^2;
+                [w{i}(:,d), S{i}(:,:,d), r_mean_temp, r_var_temp] = kalman(r, w{i}(:,d), S{i}(:,:,d), F, B, u, Q, H, sigma_r^2);
+                if stimuli(n,d)
+                    r_mean{i} = r_mean_temp;
+                    r_var{i} = r_var_temp;
+                end
+            end
         else
             F = eye(size(w{i}, 1));
             B = zeros(size(F));
@@ -158,7 +193,7 @@ for n = 1:N % for each trial
 
     % Update posterior over causal structures
     %
-    for i = 1:4
+    for i = 1:num_structures
         liks(i) = normpdf(r, r_mean{i}, r_var{i});
     end
     P = P .* liks;
@@ -187,15 +222,13 @@ for n = 1:N % for each trial
     Sigma_after{2}(1:2,1:2,n) = S{2}(1:2,1:2,1);
     Sigma_after{2}(3:4,3:4,n) = S{2}(1:2,1:2,2);
     Sigma_after{3}(:,:,n) = S{3}([1 2 4 5], [1 2 4 5]);
-    [V, vals] = value_helper(x, w, contexts(n), P);
+    [V, vals] = model_value_helper(x, w, stimuli(n,:), contexts(n), P);
     new_values = [new_values; V];
     new_valuess = [new_valuess; vals];
 end
 
  
-save shit.mat;
 assert(mean(sum(valuess(2:end,:) .* Posterior(1:end-1,:), 2) - values(2:end)) < 1e-6);
-
 
 train_results.choices = choices;
 train_results.P_n = P;
@@ -214,18 +247,3 @@ train_results.Sigma_before = Sigma_before;
 
 end
 
-
-% Helper f'n that predicts the value on the current trial
-%
-function [V, vals] = value_helper(x, w, k, P)
-    for i = 1:4
-        if i == 2 
-            % for M2, use weights for current context
-            %
-            vals(i) = x{i}' * w{i}(:,k);
-        else
-            vals(i) = x{i}' * w{i};
-        end
-    end
-    V = sum(vals .* P);
-end

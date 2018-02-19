@@ -1,4 +1,4 @@
-function test_results = model_test(x, k, train_results, params)
+function test_results = model_test(stimuli, contexts, train_results, params)
 %function [choices, values, valuess] = model_test(x, k, train_results.P_n, train_results.ww_n, params)
 
 % Kalman filter to predict outcomes based on a learned posterior over
@@ -17,38 +17,40 @@ inv_softmax_temp = params(2);
 
 % constants
 %
-N = size(x, 1); % # of trials
-D = size(x, 2); % # of stimuli
+N = size(stimuli, 1); % # of trials
+D = size(stimuli, 2); % # of stimuli
 K = 3;          % # of contexts
 
 % predict
 predict = @(V_n) 1 ./ (1 + exp(-2 * inv_softmax_temp * V_n + inv_softmax_temp)); % predicts by mapping the expectation to an outcome
 
-value = @(x_n, xx_n, k_n, c_n) (x_n' * train_results.ww_n{1}) * train_results.P_n(1) + ... % M1 
-                                     (x_n' * train_results.ww_n{2}(:, k_n)) * train_results.P_n(2) + ... % M2
-                                     (xx_n' * train_results.ww_n{3}) * train_results.P_n(3) + ... % M3   
-                                     (c_n' * train_results.ww_n{4}) * train_results.P_n(4); % M4
-
 choices = []; % history of choices
 values = []; % history of predicted outcomes, weighted sum across all models (causal structures)
 valuess = []; % history of predicted outcomes, one for each model (causal structure)
 
+w = train_results.ww_n;
+P = train_results.P_n;
                     
 for n = 1:N
-    x_n = x(n, :)'; % stimulus at trial n
-    k_n = k(n); % context idx at trial n
-    c_n = zeros(K, 1);
-    c_n(k_n) = 1; % context vector like x_n
-    xx_n = [x_n; c_n]; % augmented stimulus + context vector
+    % Make prediction for current trial
+    % notice conversion to column vectors
+    %
+    c = full(ind2vec(contexts(n), K)); % one-hot vector for the context
+    x{1} = stimuli(n,:)';
+    x{2} = x{1};
+    x{3} = [x{1}; c];
+    x{4} = c;
+    x{5} = c;
+ 
+    [V, vals] = model_value_helper(x, w, stimuli(n,:), contexts(n), P);
 
-    
-    V_n = value(x_n, xx_n, k_n, c_n);
-    out = predict(V_n);
+    out = predict(V);
     choices = [choices; out];
-    values = [values; V_n];
-    valuess = [valuess; x_n' * train_results.ww_n{1}, x_n' * train_results.ww_n{2}(:, k_n), xx_n' * train_results.ww_n{3}, c_n' * train_results.ww_n{4}];    
+    values = [values; V];
+    valuess = [valuess; vals];
 end
 
 test_results.choices = choices;
 test_results.values = values;
 test_results.valuess = valuess;
+
