@@ -1,4 +1,4 @@
-function [x, P, z_mean, z_var] = kalman(z, x, P, F, B, u, Q, R)
+function [x, P, z_mean, z_var] = kalman(z, x, P, F, B, u, Q, H, R)
 
 % Generic Kalman filter update from time t-1 to time t.
 % Following notation from Wikipedia.
@@ -11,6 +11,7 @@ function [x, P, z_mean, z_var] = kalman(z, x, P, F, B, u, Q, R)
 % B = B_t = control input model at time t
 % u = u_t = control input at time t
 % Q = Q_t = covariance of process noise at time t
+% H = H_t = observation model at time t
 % R = R_t = covariance of observation noise at time t
 %
 % OUTPUT:
@@ -44,6 +45,8 @@ function [x, P, z_mean, z_var] = kalman(z, x, P, F, B, u, Q, R)
 x = F * x + B * u;
 P = F * P * F' + Q;
 
+z_var = H * P * H' + R; % TODO why use this variance?
+
 % Observation update
 % Note x and P now correspond to x_hat_t|t and P_t|t
 %
@@ -52,4 +55,3 @@ x = x + K * (z - H * x);
 P = P - K * H * P;
 
 z_mean = H * x;
-z_var = H * P * H' + R;
