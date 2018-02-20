@@ -284,73 +284,114 @@ switch figure_name
     case 'tab:models'
 
         headings = 'Hypotheses & $\\sigma_w^2$ & $\\beta$ & BIC & PXP & Log lik & Pearson''s r \\\\';
+
+        load_cached_values = false;
+        cached_file = fullfile('results', 'show_figure_tab_models.mat');
        
-        % order here is important
+        if load_cached_values
+            load(cached_file);
+        else
 
-        models(1).which_structures = [1 1 1 0]; 
-        models(1).name = 'M1, M2, M3';
-        models(1).params_file = fullfile('results', 'fit_params_results.mat');
-        models(1).params_idx = 1;
-        models(1).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+            models(1).which_structures = [1 1 1 0]; 
+            models(1).name = 'M1, M2, M3';
+            models(1).params_file = fullfile('results', 'fit_params_results.mat');
+            models(1).params_idx = 1;
+            models(1).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
 
-        models(2).which_structures = [1 0 0 0]; 
-        models(2).name = 'M1';
-        models(2).params_file = fullfile('results', 'fit_params_results.mat');
-        models(2).params_idx = 2;
-        models(2).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+            models(2).which_structures = [1 0 0 0]; 
+            models(2).name = 'M1';
+            models(2).params_file = fullfile('results', 'fit_params_results.mat');
+            models(2).params_idx = 2;
+            models(2).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
 
-        models(3).which_structures = [0 1 0 0]; 
-        models(3).name = 'M2';
-        models(3).params_file = fullfile('results', 'fit_params_results.mat');
-        models(3).params_idx = 3;
-        models(3).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+            models(3).which_structures = [0 1 0 0]; 
+            models(3).name = 'M2';
+            models(3).params_file = fullfile('results', 'fit_params_results.mat');
+            models(3).params_idx = 3;
+            models(3).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
 
-        models(4).which_structures = [0 0 1 0]; 
-        models(4).name = 'M3';
-        models(4).params_file = fullfile('results', 'fit_params_results.mat');
-        models(4).params_idx = 4;
-        models(4).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+            models(4).which_structures = [0 0 1 0]; 
+            models(4).name = 'M3';
+            models(4).params_file = fullfile('results', 'fit_params_results.mat');
+            models(4).params_idx = 4;
+            models(4).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
 
-        models(5).which_structures = 'simple_Q'; 
-        models(5).name = 'Q learning';
-        models(5).params_file = fullfile('results', 'fit_params_results_simple_q.mat');
-        models(5).params_format = '\\beta = %.4f';
-        models(5).params_idx = 1;
 
-        models(6).which_structures = 'Q_learning'; 
-        models(6).name = 'Q learning 2';
-        models(6).params_file = fullfile('results', 'fit_params_results_q_learning.mat');
-        models(6).params_format = '\\alpha = %.4f, \\beta = %.4f';
-        models(6).params_idx = 1;
+            models(5).which_structures = 'simple_Q'; 
+            models(5).name = 'Q learning';
+            models(5).params_file = fullfile('results', 'fit_params_results_simple_q.mat');
+            models(5).params_format = '\\beta = %.4f';
+            models(5).params_idx = 1;
 
-        [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
 
-        for i = 1:numel(models)
-            [r, p] = get_test_choice_correlations(models(i).params_file, models(i).params_idx, models(i).which_structures);
-           
-            load(models(i).params_file, 'results', 'results_options');
-            params = results(models(i).params_idx).x;
-            options = results_options(models(i).params_idx);
-            assert(isequal(models(i).which_structures, options.which_structures));
+            models(6).which_structures = 'Q_learning'; 
+            models(6).name = 'Q learning 2';
+            models(6).params_file = fullfile('results', 'fit_params_results_q_learning.mat');
+            models(6).params_format = '\\alpha = %.4f, \\beta = %.4f';
+            models(6).params_idx = 1;
 
-            total_loglik = model_likfun(data, metadata, params, options.which_structures, data.which_rows, false);
-            test_loglik = model_likfun(data, metadata, params, options.which_structures, data.which_rows, true);
 
-            bic = results(models(i).params_idx).bic;
+            models(7).which_structures = [1 1 0 1 0]; 
+            models(7).name = 'M1, M2, M1''';
+            models(7).params_file = fullfile('results', 'fit_params_results_reviewer2.mat');
+            models(7).params_idx = 1;
+            models(7).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
 
-            % sumarize for table
-            %
-            models(i).params = params;
-            models(i).params_string = sprintf(models(i).params_format, params);
-            models(i).bic = bic;
-            models(i).pxp = NaN;
-            models(i).total_loglik = total_loglik;
-            models(i).test_loglik = test_loglik;
-            models(i).r = r;
-            models(i).p = p;
-            models(i).p_pow10 = ceil(log10(p));
+            models(8).which_structures = [1 0 1 0 1]; 
+            models(8).name = 'M1, M2'', M3';
+            models(8).params_file = fullfile('results', 'fit_params_results_reviewer2.mat');
+            models(8).params_idx = 2;
+            models(8).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+
+            models(9).which_structures = [1 0 0 1 1]; 
+            models(9).name = 'M1, M2'', M1''';
+            models(9).params_file = fullfile('results', 'fit_params_results_reviewer2.mat');
+            models(9).params_idx = 3;
+            models(9).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+
+            models(10).which_structures = [0 0 0 1 0]; 
+            models(10).name = 'M1''';
+            models(10).params_file = fullfile('results', 'fit_params_results_reviewer2.mat');
+            models(10).params_idx = 4;
+            models(10).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+
+            models(11).which_structures = [0 0 0 0 1]; 
+            models(11).name = 'M2''';
+            models(11).params_file = fullfile('results', 'fit_params_results_reviewer2.mat');
+            models(11).params_idx = 5;
+            models(11).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+
+            [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
+
+            for i = 1:numel(models)
+                [r, p] = get_test_choice_correlations(models(i).params_file, models(i).params_idx, models(i).which_structures);
+               
+                load(models(i).params_file, 'results', 'results_options');
+                params = results(models(i).params_idx).x;
+                options = results_options(models(i).params_idx);
+                assert(isequal(models(i).which_structures, options.which_structures));
+
+                total_loglik = model_likfun(data, metadata, params, options.which_structures, data.which_rows, false);
+                test_loglik = model_likfun(data, metadata, params, options.which_structures, data.which_rows, true);
+
+                bic = results(models(i).params_idx).bic;
+
+                % sumarize for table
+                %
+                models(i).params = params;
+                models(i).params_string = sprintf(models(i).params_format, params);
+                models(i).bic = bic;
+                models(i).pxp = NaN;
+                models(i).total_loglik = total_loglik;
+                models(i).test_loglik = test_loglik;
+                models(i).r = r;
+                models(i).p = p;
+                models(i).p_pow10 = ceil(log10(p));
+            end
+        
+            save(cached_file);
         end
-    
+
         % compute BIC for each subject manually (b/c we did fixed effects => have only one set of params & bic's)
         % need this to compute the PXPs
         % TODO dedupe with fit_param.m random effects
@@ -384,7 +425,7 @@ switch figure_name
         disp('Model & params & BIC & PXP & Log lik & Pearson''s r\n');
         for i = 1:numel(models)
             models(i).pxp = pxp(i);
-            fprintf('$%s$ & %s & %.0f & %.4f & %.0f & $r = %.2f, p = %f$ \\ \n', ...
+            fprintf('$%s$ & $%s$ & %.0f & %.4f & %.0f & $r = %.2f, p = %f$ \\\\ \n', ...
                 models(i).name, ...
                 models(i).params_string, ...
                 models(i).bic, ...
@@ -947,6 +988,8 @@ switch figure_name
         
     end 
 
+
+    save(fullfile('results', 'show_figure_last_run.mat'));
 
 end % show_figure()
 
