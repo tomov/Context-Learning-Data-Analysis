@@ -1,3 +1,6 @@
+% Create a t-map for a given event and model, based on the pre-computed searchlight results by rdms_searchlight.m in the rdms/ directory
+%
+
 clear all;
 close all;
 
@@ -7,8 +10,9 @@ close all;
 % given voxel RDM? (we have spearman's rho for all participants)
 %
 
+%event = 'feedback_onset';
+%model = 'ww_Sigma_posterior';
 event = 'feedback_onset';
-model = 'ww_Sigma_posterior';
 %dirname = 'rdms/betas_smooth';
 dirname = 'rdms';
 

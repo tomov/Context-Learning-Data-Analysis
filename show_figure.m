@@ -444,9 +444,14 @@ switch figure_name
         
         figure;
         %set(handle, 'Position', [500, 500, 450, 200])
-       
-        which_structures = logical([1 1 1 0]);
-        [data, metadata, simulated] = simulate_subjects_helper();        
+      
+        % M1, M2, M1'
+        which_structures = logical([1 1 0 1 0]);
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_reviewer2.mat'), 1, which_structures);
+
+        % M1, M2, M3
+        %which_structures = logical([1 1 1 0]);
+        %[data, metadata, simulated] = simulate_subjects_helper();        
         
         subplot(2, 1, 1);
 
