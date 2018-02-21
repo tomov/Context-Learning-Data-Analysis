@@ -67,10 +67,7 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
         % Most models use the fixed effects parameter fit with the pilot
         % data
         %
-        prior_variance = 0.1249;
-        inv_softmax_temp = 2.0064;
-        params = [prior_variance inv_softmax_temp];
-        which_structures = [1 1 1 0];
+        [params, which_structures] = model_default_params();
     else
         % Only a small subset of the models use the random effects parameter fit on the fMRI data 
         %

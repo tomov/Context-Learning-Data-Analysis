@@ -102,7 +102,7 @@ Sigma_before{1} = zeros(2, 2, N); % history of Sigma_1:n for M1 before
 Sigma_before{2} = zeros(4, 4, N); % history of Sigma_1:n for M2 before
 Sigma_before{3} = zeros(4, 4, N); % history of Sigma_1:n for M3 before
 Sigma_before{4} = []; % history of Sigma_1:n for M4 before
-%lambdas = []; % history of lambdas  TODO rm
+lambdas = []; % history of lambdas
 
 
 % train
@@ -214,6 +214,7 @@ for n = 1:N % for each trial
     %
     likelihoods = [likelihoods; liks];
     Posterior = [Posterior; P];
+    lambdas = [lambdas; r_var{1} r_var{2} r_var{3} r_var{4} r_var{5}];
     ww_after{1} = [ww_after{1}; w{1}(1:2)'];
     ww_after{2} = [ww_after{2}; w{2}(1:2,1)' w{2}(1:2,2)'];
     ww_after{3} = [ww_after{3}; w{3}([1:2 4:5])'];
@@ -242,7 +243,7 @@ train_results.likelihoods = likelihoods;
 train_results.new_values = new_values;
 train_results.new_valuess = new_valuess;
 train_results.Sigma_after = Sigma_after;
-%train_results.lambdas = lambdas; TODO rm
+train_results.lambdas = lambdas; 
 train_results.ww_before = ww_before;
 train_results.Sigma_before = Sigma_before;
 

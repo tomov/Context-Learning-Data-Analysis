@@ -199,7 +199,7 @@ for who = metadata.subjects
                 simulated.Sigma_before{1}(:, :, which_train) = train_results.Sigma_before{1};
                 simulated.Sigma_before{2}(:, :, which_train) = train_results.Sigma_before{2};
                 simulated.Sigma_before{3}(:, :, which_train) = train_results.Sigma_before{3};
-                %simulated.lambdas(which_train, :) = train_results.lambdas; TODO rm
+                simulated.lambdas(which_train, :) = train_results.lambdas;
                 
                 % Concatenate weights 
                 %

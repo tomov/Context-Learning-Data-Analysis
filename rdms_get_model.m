@@ -20,7 +20,7 @@ load(fullfile('results', 'fit_params_results.mat'), 'results', 'results_options'
 params = results(1).x;
 options = results_options(1);
 % OVERRIDE -- use params from pilot data
-params = [0.1249 2.0064];
+params = [0.1249 2.0064]; WRONG
 disp('Using parameters:');
 disp(params);
 disp('generated with options:');

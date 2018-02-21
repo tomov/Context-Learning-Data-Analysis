@@ -16,6 +16,8 @@ function [table_Rho, table_P, all_subject_rhos, idx, x, y, z] = rdms_searchlight
 % idx = indices of voxels used as sphere centers
 % x, y, z = sphere centers in coordinate space of group-level mask
 
+dirname = 'rdms';
+
 %% Load data and compute first-order RDMs
 %
 
@@ -60,6 +62,9 @@ cols = Model;
 
 [table_Rho, table_H, table_T, table_P, all_subject_rhos] = rdms_second_order(metadata, rows, cols, control_model_idxs, false, [], []);
 
+save('shit.mat');
+laksjdflksdjf
+
 
 %% Save output
 %
@@ -68,4 +73,4 @@ cols = Model;
 
 filename = sprintf('searchlight_weights_%d-%d.mat', start_idx, end_idx);
 fprintf('SAVING %s\n', filename);
-save(fullfile('rdms', filename), 'table_Rho', 'table_T', 'table_P', 'all_subject_rhos', 'x', 'y', 'z', 'r', 'idx');
+save(fullfile(dirname, filename), 'table_Rho', 'table_T', 'table_P', 'all_subject_rhos', 'x', 'y', 'z', 'r', 'idx');

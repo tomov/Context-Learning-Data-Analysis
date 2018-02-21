@@ -14,7 +14,7 @@ options = results_options(1);
 
 % OVERRIDE -- use pilot params as before
 %
-params = [0.1249 2.0064];
+params = [0.1249 2.0064]; WRONG
 options.isFmriData = false;
 options.fixedEffects = true;
 

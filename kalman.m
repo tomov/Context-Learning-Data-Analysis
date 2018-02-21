@@ -50,7 +50,7 @@ z_var = H * P * H' + R; % TODO SAM why use this variance?
 % Observation update
 % Note x and P now correspond to x_hat_t|t and P_t|t
 %
-K = P * H' * inv(H * P * H' + R);
+K = P * H' / (H * P * H' + R);
 x = x + K * (z - H * x);
 P = P - K * H * P;
 

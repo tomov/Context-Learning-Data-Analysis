@@ -15,25 +15,10 @@ tic
 
 control_model_idxs = [];
 
-%% Simulate behavior
-%
-load(fullfile('results', 'fit_params_results.mat'), 'results', 'results_options');
-params = results(1).x;
-options = results_options(1);
-% OVERRIDE -- use params from pilot data
-params = [0.1249 2.0064];
-disp('Using parameters:');
-disp(params);
-disp('generated with options:');
-disp(options);
-% safeguards
-assert(options.isFmriData == false);
-assert(options.fixedEffects == 1);
-assert(isequal(options.which_structures, [1 1 1 0]));
-which_structures = logical(options.which_structures);
 
 %% Simulate behavior using Kalman filter
 %
+[params, which_structures] = model_default_params();
 simulated = simulate_subjects(data, metadata, params, which_structures);
 
 % vector that specifies the structure corresponding to the condition
@@ -57,8 +42,27 @@ end
 
 model_idx = 0;
 
-%% models at trial onset
+
+% Posterior: normalized correlation of posterior
 %
+[posteriorRDMs, avgPosteriorRDM] = compute_rdms(simulated.P(:, which_structures), 'cosine', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = posteriorRDMs;
+Model(model_idx).RDM = avgPosteriorRDM;
+Model(model_idx).name = 'posterior';
+Model(model_idx).color = [0 1 0];
+
+% Prior: normalized correlation of prior
+%
+[priorRDMs, avgPriorRDM] = compute_rdms(simulated.Q(:, which_structures), 'cosine', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = priorRDMs;
+Model(model_idx).RDM = avgPriorRDM;
+Model(model_idx).name = 'prior';
+Model(model_idx).color = [0 1 0];
+
+
+
 
 % Posterior weights: normalized correlation of posterior weights
 %
@@ -77,6 +81,34 @@ Model(model_idx).RDMs = priorRDMs;
 Model(model_idx).RDM = avgPriorRDM;
 Model(model_idx).name = 'ww_prior';
 Model(model_idx).color = [0 1 0];
+
+
+
+
+% Posterior Sigma: normalized correlation of posterior weights
+% WARNING: hardcoded ...
+%
+Sigma_posterior = reshape(simulated.Sigma_posterior, 100, 5228)';
+[posteriorRDMs, avgPosteriorRDM] = compute_rdms(Sigma_posterior, 'cosine', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = posteriorRDMs;
+Model(model_idx).RDM = avgPosteriorRDM;
+Model(model_idx).name = 'Sigma_posterior';
+Model(model_idx).color = [0 1 0];
+
+% Prior Sigma: normalized correlation of prior weights
+% WARNING: hardcoded...
+%
+Sigma_prior = reshape(simulated.Sigma_prior, 100, 5228)';
+[priorRDMs, avgPriorRDM] = compute_rdms(Sigma_prior, 'cosine', data, metadata, which_rows);
+model_idx = model_idx + 1;
+Model(model_idx).RDMs = priorRDMs;
+Model(model_idx).RDM = avgPriorRDM;
+Model(model_idx).name = 'Sigma_prior';
+Model(model_idx).color = [0 1 0];
+
+
+
 
 
 % Posterior weights + Sigma: normalized correlation of posterior weights
@@ -100,6 +132,9 @@ Model(model_idx).RDMs = priorRDMs;
 Model(model_idx).RDM = avgPriorRDM;
 Model(model_idx).name = 'ww_Sigma_prior';
 Model(model_idx).color = [0 1 0];
+
+
+% CONTROL RDMs
 
 
 % Time = seconds since start of run: -abs(T1 - T2)
