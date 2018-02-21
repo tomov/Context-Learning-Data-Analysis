@@ -447,11 +447,8 @@ switch figure_name
       
         % M1, M2, M1'
         which_structures = logical([1 1 0 1 0]);
-        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_reviewer2.mat'), 1, which_structures);
-
-        % M1, M2, M3
-        %which_structures = logical([1 1 1 0]);
-        %[data, metadata, simulated] = simulate_subjects_helper();        
+        [data, metadata, simulated] = simulate_subjects_helper();        
+        %[data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_reviewer2.mat'), 1, which_structures);
         
         subplot(2, 1, 1);
 
@@ -1013,13 +1010,15 @@ function [data, metadata, simulated, params, options, results, results_options] 
         isFmri = true;
     end
     if nargin < 2 || isempty(params_file)
-        params_file = fullfile('results', 'fit_params_results.mat');
+        %params_file = fullfile('results', 'fit_params_results.mat');
+        params_file = fullfile('results', 'fit_params_results_reviewer2.mat');
     end
     if nargin < 3 || isempty(params_idx)
         params_idx = 1;
     end
     if nargin < 4 || isempty(which_structures)
-        which_structures = [1 1 1 0];
+        %which_structures = [1 1 1 0]; % M1, M2, M3
+        which_structures = logical([1 1 0 1 0]); % M1, M2, M1'
     end
 
     % Load data

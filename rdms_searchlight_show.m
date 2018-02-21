@@ -10,9 +10,8 @@ close all;
 % given voxel RDM? (we have spearman's rho for all participants)
 %
 
-%event = 'feedback_onset';
-%model = 'ww_Sigma_posterior';
 event = 'feedback_onset';
+model = 'ww_Sigma_posterior';
 %dirname = 'rdms/betas_smooth';
 dirname = 'rdms';
 
