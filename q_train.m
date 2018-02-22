@@ -23,7 +23,7 @@ K = 3;          % # of contexts
 
 % initialize Q learning
 %
-Q = zeros(K,D);
+Q = zeros(K,D); % TODO 0.5 ?
 count = zeros(K,D);
 
 % Store history for plotting and analysis

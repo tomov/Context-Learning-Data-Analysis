@@ -361,6 +361,12 @@ switch figure_name
             models(11).params_idx = 5;
             models(11).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
 
+            models(12).which_structures = [1 1 1 1 0]; 
+            models(12).name = 'M1, M2, M3, M1''';
+            models(12).params_file = fullfile('results', 'fit_params_results_reviewer2_four.mat');
+            models(12).params_idx = 1;
+            models(12).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+
             [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
 
             for i = 1:numel(models)
@@ -389,46 +395,77 @@ switch figure_name
                 models(i).p_pow10 = ceil(log10(p));
             end
         
+            % compute PXP for pilot data
+            % first compute BIC for each subject manually (b/c we did fixed effects => have only one set of params & bic's)
+            % need this to compute the PXPs
+            %
+            [data, metadata] = load_data(fullfile('data', 'pilot.csv'), false);
+
+            pilot_lmes = []; % log model evidence
+            for i = 1:numel(models)
+                K = length(params);
+                subj_bics = []; % bic for each subject using the shared fixed effects params
+                for who = metadata.subjects % only include "good" subjects
+                    which_rows = strcmp(data.participant, who);
+                    N = sum(which_rows);
+
+                    subj_loglik = model_likfun(data, metadata, models(i).params, models(i).which_structures, which_rows, false); % from mfit_optimize.m
+                    subj_bic = K*log(N) - 2*subj_loglik;
+                    subj_bics = [subj_bics; subj_bic];
+                end
+                pilot_lmes = [pilot_lmes, -0.5 * subj_bics];
+                fprintf('Model %d bics (pilot)\n', i);
+                disp(subj_bics);
+            end
+            assert(size(pilot_lmes, 1) == numel(metadata.subjects)); % rows = subjects
+            assert(size(pilot_lmes, 2) == numel(models)); % cols = models
+
+            [pilot_alpha,pilot_exp_r,pilot_xp,pilot_pxp,pilot_bor] = bms(pilot_lmes);
+            disp('Pilot PXP');
+            disp(pilot_pxp);
+
+
+            % compute PXP for fmri data
+            % notice that we don't account for # of parameters here (b/c we fit using pilot data)
+            %
+            [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
+
+            lmes = []; % log model evidence
+            for i = 1:numel(models)
+                K = length(params);
+                subj_lmes = [];
+                for who = metadata.subjects % only include "good" subjects
+                    which_rows = strcmp(data.participant, who);
+                    N = sum(which_rows);
+
+                    subj_loglik = model_likfun(data, metadata, models(i).params, models(i).which_structures, which_rows, false); % from mfit_optimize.m
+                    subj_lmes = [subj_lmes; subj_loglik];
+                end
+                lmes = [lmes, subj_lmes];
+                fprintf('Model %d lmes (fmri)\n', i);
+                disp(subj_lmes);
+            end
+            assert(size(lmes, 1) == numel(metadata.subjects)); % rows = subjects
+            assert(size(lmes, 2) == numel(models)); % cols = models
+
+            [alpha,exp_r,xp,pxp,bor] = bms(lmes);
+            disp('fMRI PXP');
+            disp(pxp);
+    
             save(cached_file);
         end
 
-        % compute BIC for each subject manually (b/c we did fixed effects => have only one set of params & bic's)
-        % need this to compute the PXPs
-        % TODO dedupe with fit_param.m random effects
+        % Output table
         %
-        [data, metadata] = load_data(fullfile('data', 'pilot.csv'), false);
-
-        lmes = []; % log model evidence
+        disp('Model & params & BIC & pPXP & fPXP & Log lik & Pearson''s r\n');
         for i = 1:numel(models)
-            K = length(params);
-            subj_bics = []; % bic for each subject using the shared fixed effects params
-            for who = metadata.subjects % only include "good" subjects
-                which_rows = strcmp(data.participant, who);
-                N = sum(which_rows);
-
-                subj_loglik = model_likfun(data, metadata, models(i).params, models(i).which_structures, which_rows, false); % from mfit_optimize.m
-                subj_bic = K*log(N) - 2*subj_loglik;
-                subj_bics = [subj_bics; subj_bic];
-            end
-            lmes = [lmes, -0.5 * subj_bics];
-            fprintf('Model %d bics\n', i);
-            disp(subj_bics);
-        end
-        assert(size(lmes, 1) == numel(metadata.subjects)); % rows = subjects
-        assert(size(lmes, 2) == numel(models)); % cols = models
-
-        [alpha,exp_r,xp,pxp,bor] = bms(lmes); % splitting into 10 subjects
-        %[alpha,exp_r,xp,pxp,bor] = bms(-0.5 * [models.bic]);  % using 1 "supersubject" <-- wrong; need nSubjects x models matrix
-        disp('PXP');
-        disp(pxp);
-
-        disp('Model & params & BIC & PXP & Log lik & Pearson''s r\n');
-        for i = 1:numel(models)
+            models(i).pilot_pxp = pilot_pxp(i);
             models(i).pxp = pxp(i);
-            fprintf('$%s$ & $%s$ & %.0f & %.4f & %.0f & $r = %.2f, p = %f$ \\\\ \n', ...
+            fprintf('$%s$ & $%s$ & %.0f & %.4f & %.4f & %.0f & $r = %.2f, p = %f$ \\\\ \n', ...
                 models(i).name, ...
                 models(i).params_string, ...
                 models(i).bic, ...
+                models(i).pilot_pxp, ...
                 models(i).pxp, ...
                 models(i).total_loglik, ...
                 models(i).r, ...

@@ -62,10 +62,6 @@ cols = Model;
 
 [table_Rho, table_H, table_T, table_P, all_subject_rhos] = rdms_second_order(metadata, rows, cols, control_model_idxs, false, [], []);
 
-save('shit.mat');
-laksjdflksdjf
-
-
 %% Save output
 %
 
