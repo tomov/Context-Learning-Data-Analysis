@@ -152,6 +152,29 @@ for who = metadata.subjects
                 simulated.pred(which_test) = test_results.choices;
                 simulated.values(which_test, :) = test_results.values;
 
+            elseif isequal(which_structures, 'simple_collins') % TODO fixme  reviewer 2
+
+                train_results = collins_train(train_x, train_k, train_r, subject_params, false);
+
+                model_choices = train_results.choices > rand;
+                model_response_keys = {};
+                model_response_keys(model_choices) = {'left'};
+                model_response_keys(~model_choices) = {'right'};
+                simulated.keys(which_train) = model_response_keys;
+                simulated.pred(which_train) = train_results.choices;
+                simulated.values(which_train, :) = train_results.values;
+                simulated.Q_values(:, :, which_train) = train_results.Qs;
+           
+                test_results = collins_test(test_x, test_k, train_results, subject_params, false);
+
+                model_test_choices = test_results.choices > rand;
+                model_test_response_keys = {};
+                model_test_response_keys(model_test_choices) = {'left'};
+                model_test_response_keys(~model_test_choices) = {'right'};
+                simulated.keys(which_test) = model_test_response_keys;
+                simulated.pred(which_test) = test_results.choices;
+                simulated.values(which_test, :) = test_results.values;
+
             else
                 assert(~ischar(which_structures));
                 % For a given run of a given subject, run the model on the same

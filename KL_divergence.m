@@ -13,10 +13,15 @@ function surprise = KL_divergence(P, Q)
 %
 
 assert(isequal(size(P), size(Q)));
-logs = log2(P) - log2(Q); 
-logs(isnan(logs)) = 0; % lim_{x->0} x log(x) = 0
-surprise = sum(P .* logs, 2);
-surprise(isnan(surprise)) = 0; % weird things happen when P --> 0, e.g. we get -Infs
+
+h = P .* (log2(P) - log2(Q)); 
+h(isnan(h)) = 0; % lim_{x->0} x log(x) = 0
+assert(sum(sum(isinf(h))) == 0); % shouldn't be any inf's left
+
+surprise = sum(h, 2);
+
+assert(sum(isinf(surprise)) == 0); % sanity
+assert(sum(isnan(surprise)) == 0); % sanity
 
 end
 

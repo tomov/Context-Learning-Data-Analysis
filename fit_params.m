@@ -125,7 +125,23 @@ for isFmriData = isFmriDataRange
                 param(2).logpdf = @(x) 1;
                 param(2).lb = 0;
                 param(2).ub = 10; 
+            elseif isequal(which_structures, 'simple_collins') % TODO fixme for q learning by reviewer 1
+                param(1).name = 'learning rate';
+                param(1).logpdf = @(x) 1; 
+                param(1).lb = 0;
+                param(1).ub = 1;
+
+                param(2).name = 'inverse softmax temperature'; 
+                param(2).logpdf = @(x) 1;
+                param(2).lb = 0;
+                param(2).ub = 10; 
+
+                param(3).name = 'concentration parameter'; 
+                param(3).logpdf = @(x) 1;
+                param(3).lb = 0;
+                param(3).ub = 1; 
             else
+                % Sam's model
                 assert(~ischar(which_structures));
                 param(1).name = 'prior variance';
                 param(1).logpdf = @(x) 1;  % log density function for prior
