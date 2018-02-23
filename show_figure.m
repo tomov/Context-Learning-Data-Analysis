@@ -40,6 +40,37 @@ switch figure_name
         title('fMRI');
         text(-4, 1.05, 'B', 'FontSize', 20, 'FontWeight', 'bold')
 
+    case 'fig:curves_extended'
+        %
+        % Learning curves, model vs. subjects
+        % 
+        figure('pos', [100 100 693+20 320] * 3/4);
+     
+        % pilot 
+        [data, metadata, simulated] = simulate_subjects_helper(false);
+        subplot(2,3,1);
+        plot_curves_helper(data, metadata, simulated, data.which_rows & strcmp(data.contextRole, 'irrelevant'));
+        title('Behavioral pilot: irr');
+        subplot(2,3,2);
+        plot_curves_helper(data, metadata, simulated, data.which_rows & strcmp(data.contextRole, 'modulatory'));
+        title('mod');
+        subplot(2,3,3);
+        plot_curves_helper(data, metadata, simulated, data.which_rows & strcmp(data.contextRole, 'additive'));
+        title('add');
+        text(-4, 1.05, 'A', 'FontSize', 20, 'FontWeight', 'bold')
+
+        % fmri
+        [data, metadata, simulated] = simulate_subjects_helper(true);
+        subplot(2,3,4);
+        plot_curves_helper(data, metadata, simulated, data.which_rows & strcmp(data.contextRole, 'irrelevant'));
+        title('fMRI: irr');
+        subplot(2,3,5);
+        plot_curves_helper(data, metadata, simulated, data.which_rows & strcmp(data.contextRole, 'modulatory'));
+        title('mod');
+        subplot(2,3,6);
+        plot_curves_helper(data, metadata, simulated, data.which_rows & strcmp(data.contextRole, 'additive'));
+        title('add');
+        text(-4, 1.05, 'B', 'FontSize', 20, 'FontWeight', 'bold')
            
     % statistics regarding learning and performance on the training trials
     %
@@ -367,6 +398,12 @@ switch figure_name
             models(12).params_idx = 1;
             models(12).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
 
+            models(13).which_structures = 'simple_collins'; 
+            models(13).name = 'C&F 2016 0';
+            models(13).params_file = fullfile('results', 'fit_params_results_simple_collins.mat');
+            models(13).params_idx = 1;
+            models(13).params_format = '\\eta = %.4f, \\beta = %.4f, \\alpha = %.4f';
+
             [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
 
             for i = 1:numel(models)
@@ -481,7 +518,7 @@ switch figure_name
         
         figure;
         %set(handle, 'Position', [500, 500, 450, 200])
-      
+     
         % M1, M2, M1'
         which_structures = logical([1 1 0 1 0]);
         [data, metadata, simulated] = simulate_subjects_helper();        
@@ -489,22 +526,22 @@ switch figure_name
         
         subplot(2, 1, 1);
 
-        P_means = [];
-        for condition = metadata.contextRoles
-            which_rows = data.which_rows & data.isTrain & data.trialId == 20 & strcmp(data.contextRole, condition);
-            
-            P = simulated.P(which_rows, which_structures);             
-            P_means = [P_means; mean(P, 1)];
-        end
+        %P_means = [];
+        %for condition = metadata.contextRoles
+        %    which_rows = data.which_rows & data.isTrain & data.trialId == 20 & strcmp(data.contextRole, condition);
+        %    
+        %    P = simulated.P(which_rows, which_structures);             
+        %    P_means = [P_means; mean(P, 1)];
+        %end
 
-        bar(P_means);
-        xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
-        ylabel('Posterior probability');
-        legend({'M1', 'M2', 'M3'}, 'Position', [0.15 0.3 1 1]);
-        ylim([0 1.1]);
-        set(gca,'fontsize',13);
-        
-        text(0.1, 1.25, 'A', 'FontSize', 20, 'FontWeight', 'bold')
+        %bar(P_means);
+        %xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
+        %ylabel('Posterior probability');
+        %legend({'M1', 'M2', 'M3'}, 'Position', [0.15 0.3 1 1]);
+        %ylim([0 1.1]);
+        %set(gca,'fontsize',13);
+        %
+        %text(0.1, 1.25, 'A', 'FontSize', 20, 'FontWeight', 'bold')
 
         
         %
@@ -516,6 +553,7 @@ switch figure_name
         % Choice probabilities for model
         %
         model_means = [];
+        model_sems = [];
         for condition = metadata.contextRoles
             which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
             
@@ -525,10 +563,120 @@ switch figure_name
             x3c3 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 2);
 
             model_means = [model_means; mean(x1c1) mean(x1c3) mean(x3c1) mean(x3c3)];
+            model_sems = [model_sems; std(x1c1)/sqrt(numel(x1c1)) std(x1c3)/sqrt(numel(x1c3)) std(x3c1)/sqrt(numel(x3c1)) std(x3c3)/sqrt(numel(x3c3))];
         end
-        
+
+
         plot_behavior_helper(model_means);
         
+
+    case 'collins_posteriors'
+        
+        
+        figure;
+        %set(handle, 'Position', [500, 500, 450, 200])
+     
+        % M1, M2, M1'
+        which_structures = logical([1 1 0 1 0]);
+        [data, metadata, simulated] = simulate_subjects_helper();        
+        %[data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_reviewer2.mat'), 1, which_structures);
+        
+
+        i = 0;
+        P_means = [];
+        for condition = metadata.contextRoles
+            which_rows = data.which_rows & data.newTrialId == 20 & strcmp(data.contextRole, condition);
+            
+            P = simulated.posteriors_C(:,:,which_rows);
+            P = mean(P, 3);
+            P = mean(P, 1);
+            P = P(1:3);
+            P_means = [P_means; P];
+
+            i = i + 1;
+        end
+        subplot(4,1,1);
+        bar(P_means);
+        xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
+        ylabel('P(Z_c) ');
+        legend({'Z_c1', 'Z_c2', 'Z_c3'});
+        ylim([0 1.1]);
+        set(gca,'fontsize',13);
+        title('context cluster popularities after training');
+        
+
+        
+        i = 0;
+        P_means = [];
+        for condition = metadata.contextRoles
+            which_rows = data.which_rows & data.newTrialId == 24 & strcmp(data.contextRole, condition);
+            
+            P = simulated.posteriors_C(:,:,which_rows);
+            P = mean(P, 3);
+            P = mean(P, 1);
+            P = P(1:3);
+            P_means = [P_means; P];
+
+            i = i + 1;
+        end
+        subplot(4,1,2);
+        bar(P_means);
+        xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
+        ylabel('P(Z_c) ');
+        ylim([0 1.1]);
+        set(gca,'fontsize',13);
+        title('context cluster popularities after test');
+
+
+
+
+        i = 0;
+        P_means = [];
+        for condition = metadata.contextRoles
+            which_rows = data.which_rows & data.newTrialId == 20 & strcmp(data.contextRole, condition);
+            
+            P = simulated.posteriors_S(:,:,which_rows);
+            P = mean(P, 3);
+            P = mean(P, 1);
+            P = P(1:3);
+            P_means = [P_means; P];
+
+            i = i + 1;
+        end
+        subplot(4,1,3);
+        bar(P_means);
+        xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
+        legend({'Z_s1', 'Z_s2', 'Z_s3'});
+        ylabel('P(Z_s) ');
+        ylim([0 1.1]);
+        set(gca,'fontsize',13);
+        title('cue cluster popularities after training');
+        
+
+        
+        i = 0;
+        P_means = [];
+        for condition = metadata.contextRoles
+            which_rows = data.which_rows & data.newTrialId == 24 & strcmp(data.contextRole, condition);
+            
+            P = simulated.posteriors_S(:,:,which_rows);
+            P = mean(P, 3);
+            P = mean(P, 1);
+            P = P(1:3);
+            P_means = [P_means; P];
+
+            i = i + 1;
+        end
+        subplot(4,1,4);
+        bar(P_means);
+        xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
+        ylabel('P(Z_s) ');
+        ylim([0 1.1]);
+        set(gca,'fontsize',13);
+        title('cue cluster popularities after test');
+
+
+
 
     case '_q_behavior'
 
@@ -1070,6 +1218,10 @@ function [data, metadata, simulated, params, options, results, results_options] 
         disp('=== simulate subjects helper, pilot csv\n');
     end
 
+    which_structures = 'simple_collins'; 
+    params_file = fullfile('results', 'fit_params_results_simple_collins.mat');
+    params_idx = 1;
+
     % Load parameters
     %
     %load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts_5_prior.mat'), 'results', 'results_options');
@@ -1093,18 +1245,31 @@ function [data, metadata, simulated, params, options, results, results_options] 
     % Run the model with the parameters
     %
     simulated = simulate_subjects(data, metadata, params, which_structures);
+
+    save shit.mat;
 end
 
 
 
 % helper f'n to plot behavioral results
 %
-function plot_behavior_helper(model_means)
+function plot_behavior_helper(model_means, model_sems)
     % Plot model choices probabilities
     %
     h = bar(model_means);
+    save shit.mat
 
     hold on;
+
+    if nargin == 2 & ~isempty(model_sems)
+        xs = sort([h(1).XData + h(1).XOffset, ...
+                   h(2).XData + h(2).XOffset, ...
+                   h(3).XData + h(3).XOffset, ...
+                   h(4).XData + h(4).XOffset]);
+        model_means = model_means'; model_means = model_means(:);
+        model_sems = model_sems'; model_sems = model_sems(:);        
+        errorbar(xs, model_means, model_sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+    end
 
     % plot both pilot and fmri subjects' choices
     %
@@ -1198,8 +1363,12 @@ end
 
 % helper for plotting learning curves
 %
-function plot_curves_helper(data, metadata, simulated)
+function plot_curves_helper(data, metadata, simulated, which_rows)
     sem = @(x) std(x) / sqrt(length(x));
+
+    if nargin < 4 || isempty(which_rows)
+        which_rows = data.which_rows;
+    end
 
     % average learning curve
     %
@@ -1214,8 +1383,8 @@ function plot_curves_helper(data, metadata, simulated)
         human_corr_n = []; % accuracy on trial n for each subject, averaged across blocks
         model_corr_n = [];
         for who = metadata.subjects
-            which = data.which_rows & data.isTrain & data.trialId == n & strcmp(data.participant, who);
-            assert(sum(which) == 9);
+            which = which_rows & data.isTrain & data.trialId == n & strcmp(data.participant, who);
+            %assert(sum(which) == 9);
             
             subj_corr_n = strcmp(data.response.keys(which), data.corrAns(which)); % accuracy on trial n for subject who, averaged across blocks
             sim_subj_corr_n = strcmp(simulated.keys(which), data.corrAns(which)); % accuracy on trial n for model for subject who, averaged across blocks

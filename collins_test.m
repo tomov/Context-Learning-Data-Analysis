@@ -3,11 +3,12 @@ function test_results = collins_test(stimuli, contexts, train_results, params, D
 % Collins & Frank clustering model. Clusters stimuli and contexts independently using DP (CRP).
 %
 
-Q0 = 0.5; % prior outcome expectaiton TODO collins = 0.5; Sam = 0; maybe fit?
+Q0 = 0.1; % prior outcome expectaiton TODO collins = 0.5; Sam = 0; maybe fit?
 
 eta = params(1); % learning rate
 inv_softmax_temp = params(2); 
 alpha = params(3); % concentration parameter
+alpha = 1.5;
  
 if DO_PRINT
     disp('Collins Test');
@@ -72,7 +73,9 @@ for n = 1:N % for each trial
         disp('      prior Q:');
         disp(Q);
     end
-
+    priors_C(:,:,n) = P_C;
+    priors_S(:,:,n) = P_S;
+    priors_Q(:,:,n) = Q;
 
     % pick clusters of current stimulus/context for action selection (maximum a priori)
     %
@@ -94,3 +97,6 @@ end
 
 test_results.choices = choices;
 test_results.values = values;
+test_results.priors_C = priors_C;
+test_results.priors_S = priors_S;
+test_results.priors_Q = priors_Q;

@@ -3,7 +3,7 @@ function train_results = collins_train(stimuli, contexts, rewards, params, DO_PR
 % Collins & Frank clustering model. Clusters stimuli and contexts independently using DP (CRP).
 %
 
-Q0 = 0.5; % prior outcome expectaiton TODO collins = 0.5; Sam = 0; maybe fit?
+Q0 = 0.1; % prior outcome expectaiton TODO collins = 0.5; Sam = 0; maybe fit?
 
 eta = params(1); % learning rate
 inv_softmax_temp = params(2); 
@@ -74,6 +74,9 @@ for n = 1:N % for each trial
         disp('      prior Q:');
         disp(Q);
     end
+    priors_C(:,:,n) = P_C;
+    priors_S(:,:,n) = P_S;
+    priors_Q(:,:,n) = Q;
 
 
     % pick clusters of current stimulus/context for action selection (maximum a priori)
@@ -139,6 +142,9 @@ for n = 1:N % for each trial
         disp('      posterior Q:');
         disp(Q);
     end
+    posteriors_C(:,:,n) = P_C;
+    posteriors_S(:,:,n) = P_S;
+    posteriors_Q(:,:,n) = Q;
 
 end
 
@@ -150,3 +156,9 @@ train_results.P_S = P_S;
 train_results.K_C = K_C;
 train_results.K_S = K_S;
 train_results.Q = Q;
+train_results.priors_C = priors_C;
+train_results.priors_S = priors_S;
+train_results.priors_Q = priors_Q;
+train_results.posteriors_C = posteriors_C;
+train_results.posteriors_S = posteriors_S;
+train_results.posteriors_Q = posteriors_Q;

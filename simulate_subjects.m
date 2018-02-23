@@ -163,7 +163,12 @@ for who = metadata.subjects
                 simulated.keys(which_train) = model_response_keys;
                 simulated.pred(which_train) = train_results.choices;
                 simulated.values(which_train, :) = train_results.values;
-                simulated.Q_values(:, :, which_train) = train_results.Qs;
+                simulated.priors_C(:,:,which_train) = train_results.priors_C;
+                simulated.priors_S(:,:,which_train) = train_results.priors_S;
+                simulated.priors_Q(:,:,which_train) = train_results.priors_Q;
+                simulated.posteriors_C(:,:,which_train) = train_results.posteriors_C;
+                simulated.posteriors_S(:,:,which_train) = train_results.posteriors_S;
+                simulated.posteriors_Q(:,:,which_train) = train_results.posteriors_Q;
            
                 test_results = collins_test(test_x, test_k, train_results, subject_params, false);
 
@@ -174,6 +179,12 @@ for who = metadata.subjects
                 simulated.keys(which_test) = model_test_response_keys;
                 simulated.pred(which_test) = test_results.choices;
                 simulated.values(which_test, :) = test_results.values;
+                simulated.priors_C(:,:,which_test) = test_results.priors_C;
+                simulated.priors_S(:,:,which_test) = test_results.priors_S;
+                simulated.priors_Q(:,:,which_test) = test_results.priors_Q;
+                simulated.posteriors_C(:,:,which_test) = test_results.priors_C;
+                simulated.posteriors_S(:,:,which_test) = test_results.priors_S;
+                simulated.posteriors_Q(:,:,which_test) = test_results.priors_Q;
 
             else
                 assert(~ischar(which_structures));
