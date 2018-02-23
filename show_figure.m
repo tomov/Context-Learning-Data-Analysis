@@ -316,7 +316,7 @@ switch figure_name
 
         headings = 'Hypotheses & $\\sigma_w^2$ & $\\beta$ & BIC & PXP & Log lik & Pearson''s r \\\\';
 
-        load_cached_values = false;
+        load_cached_values = true;
         cached_file = fullfile('results', 'show_figure_tab_models.mat');
        
         if load_cached_values
@@ -399,7 +399,7 @@ switch figure_name
             models(12).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
 
             models(13).which_structures = 'simple_collins'; 
-            models(13).name = 'C&F 2016 0';
+            models(13).name = 'Collins 2016';
             models(13).params_file = fullfile('results', 'fit_params_results_simple_collins.mat');
             models(13).params_idx = 1;
             models(13).params_format = '\\eta = %.4f, \\beta = %.4f, \\alpha = %.4f';
@@ -494,11 +494,11 @@ switch figure_name
 
         % Output table
         %
-        disp('Model & params & BIC & pPXP & fPXP & Log lik & Pearson''s r\n');
+        disp('Model & params & BIC & pPXP & fPXP & Log lik & Pearson''s r\\\\');
         for i = 1:numel(models)
             models(i).pilot_pxp = pilot_pxp(i);
             models(i).pxp = pxp(i);
-            fprintf('$%s$ & $%s$ & %.0f & %.4f & %.4f & %.0f & $r = %.2f, p = %f$ \\\\ \n', ...
+            fprintf('%s & $%s$ & %.0f & %.4f & %.4f & %.0f & $r = %.2f, p = %f$ \\\\ \n', ...
                 models(i).name, ...
                 models(i).params_string, ...
                 models(i).bic, ...
@@ -1218,9 +1218,9 @@ function [data, metadata, simulated, params, options, results, results_options] 
         disp('=== simulate subjects helper, pilot csv\n');
     end
 
-    which_structures = 'simple_collins'; 
-    params_file = fullfile('results', 'fit_params_results_simple_collins.mat');
-    params_idx = 1;
+    %which_structures = 'simple_collins'; 
+    %params_file = fullfile('results', 'fit_params_results_simple_collins.mat');
+    %params_idx = 1;
 
     % Load parameters
     %
