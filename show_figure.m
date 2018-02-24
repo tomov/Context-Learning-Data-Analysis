@@ -316,7 +316,7 @@ switch figure_name
 
         headings = 'Hypotheses & $\\sigma_w^2$ & $\\beta$ & BIC & PXP & Log lik & Pearson''s r \\\\';
 
-        load_cached_values = true;
+        load_cached_values = false;
         cached_file = fullfile('results', 'show_figure_tab_models.mat');
        
         if load_cached_values
@@ -400,7 +400,7 @@ switch figure_name
 
             models(13).which_structures = 'simple_collins'; 
             models(13).name = 'Collins 2016';
-            models(13).params_file = fullfile('results', 'fit_params_results_simple_collins.mat');
+            models(13).params_file = fullfile('results', 'fit_params_results_simple_collins_25nstarts.mat');
             models(13).params_idx = 1;
             models(13).params_format = '\\eta = %.4f, \\beta = %.4f, \\alpha = %.4f';
 
@@ -526,22 +526,22 @@ switch figure_name
         
         subplot(2, 1, 1);
 
-        %P_means = [];
-        %for condition = metadata.contextRoles
-        %    which_rows = data.which_rows & data.isTrain & data.trialId == 20 & strcmp(data.contextRole, condition);
-        %    
-        %    P = simulated.P(which_rows, which_structures);             
-        %    P_means = [P_means; mean(P, 1)];
-        %end
+        P_means = [];
+        for condition = metadata.contextRoles
+            which_rows = data.which_rows & data.isTrain & data.trialId == 20 & strcmp(data.contextRole, condition);
+            
+            P = simulated.P(which_rows, which_structures);             
+            P_means = [P_means; mean(P, 1)];
+        end
 
-        %bar(P_means);
-        %xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
-        %ylabel('Posterior probability');
-        %legend({'M1', 'M2', 'M3'}, 'Position', [0.15 0.3 1 1]);
-        %ylim([0 1.1]);
-        %set(gca,'fontsize',13);
-        %
-        %text(0.1, 1.25, 'A', 'FontSize', 20, 'FontWeight', 'bold')
+        bar(P_means);
+        xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
+        ylabel('Posterior probability');
+        legend({'M1', 'M2', 'M3'}, 'Position', [0.15 0.3 1 1]);
+        ylim([0 1.1]);
+        set(gca,'fontsize',13);
+        
+        text(0.1, 1.25, 'A', 'FontSize', 20, 'FontWeight', 'bold')
 
         
         %
@@ -568,7 +568,53 @@ switch figure_name
 
 
         plot_behavior_helper(model_means);
-        
+
+
+    case 'collins_curves'
+        %
+        % Learning curves, model vs. subjects
+        % 
+        figure('pos', [100 100 693+20 320] * 3/4);
+     
+        % pilot 
+        [data, metadata, simulated] = simulate_subjects_helper(false, fullfile('results', 'fit_params_results_simple_collins_25nstarts.mat'), 1, 'simple_collins');
+        subplot(1,2,1);
+        plot_curves_helper(data, metadata, simulated);
+        title('Behavioral pilot');
+        text(-4, 1.05, 'A', 'FontSize', 20, 'FontWeight', 'bold')
+
+        % fmri
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_25nstarts.mat'), 1, 'simple_collins');
+        subplot(1,2,2);
+        plot_curves_helper(data, metadata, simulated);
+        title('fMRI');
+        text(-4, 1.05, 'B', 'FontSize', 20, 'FontWeight', 'bold')
+
+
+    case 'collins_behavior'
+
+        figure;
+
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_25nstarts.mat'), 1, 'simple_collins');
+
+        % Choice probabilities for model
+        %
+        model_means = [];
+        model_sems = [];
+        for condition = metadata.contextRoles
+            which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
+            
+            x1c1 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 0);
+            x1c3 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 2);
+            x3c1 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 0);
+            x3c3 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 2);
+
+            model_means = [model_means; mean(x1c1) mean(x1c3) mean(x3c1) mean(x3c3)];
+            model_sems = [model_sems; std(x1c1)/sqrt(numel(x1c1)) std(x1c3)/sqrt(numel(x1c3)) std(x3c1)/sqrt(numel(x3c1)) std(x3c3)/sqrt(numel(x3c3))];
+        end
+
+
+        plot_behavior_helper(model_means);
 
     case 'collins_posteriors'
         
@@ -1217,10 +1263,6 @@ function [data, metadata, simulated, params, options, results, results_options] 
         [data, metadata] = load_data(fullfile('data', 'pilot.csv'), false);
         disp('=== simulate subjects helper, pilot csv\n');
     end
-
-    %which_structures = 'simple_collins'; 
-    %params_file = fullfile('results', 'fit_params_results_simple_collins.mat');
-    %params_idx = 1;
 
     % Load parameters
     %

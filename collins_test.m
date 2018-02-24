@@ -8,7 +8,7 @@ Q0 = 0.1; % prior outcome expectaiton TODO collins = 0.5; Sam = 0; maybe fit?
 eta = params(1); % learning rate
 inv_softmax_temp = params(2); 
 alpha = params(3); % concentration parameter
-alpha = 1.5; % TODO fix
+%alpha = 1.5; % TODO fix
  
 if DO_PRINT
     disp('Collins Test');

@@ -38,8 +38,8 @@ function EXPT = context_expt(local)
     % set main directory
     %
     if local
-        exptdir = '/Users/momchil/Dropbox/research/context/'; % local group level on dropbox
-        %exptdir = '/Volumes/fMRI/ConLearn/'; % local group level on external drive
+        %exptdir = '/Users/momchil/Dropbox/research/context/'; % local group level on dropbox
+        exptdir = '/Volumes/fMRI/ConLearn/'; % local group level on external drive
     else
         exptdir = '/ncf/gershman/Lab/ConLearn/'; % on CBS central server
     end
@@ -72,7 +72,8 @@ function EXPT = context_expt(local)
     EXPT.create_multi = @context_create_multi;
     % Where you want model output data to live
     if local
-        EXPT.modeldir = [exptdir, 'neural'];
+        %EXPT.modeldir = [exptdir, 'neural'];
+        EXPT.modeldir = [exptdir, 'glmOutput'];
     else
         EXPT.modeldir = [exptdir, 'glmOutput'];
     end
