@@ -168,7 +168,14 @@ for who = metadata.subjects
                 simulated.priors_Q(:,:,which_train) = train_results.priors_Q;
                 simulated.posteriors_C(:,:,which_train) = train_results.posteriors_C;
                 simulated.posteriors_S(:,:,which_train) = train_results.posteriors_S;
+                simulated.posteriors_c(which_train,:) = train_results.posteriors_c;
+                simulated.posteriors_s(which_train,:) = train_results.posteriors_s;
                 simulated.posteriors_Q(:,:,which_train) = train_results.posteriors_Q;
+
+                surprise_c = KL_divergence(train_results.posteriors_c, train_results.priors_c);
+                surprise_s = KL_divergence(train_results.posteriors_s, train_results.priors_s);
+                simulated.surprise_c(which_train, :) = surprise_c;
+                simulated.surprise_s(which_train, :) = surprise_s;
            
                 test_results = collins_test(test_x, test_k, train_results, subject_params, false);
 

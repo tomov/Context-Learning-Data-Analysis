@@ -25,7 +25,7 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
     if nargin < 4 || isempty(save_output)
         save_output = false;
     end
-    
+
     utils; % include some functions
     
     fprintf('glm %d, subj %d, run %d\n', glmodel, subj, run);
@@ -52,8 +52,6 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
     % we only support good subjects here now
     %
     assert(ismember(subj, getGoodSubjects()));
-    
-
     
     % condition = context role for the run
     %

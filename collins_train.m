@@ -77,6 +77,8 @@ for n = 1:N % for each trial
     end
     priors_C(:,:,n) = P_C;
     priors_S(:,:,n) = P_S;
+    priors_c(n,:) = P_C(c,:);
+    priors_s(n,:) = P_S(s,:);
     priors_Q(:,:,n) = Q;
 
 
@@ -145,6 +147,8 @@ for n = 1:N % for each trial
     end
     posteriors_C(:,:,n) = P_C;
     posteriors_S(:,:,n) = P_S;
+    posteriors_c(n,:) = P_C(c,:);
+    posteriors_s(n,:) = P_S(s,:);
     posteriors_Q(:,:,n) = Q;
 
 end

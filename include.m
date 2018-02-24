@@ -16,4 +16,4 @@ addpath('/Users/momchil/Dropbox/Research/libs/rsatoolbox/Modules/'); % RSA toolb
 addpath('/Users/momchil/Dropbox/Research/libs/distributionPlot/'); % for plotting stuff
 
 
-%addpath('/Users/momchil/Dropbox/research/context/model'); % the model code and behavioral data
+%addpath('/Users/momchil/Dropbox/Research/context/code'); % the current directory -- b/c ccnl_fmri_glm.m calls functions in it from another directory

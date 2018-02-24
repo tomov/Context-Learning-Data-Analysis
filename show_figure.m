@@ -400,7 +400,7 @@ switch figure_name
 
             models(13).which_structures = 'simple_collins'; 
             models(13).name = 'Collins 2016';
-            models(13).params_file = fullfile('results', 'fit_params_results_simple_collins_25nstarts.mat');
+            models(13).params_file = fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat');
             models(13).params_idx = 1;
             models(13).params_format = '\\eta = %.4f, \\beta = %.4f, \\alpha = %.4f';
 
@@ -577,14 +577,14 @@ switch figure_name
         figure('pos', [100 100 693+20 320] * 3/4);
      
         % pilot 
-        [data, metadata, simulated] = simulate_subjects_helper(false, fullfile('results', 'fit_params_results_simple_collins_25nstarts.mat'), 1, 'simple_collins');
+        [data, metadata, simulated] = simulate_subjects_helper(false, fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'), 1, 'simple_collins');
         subplot(1,2,1);
         plot_curves_helper(data, metadata, simulated);
         title('Behavioral pilot');
         text(-4, 1.05, 'A', 'FontSize', 20, 'FontWeight', 'bold')
 
         % fmri
-        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_25nstarts.mat'), 1, 'simple_collins');
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'), 1, 'simple_collins');
         subplot(1,2,2);
         plot_curves_helper(data, metadata, simulated);
         title('fMRI');
@@ -595,7 +595,7 @@ switch figure_name
 
         figure;
 
-        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_25nstarts.mat'), 1, 'simple_collins');
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'), 1, 'simple_collins');
 
         % Choice probabilities for model
         %
