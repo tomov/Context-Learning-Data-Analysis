@@ -21,7 +21,7 @@ if nargin < 4 || isempty(which_structures)
 end
 
 if nargin < 3 || isempty(params)
-    params = [0.1249 2.0064]; % by default, use the params from the pilot fit
+    params = [0.1249 2.0064]; WRONG % by default, use the params from the pilot fit 
 end
 
 

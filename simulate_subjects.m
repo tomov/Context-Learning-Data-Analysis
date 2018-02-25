@@ -187,11 +187,13 @@ for who = metadata.subjects
                 simulated.posteriors_C(which_train,:) = train_results.posteriors_C;
                 simulated.posteriors_S(which_train,:) = train_results.posteriors_S;
 
-                surprise_Zc_given_c = KL_divergence(train_results.posterior_Zc_given_c, train_results.prior_Zc_given_c);
-                simulated.surprise_Zc_given_c(which_train, :) = surprise_Zc_given_c;
+                simulated.surprise_Zc_given_c(which_train, :) = KL_divergence(train_results.posterior_Zc_given_c, train_results.prior_Zc_given_c);
+                simulated.surprise_Zs_given_s(which_train, :) = KL_divergence(train_results.posterior_Zs_given_s, train_results.prior_Zs_given_s);
 
-                surprise_Zs_given_s = KL_divergence(train_results.posterior_Zs_given_s, train_results.prior_Zs_given_s);
-                simulated.surprise_Zs_given_s(which_train, :) = surprise_Zs_given_s;
+                simulated.surprise_Zc_and_C(which_train, :) = KL_divergence(train_results.posteriors_Zc_and_C, train_results.priors_Zc_and_C);
+                simulated.surprise_Zs_and_S(which_train, :) = KL_divergence(train_results.posteriors_Zs_and_S, train_results.priors_Zs_and_S);
+                simulated.surprise_Zc(which_train, :) = KL_divergence(train_results.posteriors_Zc, train_results.priors_Zc);
+                simulated.surprise_Zs(which_train, :) = KL_divergence(train_results.posteriors_Zs, train_results.priors_Zs);
 
                 test_results = collins_test(test_x, test_k, train_results, subject_params, false);
 

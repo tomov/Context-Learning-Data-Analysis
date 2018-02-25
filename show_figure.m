@@ -630,8 +630,6 @@ switch figure_name
 
         [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'), 1, 'simple_collins');
 
-        save shit.mat;
-
         % Choice probabilities for model
         %
         model_means = [];

@@ -1,7 +1,8 @@
-function [test_log_liks, test_RTs, test_log_liks_all] = get_test_behavior()
+function [test_log_liks, test_RTs, test_log_liks_all] = get_test_behavior(params, which_structures)
 % Get the subject test trial behavior
 %
-% INPUT: n/a
+% INPUT: 
+% [params, which_structures] = model_default_params();
 %
 % OUTPUT:
 % test_log_liks = N x R matrix of average test choice log likelihoods according to
@@ -19,13 +20,9 @@ which_rows = data.which_rows;
 
 %% Simulate behavior
 %
-prior_variance = 0.1249;
-inv_softmax_temp = 2.0064;
-params = [prior_variance inv_softmax_temp];
-which_structures = logical([1 1 1 0]);
 simulated = simulate_subjects(data, metadata, params, which_structures, which_rows, false);
 
-predict = @(V_n) softmax(V_n, inv_softmax_temp);
+%predict = @(V_n) softmax(V_n, inv_softmax_temp);
 
 %% Get test choice log likelihood and RTs
 %
@@ -70,6 +67,7 @@ for subj = goodSubjects % 1..25
         
         test_log_liks(subj_idx, run) = avg_loglik; 
 
+        %{
         % Get the test trial likelihood according to each structure
         %
         v = simulated.valuess(run_test_trials, which_structures); % value on each trial, for each structure
@@ -81,6 +79,7 @@ for subj = goodSubjects % 1..25
             avg_loglik = mean(log(liks));
             test_log_liks_all(subj_idx, run, s) = avg_loglik;
         end
+        %}
         
         % Get the test trial RTs
         %

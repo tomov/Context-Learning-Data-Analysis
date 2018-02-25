@@ -14,6 +14,18 @@ function surprise = KL_divergence(P, Q)
 
 assert(isequal(size(P), size(Q)));
 
+if ndims(P) == 3
+    P = reshape(P, size(P,1)*size(P,2), size(P,3))';
+    Q = reshape(Q, size(Q,1)*size(Q,2), size(Q,3))';
+end
+
+assert(abs(mean(sum(P,2) - 1)) < 1e-6); 
+assert(abs(mean(sum(Q,2) - 1)) < 1e-6);
+assert(min(min(P)) >= 0);
+assert(max(max(P)) <= 1);
+assert(min(min(Q)) >= 0);
+assert(max(max(Q)) <= 1);
+
 h = P .* (log2(P) - log2(Q)); 
 h(isnan(h)) = 0; % lim_{x->0} x log(x) = 0
 assert(sum(sum(isinf(h))) == 0); % shouldn't be any inf's left

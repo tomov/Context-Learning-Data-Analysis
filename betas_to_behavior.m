@@ -1,4 +1,4 @@
-function [means, sems, ps, ts] = betas_to_behavior(glmodel, regressor, what, contrast)
+function [means, sems, ps, ts] = betas_to_behavior(glmodel, regressor, what, contrast, params, which_structures)
 
 % Correlate peak voxels from different contrasts with behavior
 % Also tries with clusters of voxels (average the betas)
@@ -9,7 +9,8 @@ function [means, sems, ps, ts] = betas_to_behavior(glmodel, regressor, what, con
 % what = 'voxel', 'sphere', or 'cluster' -- what area to take around the
 %        peak voxel from each cluster
 % contrast = optional contrast from which to extract the clusters; by
-%            default set to regressor
+%            default set to regressor 
+% [params, which_structures] = model_default_params();
 %
 % EXAMPLES:
 % betas_to_behavior(123, 'surprise', 'voxel')
@@ -127,7 +128,7 @@ end
 
 %% Get the behavioral correlates
 %
-[test_liks, test_RTs] = get_test_behavior();
+[test_liks, test_RTs] = get_test_behavior(params, which_structures);
 
 
 %% within-subject analysis using a linear mixed effects model and/or t-tests
