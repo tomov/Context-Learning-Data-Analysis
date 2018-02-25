@@ -528,6 +528,23 @@ switch figure_name
 
         [r, p] = corrcoef(KL_154, KL_156)
 
+    case 'KL_157_vs_159'
+        
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'), 1, 'simple_collins');
+        which_rows = data.which_rows & data.isTrain;
+        KL_157 = simulated.surprise_Zc_given_c(which_rows) + simulated.surprise_Zs_given_s(which_rows);
+
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_25nstarts.mat'), 1, 'simple_collins');
+        which_rows = data.which_rows & data.isTrain;
+        KL_159 = simulated.surprise_Zc_given_c(which_rows) + simulated.surprise_Zs_given_s(which_rows);
+
+        figure;
+        plotregression(KL_157, KL_159);
+        xlabel('KL 5 starts');
+        ylabel('KL 25 starts');
+
+        [r, p] = corrcoef(KL_157, KL_159)
+
 
     case 'ccnl_bic_bms'
         bic_154 = ccnl_bic(context_expt(), 154, 'masks/angular.nii', getGoodSubjects());

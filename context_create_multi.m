@@ -4311,8 +4311,8 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
 
             which_error = which_train & ~data.response.corr;
 
-            KL_c = simulated.surprise_c(which_train);
-            KL_s = simulated.surprise_s(which_train);
+            KL_c = simulated.surprise_Zc_given_c(which_train);
+            KL_s = simulated.surprise_Zs_given_s(which_train);
             PEs = simulated.PEs(which_train);
             
             context_changed = data.contextId ~= circshift(data.contextId, 1);
@@ -4379,8 +4379,8 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
 
             which_error = which_train & ~data.response.corr;
 
-            KL_c = simulated.surprise_c(which_train);
-            KL_s = simulated.surprise_s(which_train);
+            KL_c = simulated.surprise_Zc_given_c(which_train);
+            KL_s = simulated.surprise_Zs_given_s(which_train);
             PEs = simulated.PEs(which_train);
             
             context_changed = data.contextId ~= circshift(data.contextId, 1);

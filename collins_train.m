@@ -66,8 +66,8 @@ for n = 1:N % for each trial
 
     P_C = mean(contexts(1:n,:), 1);
     P_S = mean(stimuli(1:n,:), 1);
-    P_Zc_and_C = P_Zc_given_C .* P_C; % ncf matlab won't like this
-    P_Zs_and_S = P_Zs_given_S .* P_S;
+    P_Zc_and_C = P_Zc_given_C .* repmat(P_C, [max_clusters 1]);
+    P_Zs_and_S = P_Zs_given_S .* repmat(P_S, [max_clusters 1]);
     P_Zc = sum(P_Zc_and_C, 2);
     P_Zs = sum(P_Zs_and_S, 2);
 
@@ -115,8 +115,8 @@ for n = 1:N % for each trial
     P_Zc_given_C = Reward_update(P_Zc_given_C, K_C, Q(:,z_s), r, c, DO_PRINT);
     P_Zs_given_S = Reward_update(P_Zs_given_S, K_S, Q(z_c,:), r, s, DO_PRINT);
 
-    P_Zc_and_C = P_Zc_given_C .* P_C; % ncf matlab won't like this
-    P_Zs_and_S = P_Zs_given_S .* P_S;
+    P_Zc_and_C = P_Zc_given_C .* repmat(P_C, [max_clusters 1]);
+    P_Zs_and_S = P_Zs_given_S .* repmat(P_S, [max_clusters 1]);
     P_Zc = sum(P_Zc_and_C, 2);
     P_Zs = sum(P_Zs_and_S, 2);
 
@@ -217,6 +217,9 @@ function P = Reward_update(P, K, Q, r, c, DO_PRINT)
     for i=1:K % for each context cluster
         q = Q(i);
         lik = binopdf(r, 1, q);
+        if r == 1 & q == 1 & isnan(lik)
+            lik = 1; % ncf matlab thinks binopdf(1,1,1) == NaN...............
+        end
         %if DO_PRINT, fprintf('                 cluster %d: Q(%d, z_s) = %.3f, lik = %.3f, prior P(%d|c) = %.3f\n', i, i, q, lik, i, P_C(c, i)); end
         P(i,c) = P(i,c) * lik;
     end
