@@ -28,8 +28,8 @@ N = size(stimuli, 1); % # observations
 
 K_C = train_results.K_C; % # of active context clusters
 K_S = train_results.K_S; % # of active stimulus clusters
-P_C = train_results.P_C; % P_C(C,Z) = P(Z|C) cluster assignments for each context. Note row = C, col = Z
-P_S = train_results.P_S; % P_S(S,Z) = P(Z|S) cluster assignments for each stimulus. Note row = S, col = Z
+P_Zc_given_C = train_results.P_C; % P_C(C,Z) = P(Z|C) cluster assignments for each context. Note row = C, col = Z
+P_Zs_given_S = train_results.P_S; % P_S(S,Z) = P(Z|S) cluster assignments for each stimulus. Note row = S, col = Z
 
 Q = train_results.Q; % Q(C,S) TODO technically V b/c no action
 
@@ -45,44 +45,27 @@ for n = 1:N % for each trial
 
     % Initialize cluster probabilities according to CRP if stimulus and/or context is new
     %
-    if sum(P_C(c,:)) == 0
-        % new context
-        %
-        p = [sum(P_C(:,1:K_C)), alpha];
-        p = p / sum(p);
-        P_C(c,1:numel(p)) = p;
-        K_C = K_C + 1; % as per their 2013 psych review paper
-        if DO_PRINT, fprintf('      New c: P(z|c) = [%s]\n', sprintf('%.3f, ', P_C(c,:))); end
-    end
-
-    if sum(P_S(s,:)) == 0
-        % new stimulus 
-        %
-        p = [sum(P_S(:,1:K_S)), alpha];
-        p = p / sum(p);
-        P_S(s,1:numel(p)) = p;
-        K_S = K_S + 1;
-        if DO_PRINT, fprintf('      New s: P(z|s) = [%s]\n', sprintf('%.3f, ', P_S(s,:))); end
-    end
+    [P_Zc_given_C, K_C] = CRP_update(P_Zc_given_C, K_C, c, alpha, DO_PRINT);
+    [P_Zs_given_S, K_S] = CRP_update(P_Zs_given_S, K_S, s, alpha, DO_PRINT);
 
     if DO_PRINT
         disp('      prior P(Z|C):');
-        disp(P_C);
+        disp(P_Zc_given_C);
         disp('      prior P(Z|S):');
-        disp(P_S);
+        disp(P_Zs_given_S);
         disp('      prior Q:');
         disp(Q);
     end
-    priors_C(:,:,n) = P_C;
-    priors_S(:,:,n) = P_S;
-    prior_c(n,:) = P_C(c,:);
-    prior_s(n,:) = P_S(s,:);
+    priors_C(:,:,n) = P_Zc_given_C;
+    priors_S(:,:,n) = P_Zs_given_S;
+    prior_c(n,:) = P_Zc_given_C(:,c)';
+    prior_s(n,:) = P_Zs_given_S(:,s)';
     priors_Q(:,:,n) = Q;
 
     % pick clusters of current stimulus/context for action selection (maximum a priori)
     %
-    [~, z_c] = max(P_C(c,:));
-    [~, z_s] = max(P_S(s,:));
+    [~, z_c] = max(P_Zc_given_C(:,c));
+    [~, z_s] = max(P_Zs_given_S(:,s));
 
     if DO_PRINT, fprintf('   (a priori) inferred z_c = %d, z_s = %d, Q = %.4f\n', z_c, z_s, Q(z_c, z_s)); end
 
@@ -105,5 +88,22 @@ test_results.prior_c = prior_c;
 test_results.prior_s = prior_s;
 test_results.priors_Q = priors_Q;
 
+end
+
+
+function [P, K] = CRP_update(P, K, c, alpha, DO_PRINT)
+    % if context c is new, update its distribution over clusters P(Z_c|c)
+    %
+    if sum(P(:,c)) == 0
+        % new context
+        %
+        p = [sum(P(1:K,:), 2); alpha];
+        p = p / sum(p);
+        assert(numel(p) == K+1);
+        P(1:numel(p), c) = p;
+        K = K + 1; % as per collins & frank's 2013 psych review paper
+        if DO_PRINT, disp('                       New cluster'); end
+        %if DO_PRINT, fprintf('      New : P(z|s) = [%s]\n', sprintf('%.3f, ', P_S(s,:))); end
+    end
 end
 

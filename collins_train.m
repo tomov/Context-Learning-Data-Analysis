@@ -29,14 +29,14 @@ N = size(stimuli, 1); % # observations
 
 K_C = 0; % # of active context clusters
 K_S = 0; % # of active stimulus clusters
-P_Zc_given_C = zeros(D_C, max_clusters); % (C,Z_c) = P(Z_c|C) cluster assignments for each context. Note row = C, col = Z
-P_Zs_given_S = zeros(D_S, max_clusters); % (S,Z_s) = P(Z_s|S) cluster assignments for each stimulus. Note row = S, col = Z
+P_Zc_given_C = zeros(max_clusters, D_C); % (C,Z_c) = P(Z_c|C) cluster assignments for each context. Note row = C, col = Z
+P_Zs_given_S = zeros(max_clusters, D_S); % (S,Z_s) = P(Z_s|S) cluster assignments for each stimulus. Note row = S, col = Z
 P_C = zeros(max_clusters); % P(Z_c) = cluster popularities for contexts
 P_S = zeros(max_clusters); % P(Z_s) = cluster popularities for stimuli
 P_C(1) = 1;
 P_S(1) = 1;
-P_Zc_and_C = zeros(D_C, max_clusters); % P(C,Z_c) = P(Z_c|C) P(C) 
-P_Zs_and_S = zeros(D_S, max_clusters); % P(S,Z_s) = P(Z_s|S) P(S)
+P_Zc_and_C = zeros(max_clusters, D_C); % P(C,Z_c) = P(Z_c|C) P(C) 
+P_Zs_and_S = zeros(max_clusters, D_S); % P(S,Z_s) = P(Z_s|S) P(S)
 
 Q = Q0 * ones(max_clusters, max_clusters); % Q(C,S) TODO technically V b/c no action
 
@@ -66,15 +66,15 @@ for n = 1:N % for each trial
     end
     priors_C(:,:,n) = P_Zc_given_C;
     priors_S(:,:,n) = P_Zs_given_S;
-    prior_c(n,:) = P_Zc_given_C(c,:);
-    prior_s(n,:) = P_Zs_given_S(s,:);
+    prior_c(n,:) = P_Zc_given_C(:,c)';
+    prior_s(n,:) = P_Zs_given_S(:,s)';
     priors_Q(:,:,n) = Q;
 
 
     % pick clusters of current stimulus/context for action selection (maximum a priori)
     %
-    [~, z_c] = max(P_Zc_given_C(c,:));
-    [~, z_s] = max(P_Zs_given_S(s,:));
+    [~, z_c] = max(P_Zc_given_C(:,c));
+    [~, z_s] = max(P_Zs_given_S(:,s));
 
     if DO_PRINT, fprintf('   (a priori) inferred z_c = %d, z_s = %d, Q = %.4f\n', z_c, z_s, Q(z_c, z_s)); end
 
@@ -96,8 +96,8 @@ for n = 1:N % for each trial
 
     % pick clusters of current stimulus/context for updating (maximum a posteriori)
     %
-    [~, z_c] = max(P_Zc_given_C(c,:));
-    [~, z_s] = max(P_Zs_given_S(s,:));
+    [~, z_c] = max(P_Zc_given_C(:,c));
+    [~, z_s] = max(P_Zs_given_S(:,s));
 
     if DO_PRINT, fprintf('   (a posteriori) inferred z_c = %d, z_s = %d, Q = %.4f\n', z_c, z_s, Q(z_c, z_s)); end
 
@@ -119,8 +119,8 @@ for n = 1:N % for each trial
     end
     posteriors_C(:,:,n) = P_Zc_given_C;
     posteriors_S(:,:,n) = P_Zs_given_S;
-    posterior_c(n,:) = P_Zc_given_C(c,:);
-    posterior_s(n,:) = P_Zs_given_S(s,:);
+    posterior_c(n,:) = P_Zc_given_C(:,c)';
+    posterior_s(n,:) = P_Zs_given_S(:,s)';
     posteriors_Q(:,:,n) = Q;
     PEs(n) = PE;
 
@@ -152,12 +152,13 @@ end
 function [P, K] = CRP_update(P, K, c, alpha, DO_PRINT)
     % if context c is new, update its distribution over clusters P(Z_c|c)
     %
-    if sum(P(c,:)) == 0
+    if sum(P(:,c)) == 0
         % new context
         %
-        p = [sum(P(:,1:K)), alpha];
+        p = [sum(P(1:K,:), 2); alpha];
         p = p / sum(p);
-        P(c,1:numel(p)) = p;
+        assert(numel(p) == K+1);
+        P(1:numel(p), c) = p;
         K = K + 1; % as per collins & frank's 2013 psych review paper
         if DO_PRINT, disp('                       New cluster'); end
         %if DO_PRINT, fprintf('      New : P(z|s) = [%s]\n', sprintf('%.3f, ', P_S(s,:))); end
@@ -172,7 +173,7 @@ function P = Reward_update(P, K, Q, r, c, DO_PRINT)
         q = Q(i);
         lik = binopdf(r, 1, q);
         %if DO_PRINT, fprintf('                 cluster %d: Q(%d, z_s) = %.3f, lik = %.3f, prior P(%d|c) = %.3f\n', i, i, q, lik, i, P_C(c, i)); end
-        P(c, i) = P(c, i) * lik;
+        P(i,c) = P(i,c) * lik;
     end
-    P(c, :) = P(c, :) / sum(P(c, :));
+    P(:,c) = P(:,c) / sum(P(:,c));
 end
