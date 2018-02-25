@@ -81,9 +81,15 @@ for n = 1:N % for each trial
     end
     priors_P_Zc_given_C(:,:,n) = P_Zc_given_C;
     priors_P_Zs_given_S(:,:,n) = P_Zs_given_S;
-    prior_Zc_given_c(n,:) = P_Zc_given_C(:,c)';
-    prior_Zs_given_s(n,:) = P_Zs_given_S(:,s)';
+    prior_Zc_given_c(n,:) = P_Zc_given_C(:,c);
+    prior_Zs_given_s(n,:) = P_Zs_given_S(:,s);
     priors_Q(:,:,n) = Q;
+    priors_P_Zc_and_C(:,:,n) = P_Zc_and_C;
+    priors_P_Zs_and_S(:,:,n) = P_Zs_and_S;
+    priors_P_Zc(n,:) = P_Zc;
+    priors_P_Zs(n,:) = P_Zs;
+    priors_P_C(n,:) = P_C;
+    priors_P_S(n,:) = P_S;
 
 
     % pick clusters of current stimulus/context for action selection (maximum a priori)
@@ -108,6 +114,11 @@ for n = 1:N % for each trial
     
     P_Zc_given_C = Reward_update(P_Zc_given_C, K_C, Q(:,z_s), r, c, DO_PRINT);
     P_Zs_given_S = Reward_update(P_Zs_given_S, K_S, Q(z_c,:), r, s, DO_PRINT);
+
+    P_Zc_and_C = P_Zc_given_C .* P_C; % ncf matlab won't like this
+    P_Zs_and_S = P_Zs_given_S .* P_S;
+    P_Zc = sum(P_Zc_and_C, 2);
+    P_Zs = sum(P_Zs_and_S, 2);
 
     % pick clusters of current stimulus/context for updating (maximum a posteriori)
     %
@@ -138,6 +149,13 @@ for n = 1:N % for each trial
     posterior_Zs_given_s(n,:) = P_Zs_given_S(:,s)';
     posteriors_Q(:,:,n) = Q;
     PEs(n) = PE;
+    posteriors_P_Zc_and_C(:,:,n) = P_Zc_and_C;
+    posteriors_P_Zs_and_S(:,:,n) = P_Zs_and_S;
+    posteriors_P_Zc(n,:) = P_Zc;
+    posteriors_P_Zs(n,:) = P_Zs;
+    posteriors_P_C(n,:) = P_C;
+    posteriors_P_S(n,:) = P_S;
+
 
 end
 
@@ -154,12 +172,24 @@ train_results.priors_Zs_given_S = priors_P_Zs_given_S;
 train_results.prior_Zc_given_c = prior_Zc_given_c;
 train_results.prior_Zs_given_s = prior_Zs_given_s;
 train_results.priors_Q = priors_Q;
+train_results.priors_P_Zc_and_C = priors_P_Zc_and_C;
+train_results.priors_P_Zs_and_S = priors_P_Zs_and_S;
+train_results.priors_P_Zc = priors_P_Zc;
+train_results.priors_P_Zs = priors_P_Zs;
+train_results.priors_P_C = priors_P_C;
+train_results.priors_P_S = priors_P_S;
 train_results.posteriors_Zc_given_C = posteriors_Zc_given_C;
 train_results.posteriors_Zs_given_S = posteriors_Zs_given_S;
 train_results.posterior_Zc_given_c = posterior_Zc_given_c;
 train_results.posterior_Zs_given_s = posterior_Zs_given_s;
 train_results.posteriors_Q = posteriors_Q;
 train_results.PEs = PEs;
+train_results.posteriors_P_Zc_and_C = posteriors_P_Zc_and_C;
+train_results.posteriors_P_Zs_and_S = posteriors_P_Zs_and_S;
+train_results.posteriors_P_Zc = posteriors_P_Zc;
+train_results.posteriors_P_Zs = posteriors_P_Zs;
+train_results.posteriors_P_C = posteriors_P_C;
+train_results.posteriors_P_S = posteriors_P_S;
 
 end
 

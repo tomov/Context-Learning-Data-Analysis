@@ -62,8 +62,8 @@ for n = 1:N % for each trial
     end
     priors_Zc_given_C(:,:,n) = P_Zc_given_C;
     priors_Zs_given_S(:,:,n) = P_Zs_given_S;
-    prior_Zc_given_c(n,:) = P_Zc_given_C(:,c)';
-    prior_Zs_given_s(n,:) = P_Zs_given_S(:,s)';
+    prior_Zc_given_c(n,:) = P_Zc_given_C(:,c);
+    prior_Zs_given_s(n,:) = P_Zs_given_S(:,s);
     priors_Q(:,:,n) = Q;
 
     % pick clusters of current stimulus/context for action selection (maximum a priori)
