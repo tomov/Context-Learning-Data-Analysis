@@ -60,10 +60,10 @@ for n = 1:N % for each trial
         disp('      prior Q:');
         disp(Q);
     end
-    priors_C(:,:,n) = P_Zc_given_C;
-    priors_S(:,:,n) = P_Zs_given_S;
-    prior_c(n,:) = P_Zc_given_C(:,c)';
-    prior_s(n,:) = P_Zs_given_S(:,s)';
+    priors_Zc_given_C(:,:,n) = P_Zc_given_C;
+    priors_Zs_given_S(:,:,n) = P_Zs_given_S;
+    prior_Zc_given_c(n,:) = P_Zc_given_C(:,c)';
+    prior_Zs_given_s(n,:) = P_Zs_given_S(:,s)';
     priors_Q(:,:,n) = Q;
 
     % pick clusters of current stimulus/context for action selection (maximum a priori)
@@ -86,10 +86,10 @@ end
 
 test_results.choices = choices;
 test_results.values = values;
-test_results.priors_C = priors_C;
-test_results.priors_S = priors_S;
-test_results.prior_c = prior_c;
-test_results.prior_s = prior_s;
+test_results.priors_Zc_given_C = priors_Zc_given_C;
+test_results.priors_Zs_given_S = priors_Zs_given_S;
+test_results.prior_Zc_given_c = prior_Zc_given_c;
+test_results.prior_Zs_given_s = prior_Zs_given_s;
 test_results.priors_Q = priors_Q;
 
 end

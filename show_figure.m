@@ -656,9 +656,10 @@ switch figure_name
         %set(handle, 'Position', [500, 500, 450, 200])
      
         % M1, M2, M1'
-        which_structures = logical([1 1 0 1 0]);
-        [data, metadata, simulated] = simulate_subjects_helper();        
-        %[data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_reviewer2.mat'), 1, which_structures);
+        %which_structures = logical([1 1 0 1 0]);
+        %[data, metadata, simulated] = simulate_subjects_helper();        
+        which_structures = 'simple_collins';
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'), 1, which_structures);
         
 
         i = 0;
@@ -666,9 +667,9 @@ switch figure_name
         for condition = metadata.contextRoles
             which_rows = data.which_rows & data.newTrialId == 20 & strcmp(data.contextRole, condition);
             
-            P = simulated.posteriors_C(:,:,which_rows);
+            P = simulated.posteriors_Zc_given_C(:,:,which_rows);
             P = mean(P, 3);
-            P = mean(P, 1);
+            P = mean(P, 2)';
             P = P(1:3);
             P_means = [P_means; P];
 
@@ -690,9 +691,9 @@ switch figure_name
         for condition = metadata.contextRoles
             which_rows = data.which_rows & data.newTrialId == 24 & strcmp(data.contextRole, condition);
             
-            P = simulated.posteriors_C(:,:,which_rows);
+            P = simulated.posteriors_Zc_given_C(:,:,which_rows);
             P = mean(P, 3);
-            P = mean(P, 1);
+            P = mean(P, 2)';
             P = P(1:3);
             P_means = [P_means; P];
 
@@ -714,9 +715,9 @@ switch figure_name
         for condition = metadata.contextRoles
             which_rows = data.which_rows & data.newTrialId == 20 & strcmp(data.contextRole, condition);
             
-            P = simulated.posteriors_S(:,:,which_rows);
+            P = simulated.posteriors_Zs_given_S(:,:,which_rows);
             P = mean(P, 3);
-            P = mean(P, 1);
+            P = mean(P, 2)';
             P = P(1:3);
             P_means = [P_means; P];
 
@@ -738,9 +739,9 @@ switch figure_name
         for condition = metadata.contextRoles
             which_rows = data.which_rows & data.newTrialId == 24 & strcmp(data.contextRole, condition);
             
-            P = simulated.posteriors_S(:,:,which_rows);
+            P = simulated.posteriors_Zs_given_S(:,:,which_rows);
             P = mean(P, 3);
-            P = mean(P, 1);
+            P = mean(P, 2)';
             P = P(1:3);
             P_means = [P_means; P];
 

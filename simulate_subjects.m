@@ -163,23 +163,23 @@ for who = metadata.subjects
                 simulated.keys(which_train) = model_response_keys;
                 simulated.pred(which_train) = train_results.choices;
                 simulated.values(which_train, :) = train_results.values;
-                simulated.priors_C(:,:,which_train) = train_results.priors_C;
-                simulated.priors_S(:,:,which_train) = train_results.priors_S;
-                simulated.prior_c(which_train,:) = train_results.prior_c;
-                simulated.prior_s(which_train,:) = train_results.prior_s;
+                simulated.priors_Zc_given_C(:,:,which_train) = train_results.priors_Zc_given_C;
+                simulated.priors_Zs_given_S(:,:,which_train) = train_results.priors_Zs_given_S;
+                simulated.prior_Zc_given_c(which_train,:) = train_results.prior_Zc_given_c;
+                simulated.prior_Zs_given_s(which_train,:) = train_results.prior_Zs_given_s;
                 simulated.priors_Q(:,:,which_train) = train_results.priors_Q;
-                simulated.posteriors_C(:,:,which_train) = train_results.posteriors_C;
-                simulated.posteriors_S(:,:,which_train) = train_results.posteriors_S;
-                simulated.posterior_c(which_train,:) = train_results.posterior_c;
-                simulated.posterior_s(which_train,:) = train_results.posterior_s;
+                simulated.posteriors_Zc_given_C(:,:,which_train) = train_results.posteriors_Zc_given_C;
+                simulated.posteriors_Zs_given_S(:,:,which_train) = train_results.posteriors_Zs_given_S;
+                simulated.posterior_Zc_given_c(which_train,:) = train_results.posterior_Zc_given_c;
+                simulated.posterior_Zs_given_s(which_train,:) = train_results.posterior_Zs_given_s;
                 simulated.posteriors_Q(:,:,which_train) = train_results.posteriors_Q;
                 simulated.PEs(which_train) = train_results.PEs;
 
-                surprise_c = KL_divergence(train_results.posterior_c, train_results.prior_c);
-                simulated.surprise_c(which_train, :) = surprise_c;
+                surprise_Zc_given_c = KL_divergence(train_results.posterior_Zc_given_c, train_results.prior_Zc_given_c);
+                simulated.surprise_Zc_given_c(which_train, :) = surprise_Zc_given_c;
 
-                surprise_s = KL_divergence(train_results.posterior_s, train_results.prior_s);
-                simulated.surprise_s(which_train, :) = surprise_s;
+                surprise_Zs_given_s = KL_divergence(train_results.posterior_Zs_given_s, train_results.prior_Zs_given_s);
+                simulated.surprise_Zs_given_s(which_train, :) = surprise_Zs_given_s;
 
                 test_results = collins_test(test_x, test_k, train_results, subject_params, false);
 
@@ -190,15 +190,15 @@ for who = metadata.subjects
                 simulated.keys(which_test) = model_test_response_keys;
                 simulated.pred(which_test) = test_results.choices;
                 simulated.values(which_test, :) = test_results.values;
-                simulated.priors_C(:,:,which_test) = test_results.priors_C;
-                simulated.priors_S(:,:,which_test) = test_results.priors_S;
-                simulated.prior_c(which_test,:) = test_results.prior_c;
-                simulated.prior_s(which_test,:) = test_results.prior_s;
+                simulated.priors_Zc_given_C(:,:,which_test) = test_results.priors_Zc_given_C;
+                simulated.priors_Zs_given_S(:,:,which_test) = test_results.priors_Zs_given_S;
+                simulated.prior_Zc_given_c(which_test,:) = test_results.prior_Zc_given_c;
+                simulated.prior_Zs_given_s(which_test,:) = test_results.prior_Zs_given_s;
                 simulated.priors_Q(:,:,which_test) = test_results.priors_Q;
-                simulated.posteriors_C(:,:,which_test) = test_results.priors_C;
-                simulated.posteriors_S(:,:,which_test) = test_results.priors_S;
-                simulated.posterior_c(which_test,:) = test_results.prior_c;
-                simulated.posterior_s(which_test,:) = test_results.prior_s;
+                simulated.posteriors_Zc_given_C(:,:,which_test) = test_results.priors_Zc_given_C;
+                simulated.posteriors_Zs_given_S(:,:,which_test) = test_results.priors_Zs_given_S;
+                simulated.posterior_Zc_given_c(which_test,:) = test_results.prior_Zc_given_c;
+                simulated.posterior_Zs_given_s(which_test,:) = test_results.prior_Zs_given_s;
                 simulated.posteriors_Q(:,:,which_test) = test_results.priors_Q;
 
             else
