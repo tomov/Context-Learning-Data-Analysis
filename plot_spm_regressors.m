@@ -11,8 +11,7 @@ include_motion = false;
 
 multi = context_create_multi(glmodel, subj, run, true);
 
-%lkasjflaksjflasjkfd
-% TODO broken -- don't save stuff in context_create_multi.mat; breaks
+% TODO FIXME broken -- don't save stuff in context_create_multi.mat; breaks
 % ccnl_fmri_glm...
 load(fullfile('context_create_multi.mat')); % WARNING WARNING WARNING: MASSIVE COUPLING. This relies on context_create_multi saving its state into this file. I just don't wanna copy-paste or abstract away the code that load the data from there
 disp(condition)

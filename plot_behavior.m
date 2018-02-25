@@ -15,6 +15,7 @@ function plot_behavior(data, metadata, params, which_structures)
 %                    e.g. [1 1 1 0] = M1, M2, M3
 %
 
+
 if nargin < 4 || isempty(which_structures)
     which_structures = [1 1 1 0]; % by defulat, use M1 M2 M3
 end

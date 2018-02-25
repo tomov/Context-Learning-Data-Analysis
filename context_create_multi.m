@@ -60,26 +60,44 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
     
     % Run model on training trials
     %
-    
-    if glmodel < 127 || glmodel >= 137
-        % Most models use the fixed effects parameter fit with the pilot
-        % data
+   
+    if glmodel <= 155
+        % M1, M2, M3 structures 
+        %
+        if glmodel < 127 || glmodel >= 137
+            % Most models use the fixed effects parameter fit with the pilot
+            % data
+            %
+            load(fullfile('results', 'fit_params_results.mat'), 'results', 'results_options');
+            params = results(1).x;
+            options = results_options(1);
+            disp('Using parameters:');
+            disp(params);
+            disp('generated with options:');
+            disp(options);
+            assert(options.isFmriData == false);
+            assert(options.fixedEffects == true);
+            assert(isequal(options.which_structures, [1 1 1 0]));
+            which_structures = options.which_structures;
+        else
+            % Only a small subset of the models use the random effects parameter fit on the fMRI data 
+            %
+            load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts.mat'), 'results', 'results_options');
+            params = results(1).x;
+            options = results_options(1);
+            disp('Using parameters:');
+            disp(params);
+            disp('generated with options:');
+            disp(options);
+            assert(options.isFmriData == true);
+            assert(~options.fixedEffects);
+            assert(isequal(options.which_structures, [1 1 1 0]));
+            which_structures = options.which_structures;
+        end
+    else
+        % Use the M1, M2, M1' structures
         %
         [params, which_structures] = model_default_params();
-    else
-        % Only a small subset of the models use the random effects parameter fit on the fMRI data 
-        %
-        load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts.mat'), 'results', 'results_options');
-        params = results(1).x;
-        options = results_options(1);
-        disp('Using parameters:');
-        disp(params);
-        disp('generated with options:');
-        disp(options);
-        assert(options.isFmriData == true);
-        assert(~options.fixedEffects);
-        assert(isequal(options.which_structures, [1 1 1 0]));
-        which_structures = options.which_structures;
     end
     
     simulated = simulate_subjects(data, metadata, params, which_structures, which_rows);        
@@ -3995,6 +4013,7 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
             
             
         % Same as 153 but with context changes as a regressor
+        % THIS IS THE ONE WE USED IN THE FIRST SUBMISSION TO JNEURO
         %
         case 154
             which_error = which_train & ~data.response.corr;
@@ -4136,7 +4155,273 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
                 multi.durations{4} = zeros(size(data.contextRole(which_error)));
             end
             
+
+
+        %
+        % -------------------- FROM HENCE ONWARD -- M1, M2, M1'
+        %
+
+
             
+        % Same as 154 actually. Except simulated with M1, M2, M1'
+        %
+        case 156
+            which_error = which_train & ~data.response.corr;
+
+            KL_structures = simulated.surprise(which_train);
+            
+            context_changed = data.contextId ~= circshift(data.contextId, 1);
+            context_changed(data.trialId == 1 & data.isTrain) = 0; % TODO 0 or 1?
+            context_changed = context_changed(which_train);
+            
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them!
+                        
+            M = -1;
+            if strcmp(condition, 'irrelevant')
+                M = 1;
+            elseif strcmp(condition, 'modulatory')
+                M = 2;
+            else
+                assert(strcmp(condition, 'additive'));
+                M = 3;
+            end
+            ww_prior = simulated.ww_before{M}(which_train, :);
+            Sigma_prior = simulated.Sigma_before{M}(:,:,which_train);
+            ww_posterior = simulated.ww_after{M}(which_train, :);
+            Sigma_posterior = simulated.Sigma_after{M}(:,:,which_train);
+            KL_weights = KL_divergence_gauss(ww_posterior, Sigma_posterior, ww_prior, Sigma_prior);
+            assert(size(KL_weights, 1) == sum(which_train));
+            
+            multi.pmod(1).name{1} = 'KL_structures';
+            multi.pmod(1).param{1} = KL_structures';
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'KL_weights';
+            multi.pmod(1).param{2} = KL_weights';
+            multi.pmod(1).poly{2} = 1; % first order        
+            
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+
+            % did context change on this trial?
+            %
+            multi.names{3} = 'context_changed';
+            multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(context_changed))';
+            multi.durations{3} = zeros(size(data.contextRole(context_changed)));
+            
+            % correct vs. wrong (0/1) @ feedback / outcome onset (WRONG trials 1..20)
+            % 
+            if sum(which_error) > 0
+                multi.names{4} = 'wrong';
+                multi.onsets{4} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
+                multi.durations{4} = zeros(size(data.contextRole(which_error)));
+            end
+        
+
+
+        % Collins & frank GLM, analogous to ours 154
+        %
+        case 157
+            load(fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'), 'results', 'results_options');
+            params = results(1).x;
+            options = results_options(1);
+            disp('Using parameters:');
+            disp(params);
+            disp('generated with options:');
+            disp(options);
+            assert(options.isFmriData == false);
+            assert(options.fixedEffects == true);
+            which_structures = options.which_structures;
+
+            simulated = simulate_subjects(data, metadata, params, which_structures, which_rows);        
+
+
+            which_error = which_train & ~data.response.corr;
+
+            KL_c = simulated.surprise_c(which_train);
+            KL_s = simulated.surprise_s(which_train);
+            PEs = simulated.PEs(which_train);
+            
+            context_changed = data.contextId ~= circshift(data.contextId, 1);
+            context_changed(data.trialId == 1 & data.isTrain) = 0; % TODO 0 or 1?
+            context_changed = context_changed(which_train);
+            
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them!
+                        
+            multi.pmod(1).name{1} = 'KL_clusters';
+            multi.pmod(1).param{1} = KL_s' + KL_c'; % TODO contrast too
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'PEs';
+            multi.pmod(1).param{2} = PEs';
+            multi.pmod(1).poly{2} = 1; % first order        
+            
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+
+            % did context change on this trial?
+            %
+            multi.names{3} = 'context_changed';
+            multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(context_changed))';
+            multi.durations{3} = zeros(size(data.contextRole(context_changed)));
+            
+            % correct vs. wrong (0/1) @ feedback / outcome onset (WRONG trials 1..20)
+            % 
+            if sum(which_error) > 0
+                multi.names{4} = 'wrong';
+                multi.onsets{4} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
+                multi.durations{4} = zeros(size(data.contextRole(which_error)));
+            end
+        
+
+        % Collins & frank GLM KL_s vs KL_c
+        %
+        case 158
+            load(fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'), 'results', 'results_options');
+            params = results(1).x;
+            options = results_options(1);
+            disp('Using parameters:');
+            disp(params);
+            disp('generated with options:');
+            disp(options);
+            assert(options.isFmriData == false);
+            assert(options.fixedEffects == true);
+            which_structures = options.which_structures;
+
+            simulated = simulate_subjects(data, metadata, params, which_structures, which_rows);        
+
+
+            which_error = which_train & ~data.response.corr;
+
+            KL_c = simulated.surprise_c(which_train);
+            KL_s = simulated.surprise_s(which_train);
+            PEs = simulated.PEs(which_train);
+            
+            context_changed = data.contextId ~= circshift(data.contextId, 1);
+            context_changed(data.trialId == 1 & data.isTrain) = 0; % TODO 0 or 1?
+            context_changed = context_changed(which_train);
+            
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them!
+                        
+            multi.pmod(1).name{1} = 'KL_s';
+            multi.pmod(1).param{1} = KL_s'; % TODO contrast too
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'KL_c';
+            multi.pmod(1).param{2} = KL_c'; % TODO contrast too
+            multi.pmod(1).poly{2} = 1; % first order                    
+
+            multi.pmod(1).name{3} = 'PEs';
+            multi.pmod(1).param{3} = PEs';
+            multi.pmod(1).poly{3} = 1; % first order        
+            
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+
+            % did context change on this trial?
+            %
+            multi.names{3} = 'context_changed';
+            multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(context_changed))';
+            multi.durations{3} = zeros(size(data.contextRole(context_changed)));
+            
+            % correct vs. wrong (0/1) @ feedback / outcome onset (WRONG trials 1..20)
+            % 
+            if sum(which_error) > 0
+                multi.names{4} = 'wrong';
+                multi.onsets{4} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
+                multi.durations{4} = zeros(size(data.contextRole(which_error)));
+            end
+            
+            
+        % Collins & frank GLM, same as 157 but with better parameters
+        %
+        case 159
+            load(fullfile('results', 'fit_params_results_simple_collins_25nstarts.mat'), 'results', 'results_options');
+            params = results(1).x;
+            options = results_options(1);
+            disp('Using parameters:');
+            disp(params);
+            disp('generated with options:');
+            disp(options);
+            assert(options.isFmriData == false);
+            assert(options.fixedEffects == true);
+            which_structures = options.which_structures;
+
+            simulated = simulate_subjects(data, metadata, params, which_structures, which_rows);        
+
+
+            which_error = which_train & ~data.response.corr;
+
+            KL_c = simulated.surprise_c(which_train);
+            KL_s = simulated.surprise_s(which_train);
+            PEs = simulated.PEs(which_train);
+            
+            context_changed = data.contextId ~= circshift(data.contextId, 1);
+            context_changed(data.trialId == 1 & data.isTrain) = 0; % TODO 0 or 1?
+            context_changed = context_changed(which_train);
+            
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them!
+                        
+            multi.pmod(1).name{1} = 'KL_clusters';
+            multi.pmod(1).param{1} = KL_s' + KL_c'; % TODO contrast too
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'PEs';
+            multi.pmod(1).param{2} = PEs';
+            multi.pmod(1).poly{2} = 1; % first order        
+            
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+
+            % did context change on this trial?
+            %
+            multi.names{3} = 'context_changed';
+            multi.onsets{3} = cellfun(@str2num,data.actualFeedbackOnset(context_changed))';
+            multi.durations{3} = zeros(size(data.contextRole(context_changed)));
+            
+            % correct vs. wrong (0/1) @ feedback / outcome onset (WRONG trials 1..20)
+            % 
+            if sum(which_error) > 0
+                multi.names{4} = 'wrong';
+                multi.onsets{4} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
+                multi.durations{4} = zeros(size(data.contextRole(which_error)));
+            end
             
         otherwise
             assert(false, 'invalid glmodel -- should be one of the above');

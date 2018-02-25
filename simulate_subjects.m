@@ -165,18 +165,22 @@ for who = metadata.subjects
                 simulated.values(which_train, :) = train_results.values;
                 simulated.priors_C(:,:,which_train) = train_results.priors_C;
                 simulated.priors_S(:,:,which_train) = train_results.priors_S;
+                simulated.prior_c(which_train,:) = train_results.prior_c;
+                simulated.prior_s(which_train,:) = train_results.prior_s;
                 simulated.priors_Q(:,:,which_train) = train_results.priors_Q;
                 simulated.posteriors_C(:,:,which_train) = train_results.posteriors_C;
                 simulated.posteriors_S(:,:,which_train) = train_results.posteriors_S;
-                simulated.posteriors_c(which_train,:) = train_results.posteriors_c;
-                simulated.posteriors_s(which_train,:) = train_results.posteriors_s;
+                simulated.posterior_c(which_train,:) = train_results.posterior_c;
+                simulated.posterior_s(which_train,:) = train_results.posterior_s;
                 simulated.posteriors_Q(:,:,which_train) = train_results.posteriors_Q;
+                simulated.PEs(which_train) = train_results.PEs;
 
-                surprise_c = KL_divergence(train_results.posteriors_c, train_results.priors_c);
-                surprise_s = KL_divergence(train_results.posteriors_s, train_results.priors_s);
+                surprise_c = KL_divergence(train_results.posterior_c, train_results.prior_c);
                 simulated.surprise_c(which_train, :) = surprise_c;
+
+                surprise_s = KL_divergence(train_results.posterior_s, train_results.prior_s);
                 simulated.surprise_s(which_train, :) = surprise_s;
-           
+
                 test_results = collins_test(test_x, test_k, train_results, subject_params, false);
 
                 model_test_choices = test_results.choices > rand;
@@ -188,9 +192,13 @@ for who = metadata.subjects
                 simulated.values(which_test, :) = test_results.values;
                 simulated.priors_C(:,:,which_test) = test_results.priors_C;
                 simulated.priors_S(:,:,which_test) = test_results.priors_S;
+                simulated.prior_c(which_test,:) = test_results.prior_c;
+                simulated.prior_s(which_test,:) = test_results.prior_s;
                 simulated.priors_Q(:,:,which_test) = test_results.priors_Q;
                 simulated.posteriors_C(:,:,which_test) = test_results.priors_C;
                 simulated.posteriors_S(:,:,which_test) = test_results.priors_S;
+                simulated.posterior_c(which_test,:) = test_results.prior_c;
+                simulated.posterior_s(which_test,:) = test_results.prior_s;
                 simulated.posteriors_Q(:,:,which_test) = test_results.priors_Q;
 
             else
