@@ -26,17 +26,25 @@ D_S = size(stimuli, 2); % # of stimuli = D in Sam's model
 
 N = size(stimuli, 1); % # observations
 
+contexts_onehot = zeros(N, D_C);
+contexts_onehot(sub2ind([N D_C], 1:N, contexts')) = 1;
+contexts = contexts_onehot;
+
 
 K_C = 0; % # of active context clusters
 K_S = 0; % # of active stimulus clusters
-P_Zc_given_C = zeros(max_clusters, D_C); % (C,Z_c) = P(Z_c|C) cluster assignments for each context. Note row = C, col = Z
-P_Zs_given_S = zeros(max_clusters, D_S); % (S,Z_s) = P(Z_s|S) cluster assignments for each stimulus. Note row = S, col = Z
-P_C = zeros(max_clusters); % P(Z_c) = cluster popularities for contexts
-P_S = zeros(max_clusters); % P(Z_s) = cluster popularities for stimuli
-P_C(1) = 1;
-P_S(1) = 1;
-P_Zc_and_C = zeros(max_clusters, D_C); % P(C,Z_c) = P(Z_c|C) P(C) 
-P_Zs_and_S = zeros(max_clusters, D_S); % P(S,Z_s) = P(Z_s|S) P(S)
+% conditionals
+P_Zc_given_C = zeros(max_clusters, D_C); % P(Z_c|C) cluster assignments for each context. Note row = C, col = Z
+P_Zs_given_S = zeros(max_clusters, D_S); % P(Z_s|S) cluster assignments for each stimulus. Note row = S, col = Z
+% marginals
+P_Zc = nan(max_clusters); % P(Z_c) = cluster popularities for contexts
+P_Zs = nan(max_clusters); % P(Z_s) = cluster popularities for stimuli
+% marginals
+P_C = nan(max_clusters); % P(C) = context frequencies
+P_S = nan(max_clusters); % P(S) = stimulus frequencies
+% joint
+P_Zc_and_C = nan(max_clusters, D_C); % P(Z_c,C) = P(Z_c|C) P(C) 
+P_Zs_and_S = nan(max_clusters, D_S); % P(Z_s,S) = P(Z_s|S) P(S)
 
 Q = Q0 * ones(max_clusters, max_clusters); % Q(C,S) TODO technically V b/c no action
 
@@ -47,7 +55,7 @@ for n = 1:N % for each trial
 
     r = rewards(n);
     s = find(stimuli(n,:));
-    c = contexts(n); % one-hot vector for the context
+    c = find(contexts(n,:));
 
     if DO_PRINT, fprintf('\n\n\n========== Trial %d: c = %d, s = %d -> r = %d ============\n', n, c, s, r); end
 
@@ -55,6 +63,13 @@ for n = 1:N % for each trial
     %
     [P_Zc_given_C, K_C] = CRP_update(P_Zc_given_C, K_C, c, alpha, DO_PRINT);
     [P_Zs_given_S, K_S] = CRP_update(P_Zs_given_S, K_S, s, alpha, DO_PRINT);
+
+    P_C = mean(contexts(1:n,:), 1);
+    P_S = mean(stimuli(1:n,:), 1);
+    P_Zc_and_C = P_Zc_given_C .* P_C % ncf matlab won't like this
+    P_Zs_and_S = P_Zs_given_S .* P_S;
+    P_Zc = sum(P_Zc_and_C, 2);
+    P_Zs = sum(P_Zs_and_S, 2);
 
     if DO_PRINT
         disp('      prior P(Z|C):');
@@ -64,10 +79,10 @@ for n = 1:N % for each trial
         disp('      prior Q:');
         disp(Q);
     end
-    priors_C(:,:,n) = P_Zc_given_C;
-    priors_S(:,:,n) = P_Zs_given_S;
-    prior_c(n,:) = P_Zc_given_C(:,c)';
-    prior_s(n,:) = P_Zs_given_S(:,s)';
+    priors_P_Zc_given_C(:,:,n) = P_Zc_given_C;
+    priors_P_Zs_given_S(:,:,n) = P_Zs_given_S;
+    prior_Zc_given_c(n,:) = P_Zc_given_C(:,c)';
+    prior_Zs_given_s(n,:) = P_Zs_given_S(:,s)';
     priors_Q(:,:,n) = Q;
 
 
@@ -117,10 +132,10 @@ for n = 1:N % for each trial
         disp('      posterior Q:');
         disp(Q);
     end
-    posteriors_C(:,:,n) = P_Zc_given_C;
-    posteriors_S(:,:,n) = P_Zs_given_S;
-    posterior_c(n,:) = P_Zc_given_C(:,c)';
-    posterior_s(n,:) = P_Zs_given_S(:,s)';
+    posteriors_Zc_given_C(:,:,n) = P_Zc_given_C;
+    posteriors_Zs_given_S(:,:,n) = P_Zs_given_S;
+    posterior_Zc_given_c(n,:) = P_Zc_given_C(:,c)';
+    posterior_Zs_given_s(n,:) = P_Zs_given_S(:,s)';
     posteriors_Q(:,:,n) = Q;
     PEs(n) = PE;
 
@@ -134,15 +149,15 @@ train_results.P_S = P_Zs_given_S;
 train_results.K_C = K_C;
 train_results.K_S = K_S;
 train_results.Q = Q;
-train_results.priors_C = priors_C;
-train_results.priors_S = priors_S;
-train_results.prior_c = prior_c;
-train_results.prior_s = prior_s;
+train_results.priors_C = priors_P_Zc_given_C;
+train_results.priors_S = priors_P_Zs_given_S;
+train_results.prior_c = prior_Zc_given_c;
+train_results.prior_s = prior_Zs_given_s;
 train_results.priors_Q = priors_Q;
-train_results.posteriors_C = posteriors_C;
-train_results.posteriors_S = posteriors_S;
-train_results.posterior_c = posterior_c;
-train_results.posterior_s = posterior_s;
+train_results.posteriors_C = posteriors_Zc_given_C;
+train_results.posteriors_S = posteriors_Zs_given_S;
+train_results.posterior_c = posterior_Zc_given_c;
+train_results.posterior_s = posterior_Zs_given_s;
 train_results.posteriors_Q = posteriors_Q;
 train_results.PEs = PEs;
 

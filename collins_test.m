@@ -26,6 +26,10 @@ D_S = size(stimuli, 2); % # of stimuli = D in Sam's model
 
 N = size(stimuli, 1); % # observations
 
+contexts_onehot = zeros(N, D_C);
+contexts_onehot(sub2ind([N D_C], 1:N, contexts')) = 1;
+contexts = contexts_onehot;
+
 K_C = train_results.K_C; % # of active context clusters
 K_S = train_results.K_S; % # of active stimulus clusters
 P_Zc_given_C = train_results.P_C; % P_C(C,Z) = P(Z|C) cluster assignments for each context. Note row = C, col = Z
@@ -39,7 +43,7 @@ values = []; % history of predicted outcomes, weighted sum across all models (ca
 for n = 1:N % for each trial
 
     s = find(stimuli(n,:));
-    c = contexts(n); % one-hot vector for the context
+    c = find(contexts(n,:));
 
     if DO_PRINT, fprintf('\n\n\n========== Trial %d: c = %d, s = %d  ============\n', n, c, s); end
 
