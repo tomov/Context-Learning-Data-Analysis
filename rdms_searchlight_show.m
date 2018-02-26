@@ -11,7 +11,7 @@ close all;
 %
 
 event = 'feedback_onset';
-model = 'ww_Sigma_posterior';
+model = 'posterior';
 %dirname = 'rdms/betas_smooth';
 dirname = 'rdms';
 
