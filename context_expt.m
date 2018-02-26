@@ -73,7 +73,7 @@ function EXPT = context_expt(local)
     % Where you want model output data to live
     if local
         %EXPT.modeldir = [exptdir, 'neural'];
-        EXPT.modeldir = [exptdir, 'glmOutput'];
+        EXPT.modeldir = [exptdir, 'glm'];
     else
         EXPT.modeldir = [exptdir, 'glmOutput'];
     end

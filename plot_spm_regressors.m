@@ -4,6 +4,12 @@ function plot_spm_regressors(glmodel, subj, run)
 % Requires the SPM structure to have been generated i.e. the single-subject
 % GLM should have been run
 %
+% USAGE:
+% plot_spm_regressors(glmodel, subj, run)
+%
+% EXAMPLE:
+% plot_spm_regressors(160, 1, 1)
+%
 
 EXPT = context_expt();
 include_motion = false;
