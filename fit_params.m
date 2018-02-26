@@ -110,12 +110,12 @@ for isFmriData = isFmriDataRange
             %
             param = [];
 
-            if isequal(which_structures, 'simple_Q') % TODO fixme for q learning by reviewer 1
+            if isequal(which_structures, 'simple_Q') 
                 param(1).name = 'inverse softmax temperature'; 
                 param(1).logpdf = @(x) 1;
                 param(1).lb = 0;
                 param(1).ub = 10;
-            elseif isequal(which_structures, 'Q_learning') % TODO fixme for q learning by reviewer 1
+            elseif isequal(which_structures, 'Q_learning')
                 param(1).name = 'learning rate';
                 param(1).logpdf = @(x) 1; 
                 param(1).lb = 0;
@@ -125,7 +125,7 @@ for isFmriData = isFmriDataRange
                 param(2).logpdf = @(x) 1;
                 param(2).lb = 0;
                 param(2).ub = 10; 
-            elseif isequal(which_structures, 'simple_collins') % TODO fixme for q learning by reviewer 1
+            elseif isequal(which_structures, 'simple_collins') 
                 param(1).name = 'learning rate';
                 param(1).logpdf = @(x) 1; 
                 param(1).lb = 0;
@@ -140,6 +140,16 @@ for isFmriData = isFmriDataRange
                 param(3).logpdf = @(x) 1;
                 param(3).lb = 1;
                 param(3).ub = 2; 
+            elseif isequal(which_structures, 'flat_collins') 
+                param(1).name = 'learning rate';
+                param(1).logpdf = @(x) 1; 
+                param(1).lb = 0;
+                param(1).ub = 1;
+
+                param(2).name = 'inverse softmax temperature'; 
+                param(2).logpdf = @(x) 1;
+                param(2).lb = 0;
+                param(2).ub = 10; 
             else
                 % Sam's model
                 assert(~ischar(which_structures));

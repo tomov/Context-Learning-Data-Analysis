@@ -316,7 +316,7 @@ switch figure_name
 
         headings = 'Hypotheses & $\\sigma_w^2$ & $\\beta$ & BIC & PXP & Log lik & Pearson''s r \\\\';
 
-        load_cached_values = false;
+        load_cached_values = true;
         cached_file = fullfile('results', 'show_figure_tab_models.mat');
        
         if load_cached_values
@@ -403,6 +403,12 @@ switch figure_name
             models(13).params_file = fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat');
             models(13).params_idx = 1;
             models(13).params_format = '\\eta = %.4f, \\beta = %.4f, \\alpha = %.4f';
+
+            models(14).which_structures = 'flat_collins'; 
+            models(14).name = 'Flat RL';
+            models(14).params_file = fullfile('results', 'fit_params_results_flat_collins_5nstarts.mat');
+            models(14).params_idx = 1;
+            models(14).params_format = '\\eta = %.4f, \\beta = %.4f';
 
             [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
 
@@ -600,24 +606,7 @@ switch figure_name
         
         subplot(2, 1, 2);
 
-        % Choice probabilities for model
-        %
-        model_means = [];
-        model_sems = [];
-        for condition = metadata.contextRoles
-            which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
-            
-            x1c1 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 0);
-            x1c3 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 2);
-            x3c1 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 0);
-            x3c3 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 2);
-
-            model_means = [model_means; mean(x1c1) mean(x1c3) mean(x3c1) mean(x3c3)];
-            model_sems = [model_sems; std(x1c1)/sqrt(numel(x1c1)) std(x1c3)/sqrt(numel(x1c3)) std(x3c1)/sqrt(numel(x3c1)) std(x3c3)/sqrt(numel(x3c3))];
-        end
-
-
-        plot_behavior_helper(model_means);
+        plot_behavior_helper(data, metadata, simulated);
 
 
     case 'collins_curves'
@@ -625,46 +614,65 @@ switch figure_name
         % Learning curves, model vs. subjects
         % 
         figure('pos', [100 100 693+20 320] * 3/4);
+
+        %
+        % Collins model
+        %
      
         % pilot 
         [data, metadata, simulated] = simulate_subjects_helper(false, fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'), 1, 'simple_collins');
-        subplot(1,2,1);
+        subplot(2,2,1);
         plot_curves_helper(data, metadata, simulated);
-        title('Behavioral pilot');
+        title('Collins: Behavioral pilot');
         text(-4, 1.05, 'A', 'FontSize', 20, 'FontWeight', 'bold')
 
         % fmri
         [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'), 1, 'simple_collins');
-        subplot(1,2,2);
+        subplot(2,2,2);
         plot_curves_helper(data, metadata, simulated);
-        title('fMRI');
+        title('Collins: fMRI');
+        text(-4, 1.05, 'B', 'FontSize', 20, 'FontWeight', 'bold')
+
+        %
+        % Flat model
+        %
+     
+        % pilot 
+        [data, metadata, simulated] = simulate_subjects_helper(false, fullfile('results', 'fit_params_results_flat_collins_5nstarts.mat'), 1, 'flat_collins');
+        subplot(2,2,3);
+        plot_curves_helper(data, metadata, simulated);
+        title('Flat: Behavioral pilot');
+        text(-4, 1.05, 'A', 'FontSize', 20, 'FontWeight', 'bold')
+
+        % fmri
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_flat_collins_5nstarts.mat'), 1, 'flat_collins');
+        subplot(2,2,4);
+        plot_curves_helper(data, metadata, simulated);
+        title('Flat: fMRI');
         text(-4, 1.05, 'B', 'FontSize', 20, 'FontWeight', 'bold')
 
 
     case 'collins_behavior'
 
-        figure;
+        figure
+        
+        % Collins & frank model
+        %
+
+        subplot(2,1,1);
 
         [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'), 1, 'simple_collins');
 
-        % Choice probabilities for model
+        plot_behavior_helper(data, metadata, simulated);
+
+        % Flat Q learning
         %
-        model_means = [];
-        model_sems = [];
-        for condition = metadata.contextRoles
-            which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
-            
-            x1c1 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 0);
-            x1c3 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 2);
-            x3c1 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 0);
-            x3c3 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 2);
 
-            model_means = [model_means; mean(x1c1) mean(x1c3) mean(x3c1) mean(x3c3)];
-            model_sems = [model_sems; std(x1c1)/sqrt(numel(x1c1)) std(x1c3)/sqrt(numel(x1c3)) std(x3c1)/sqrt(numel(x3c1)) std(x3c3)/sqrt(numel(x3c3))];
-        end
+        subplot(2,1,2);
 
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_flat_collins_5nstarts.mat'), 1, 'flat_collins');
 
-        plot_behavior_helper(model_means);
+        plot_behavior_helper(data, metadata, simulated);
 
     case 'collins_posteriors'
         
@@ -817,21 +825,7 @@ switch figure_name
             [data, metadata, simulated] = simulate_subjects_helper(true, models(i).params_file, models(i).params_idx, models(i).which_structures);
             subplot(2,1,2);
             
-            % Choice probabilities for model
-            %
-            model_means = [];
-            for condition = metadata.contextRoles
-                which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
-                
-                x1c1 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 0);
-                x1c3 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 2);
-                x3c1 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 0);
-                x3c3 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 2);
-
-                model_means = [model_means; mean(x1c1) mean(x1c3) mean(x3c1) mean(x3c3)];
-            end
-            
-            plot_behavior_helper(model_means);
+            plot_behavior_helper(data, metadata, simulated);
 
             title(models(i).name);
         end
@@ -1287,7 +1281,24 @@ end % show_figure()
 
 % helper f'n to plot behavioral results
 %
-function plot_behavior_helper(model_means, model_sems)
+function plot_behavior_helper(data, metadata, simulated)
+
+    % Choice probabilities for model
+    %
+    model_means = [];
+    model_sems = [];
+    for condition = metadata.contextRoles
+        which_rows = data.which_rows & ~data.isTrain & strcmp(data.contextRole, condition);
+        
+        x1c1 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 0);
+        x1c3 = simulated.pred(which_rows & data.cueId == 0 & data.contextId == 2);
+        x3c1 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 0);
+        x3c3 = simulated.pred(which_rows & data.cueId == 2 & data.contextId == 2);
+
+        model_means = [model_means; mean(x1c1) mean(x1c3) mean(x3c1) mean(x3c3)];
+        model_sems = [model_sems; std(x1c1)/sqrt(numel(x1c1)) std(x1c3)/sqrt(numel(x1c3)) std(x3c1)/sqrt(numel(x3c1)) std(x3c3)/sqrt(numel(x3c3))];
+    end
+
     % Plot model choices probabilities
     %
     h = bar(model_means);
