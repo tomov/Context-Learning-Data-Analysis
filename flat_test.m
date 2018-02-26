@@ -47,10 +47,12 @@ for n = 1:N % for each trial
     choices = [choices; out];
     values = [values; q];
 
+    Qs(:,:,n) = Q;
+
     if DO_PRINT, fprintf('   choice = %.3f\n', out); end
 end
 
 
 test_results.choices = choices;
 test_results.values = values;
-
+test_results.Qs = Qs;

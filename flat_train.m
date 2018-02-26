@@ -56,9 +56,13 @@ for n = 1:N % for each trial
     PE = r - Q(c, s);
     Q(c, s) = Q(c, s) + eta * PE;
 
+    PEs(n) = PE;
+    Qs(:,:,n) = Q;
 end
 
 
 train_results.choices = choices;
 train_results.values = values;
 train_results.Q = Q;
+train_results.Qs = Qs;
+train_results.PEs = PEs;

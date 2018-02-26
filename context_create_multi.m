@@ -4332,7 +4332,7 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
             multi.pmod(1).poly{1} = 1; % first order                    
 
             multi.pmod(1).name{2} = 'KL_c';
-            multi.pmod(1).param{2} = KL_c'; % TODO contrast too
+            multi.pmod(1).param{2} = KL_c';
             multi.pmod(1).poly{2} = 1; % first order                    
 
             multi.pmod(1).name{3} = 'PEs';
@@ -4396,7 +4396,7 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
             multi.orth{1} = 0; % do NOT orthogonalize them!
                         
             multi.pmod(1).name{1} = 'KL_clusters';
-            multi.pmod(1).param{1} = KL_s' + KL_c'; % TODO contrast too
+            multi.pmod(1).param{1} = KL_s' + KL_c';
             multi.pmod(1).poly{1} = 1; % first order                    
 
             multi.pmod(1).name{2} = 'PEs';
@@ -4422,6 +4422,32 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
                 multi.onsets{4} = cellfun(@str2num,data.actualFeedbackOnset(which_error))';
                 multi.durations{4} = zeros(size(data.contextRole(which_error)));
             end
+
+        % Collins & frank GLM from their 2016 paper
+        %
+        case 160
+            [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_flat_collins_5nstarts.mat', 1, 'flat_collins');
+            FPEs = simulated.PEs(which_train);
+
+            [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_simple_collins_5nstarts.mat', 1, 'simple_collins');
+            SPEs = simulated.PEs(which_train);
+            
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 1; % DO orthogonalize them -- flat PE first
+                        
+            multi.pmod(1).name{1} = 'FPEs';
+            multi.pmod(1).param{1} = FPEs';
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'SPEs';
+            multi.pmod(1).param{2} = SPEs';
+            multi.pmod(1).poly{2} = 1; % first order        
+        
             
         otherwise
             assert(false, 'invalid glmodel -- should be one of the above');

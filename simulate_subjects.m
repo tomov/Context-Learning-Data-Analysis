@@ -226,6 +226,8 @@ for who = metadata.subjects
                 simulated.keys(which_train) = model_response_keys;
                 simulated.pred(which_train) = train_results.choices;
                 simulated.values(which_train, :) = train_results.values;
+                simulated.PEs(which_train) = train_results.PEs;
+                simulated.Qs(:,:,which_train) = train_results.Qs;
                 
                 test_results = flat_test(test_x, test_k, train_results, subject_params, false);
 
@@ -236,6 +238,7 @@ for who = metadata.subjects
                 simulated.keys(which_test) = model_test_response_keys;
                 simulated.pred(which_test) = test_results.choices;
                 simulated.values(which_test, :) = test_results.values;
+                simulated.Qs(:,:,which_test) = test_results.Qs;
 
 
             else

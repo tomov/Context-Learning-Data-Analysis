@@ -316,7 +316,7 @@ switch figure_name
 
         headings = 'Hypotheses & $\\sigma_w^2$ & $\\beta$ & BIC & PXP & Log lik & Pearson''s r \\\\';
 
-        load_cached_values = true;
+        load_cached_values = false;
         cached_file = fullfile('results', 'show_figure_tab_models.mat');
        
         if load_cached_values
@@ -553,9 +553,9 @@ switch figure_name
 
 
     case 'ccnl_bic_bms'
-        bic_154 = ccnl_bic(context_expt(), 154, 'masks/angular.nii', getGoodSubjects());
-        bic_156 = ccnl_bic(context_expt(), 156, 'masks/angular.nii', getGoodSubjects());
-        bic_157 = ccnl_bic(context_expt(), 157, 'masks/angular.nii', getGoodSubjects());
+        bic_154 = ccnl_bic(context_expt(), 154, 'masks/mask.nii', getGoodSubjects());
+        bic_156 = ccnl_bic(context_expt(), 156, 'masks/mask.nii', getGoodSubjects());
+        bic_157 = ccnl_bic(context_expt(), 157, 'masks/mask.nii', getGoodSubjects());
 
         lme = -0.5 * [bic_154 bic_156 bic_157];
 
