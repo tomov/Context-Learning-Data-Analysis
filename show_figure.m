@@ -600,16 +600,24 @@ switch figure_name
         bspmview('rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', '../neural/mean.nii');
         
     case 'KL_structures'
-        ccnl_view(context_expt(), 154, 'KL_structures');
+        EXPT = context_expt();
+        EXPT.modeldir = 'neural'; % HACK keep locally on github in case things get fucked
+        ccnl_view(EXPT, 154, 'KL_structures');
         
     case 'KL_weights'
-        ccnl_view(context_expt(), 154, 'KL_weights');
+        EXPT = context_expt();
+        EXPT.modeldir = 'neural'; % HACK keep locally on github in case things get fucked
+        ccnl_view(EXPT, 154, 'KL_weights');
         
     case 'KL_structures - KL_weights'
-        ccnl_view(context_expt(), 154, 'KL_structures - KL_weights');
+        EXPT = context_expt();
+        EXPT.modeldir = 'neural'; % HACK keep locally on github in case things get fucked
+        ccnl_view(EXPT, 154, 'KL_structures - KL_weights');
 
     case 'KL_weights - KL_structures'
-        ccnl_view(context_expt(), 154, 'KL_weights - KL_structures');
+        EXPT = context_expt();
+        EXPT.modeldir = 'neural'; % HACK keep locally on github in case things get fucked
+        ccnl_view(EXPT, 154, 'KL_weights - KL_structures');
         
 
     case 'glm154'
