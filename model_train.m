@@ -43,9 +43,21 @@ function train_results = model_train(stimuli, contexts, rewards, params, which_s
 % Sigma = history of Sigma's (weight covariance matrices) for each causal
 %         structure
 
-assert(numel(params) == 2);
+%disp(params);
+
+assert(numel(params) == 2 || numel(params) == 3 || numel(params) == 4);
 prior_variance = params(1);
 inv_softmax_temp = params(2);
+if numel(params) >= 3
+    diffusion_variance = params(3);
+else
+    diffusion_variance = 0.001;
+end
+if numel(params) >= 4
+    initial_weight = params(4);
+else
+    initial_weight = 0;
+end
 
 predict = @(V_n) 1 ./ (1 + exp(-2 * inv_softmax_temp * V_n + inv_softmax_temp)); % predicts by mapping the expectation to an outcome
 
@@ -58,15 +70,15 @@ num_structures = 5;
 
 sigma_r = sqrt(0.01);
 sigma_w = sqrt(prior_variance); % std for gaussian prior over weights, uncertainty; decreasing the learning rate
-tau = sqrt(0.001);
+tau = sqrt(diffusion_variance);
 
 % initialize Kalman filter
 %
-w{1} = zeros(D, 1); % M1 weights: one per stimulus
-w{2} = zeros(D, K); % M2 weights: one per stimulus-context pair
-w{3} = zeros(D + K, 1); % M3 weights: one per stimulus + one per context
-w{4} = zeros(K, 1); % M4 weights: one per context
-w{5} = zeros(K, D); % M4 weights: one per stimulus-context pair
+w{1} = initial_weight * ones(D, 1); % M1 weights: one per stimulus
+w{2} = initial_weight * ones(D, K); % M2 weights: one per stimulus-context pair
+w{3} = initial_weight * ones(D + K, 1); % M3 weights: one per stimulus + one per context
+w{4} = initial_weight * ones(K, 1); % M4 weights: one per context
+w{5} = initial_weight * ones(K, D); % M4 weights: one per stimulus-context pair
 
 S{1} = sigma_w^2 * eye(D);
 S{2} = repmat(sigma_w^2 * eye(D), 1, 1, K); % note the third dimension is the context

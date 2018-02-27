@@ -400,7 +400,7 @@ switch figure_name
 
             models(13).which_structures = 'simple_collins'; 
             models(13).name = 'Collins 2016';
-            models(13).params_file = fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat');
+            models(13).params_file = fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'); % concentration parameter between 1 and 2
             models(13).params_idx = 1;
             models(13).params_format = '\\eta = %.4f, \\beta = %.4f, \\alpha = %.4f';
 

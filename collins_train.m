@@ -3,11 +3,17 @@ function train_results = collins_train(stimuli, contexts, rewards, params, DO_PR
 % Collins & Frank clustering model. Clusters stimuli and contexts independently using DP (CRP).
 %
 
-Q0 = 0.1; % prior outcome expectaiton TODO collins = 0.5; Sam = 0; maybe fit?
+disp(params);
 
+assert(numel(params) == 3 || numel(params) == 4);
 eta = params(1); % learning rate
 inv_softmax_temp = params(2); 
 alpha = params(3); % concentration parameter
+if numel(params) >= 4
+    Q0 = params(4);
+else
+    Q0 = 0.1; % prior outcome expectaiton; collins = 0.5; Sam = 0;
+end
 %alpha = 1.5; % TODO fix
 
 if DO_PRINT

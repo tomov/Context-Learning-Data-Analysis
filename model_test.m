@@ -12,7 +12,6 @@ function test_results = model_test(stimuli, contexts, train_results, params)
 % Same as in model_train.m
 % 
 
-assert(numel(params) == 2);
 inv_softmax_temp = params(2);
 
 % constants

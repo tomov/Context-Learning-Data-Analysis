@@ -1,4 +1,4 @@
-function [results, results_options, mfit_datas] = fit_params(isFmriDataRange, fixedEffectsRange, which_structuress, nstarts)
+function [results, results_options, mfit_datas] = fit_params(isFmriDataRange, fixedEffectsRange, which_structuress, nstarts, outfile, nparams)
 
 % Fit the hyperparameters of the model based on behavioral data
 %
@@ -9,6 +9,8 @@ function [results, results_options, mfit_datas] = fit_params(isFmriDataRange, fi
 %                                hypothesis spaces to fit, e.g. {[1 1 1 0], [1 0 0 0]}
 % nstarts (optional) = how many starts for mfit_optimize for each model
 %                      version
+% outfile (optional) = where to save the results
+% nparams = how many of the parameters to fit (some models have default parameters)
 %
 % OUTPUT: 
 % results = struct array with resulting parameter fits for each version of
@@ -40,6 +42,12 @@ if nargin < 4 || isempty(nstarts)
     % number of random parameter initializations 
     %
     nstarts = 5;
+end
+if nargin < 5 || isempty(outfile)
+    outfile = [];
+end
+if nargin < 6 || isempty(nparams)
+    nparams = 0;
 end
 
 
@@ -138,8 +146,16 @@ for isFmriData = isFmriDataRange
 
                 param(3).name = 'concentration parameter'; 
                 param(3).logpdf = @(x) 1;
-                param(3).lb = 1;
-                param(3).ub = 2; 
+                param(3).lb = 0;
+                param(3).ub = 10; 
+
+                if nparams >= 4
+                    param(4).name = 'initial Q-value'; 
+                    param(4).logpdf = @(x) 1;
+                    param(4).lb = 0;
+                    param(4).ub = 1; 
+                end
+
             elseif isequal(which_structures, 'flat_collins') 
                 param(1).name = 'learning rate';
                 param(1).logpdf = @(x) 1; 
@@ -162,7 +178,22 @@ for isFmriData = isFmriDataRange
                 param(2).logpdf = @(x) 1;  % log density function for prior
                 param(2).lb = 0;
                 param(2).ub = 10; % can't make it too large b/c you get prob = 0 and -Inf likelihiood which fmincon doesn't like
+
+                if nparams >= 3
+                    param(3).name = 'diffusion_variance'; 
+                    param(3).logpdf = @(x) 1;  % log density function for prior
+                    param(3).lb = 0;
+                    param(3).ub = 10;
+                end
+
+                if nparams >= 4
+                    param(4).name = 'initial_weight'; 
+                    param(4).logpdf = @(x) 1;  % log density function for prior
+                    param(4).lb = 0;
+                    param(4).ub = 1;
+                end
             end
+
 
             % P(behavioral data | model)
             % the likelihood function takes in all the subject data every
@@ -187,6 +218,10 @@ for isFmriData = isFmriDataRange
             disp(results(results_ord).x);
         end
     end
+end
+
+if ~isempty(outfile)
+    save(outfile, 'results', 'results_options');
 end
 
 toc

@@ -104,9 +104,7 @@ for who = metadata.subjects
             [train_x, train_k, train_r, test_x, test_k] = convert_run(data, metadata, who, run);
 
 
-            % TODO FIXME hack
-            %
-            if isequal(which_structures, 'simple_Q') % TODO fixme for q learning by reviewer 1
+            if isequal(which_structures, 'simple_Q')
 
                 train_results = q_train(train_x, train_k, train_r, subject_params, false);
 
@@ -129,7 +127,7 @@ for who = metadata.subjects
                 simulated.pred(which_test) = test_results.choices;
                 simulated.values(which_test, :) = test_results.values;
 
-            elseif isequal(which_structures, 'Q_learning') % TODO fixme for q learning by reviewer 1
+            elseif isequal(which_structures, 'Q_learning')
 
                 train_results = q2_train(train_x, train_k, train_r, subject_params, false);
 
@@ -152,7 +150,7 @@ for who = metadata.subjects
                 simulated.pred(which_test) = test_results.choices;
                 simulated.values(which_test, :) = test_results.values;
 
-            elseif isequal(which_structures, 'simple_collins') % TODO fixme  reviewer 2
+            elseif isequal(which_structures, 'simple_collins')
 
                 train_results = collins_train(train_x, train_k, train_r, subject_params, false);
 
@@ -215,7 +213,7 @@ for who = metadata.subjects
                 simulated.posterior_Zs_given_s(which_test,:) = test_results.prior_Zs_given_s;
                 simulated.posteriors_Q(:,:,which_test) = test_results.priors_Q;
 
-            elseif isequal(which_structures, 'flat_collins') % TODO fixme  reviewer 2
+            elseif isequal(which_structures, 'flat_collins')
 
                 train_results = flat_train(train_x, train_k, train_r, subject_params, false);
 
@@ -348,7 +346,7 @@ for who = metadata.subjects
                 end
                 simulated.KL_weights(which_train, :) = KL_divergence_gauss(ww_posterior, Sigma_posterior, ww_prior, Sigma_prior);
 
-            end % end TODO fixme hack
+            end % end switch statement which_structures 
 
         end
     end
