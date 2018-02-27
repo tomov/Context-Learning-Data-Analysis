@@ -3,7 +3,7 @@ function train_results = collins_train(stimuli, contexts, rewards, params, DO_PR
 % Collins & Frank clustering model. Clusters stimuli and contexts independently using DP (CRP).
 %
 
-disp(params);
+%disp(params);
 
 assert(numel(params) == 3 || numel(params) == 4);
 eta = params(1); % learning rate

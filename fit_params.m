@@ -183,7 +183,7 @@ for isFmriData = isFmriDataRange
                     param(3).name = 'diffusion_variance'; 
                     param(3).logpdf = @(x) 1;  % log density function for prior
                     param(3).lb = 0;
-                    param(3).ub = 10;
+                    param(3).ub = 1;
                 end
 
                 if nparams >= 4
