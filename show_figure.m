@@ -28,7 +28,7 @@ switch figure_name
      
         % pilot 
         %[data, metadata, simulated] = simulate_subjects_helper(false);
-        [data, metadata, simulated] = simulate_subjects_helper(false, fullfile('results', 'fit_params_results_M1M2M3_25nstarts.mat'), 1, [1 1 1 0 0]);
+        [data, metadata, simulated] = simulate_subjects_helper(false, fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, [1 1 0 1 0]);
         subplot(1,2,1);
         plot_curves_helper(data, metadata, simulated);
         title('Behavioral pilot');
@@ -36,7 +36,7 @@ switch figure_name
 
         % fmri
         %[data, metadata, simulated] = simulate_subjects_helper(true);
-        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_M1M2M3_25nstarts.mat'), 1, [1 1 1 0 0]);
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, [1 1 0 1 0]);
         subplot(1,2,2);
         plot_curves_helper(data, metadata, simulated);
         title('fMRI');
@@ -440,7 +440,7 @@ switch figure_name
 
             idx = idx + 1;
             models(idx).which_structures = 'simple_collins'; 
-            models(idx).name = 'Collins 2016 Q0';
+            models(idx).name = 'Collins 2016';
             models(idx).params_file = fullfile('results', 'fit_params_results_simple_collins_25nstarts_0-10alpha_Q0.mat');
             models(idx).params_idx = 1;
             models(idx).params_format = '\\eta = %.4f, \\beta = %.4f, \\alpha = %.4f, Q_0 = %.4f';
@@ -455,7 +455,7 @@ switch figure_name
             idx = idx + 1;
             models(idx).which_structures = [1 1 0 1 0]; 
             models(idx).name = 'M1, M2, M1''';
-            models(idx).params_file = fullfile('results', 'results/fit_params_results_M1M2M1_25nstarts.mat');
+            models(idx).params_file = fullfile('results', 'fit_params_results_M1M2M1_25nstarts.mat');
             models(idx).params_idx = 1;
             models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
 
@@ -469,21 +469,21 @@ switch figure_name
             idx = idx + 1;
             models(idx).which_structures = [1 1 0 1 0]; 
             models(idx).name = 'M1, M2, M1''';
-            models(idx).params_file = fullfile('results', 'results/fit_params_results_M1M2M1_25nstarts_tau.mat');
+            models(idx).params_file = fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau.mat');
             models(idx).params_idx = 1;
             models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f, \\tau^2 = %.4f';
 
             idx = idx + 1;
             models(idx).which_structures = [1 1 1 0 0]; 
             models(idx).name = 'M1, M2, M3';
-            models(idx).params_file = fullfile('results', 'results/fit_params_results_M1M2M3_25nstarts_tau_w0.mat');
+            models(idx).params_file = fullfile('results', 'fit_params_results_M1M2M3_25nstarts_tau_w0.mat');
             models(idx).params_idx = 1;
             models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f, \\tau^2 = %.4f, w_0 = %.4f';
 
             idx = idx + 1;
             models(idx).which_structures = [1 1 0 1 0]; 
             models(idx).name = 'M1, M2, M1''';
-            models(idx).params_file = fullfile('results', 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat');
+            models(idx).params_file = fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat');
             models(idx).params_idx = 1;
             models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f, \\tau^2 = %.4f, w_0 = %.4f';
 
@@ -653,8 +653,8 @@ switch figure_name
         %set(handle, 'Position', [500, 500, 450, 200])
      
         % M1, M2, M1'
-        which_structures = logical([1 1 1 0 0]);
-        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_M1M2M3_25nstarts.mat'), 1, [1 1 1 0 0]);
+        which_structures = logical([1 1 0 1 0]);
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, [1 1 0 1 0]);
         %[data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_reviewer2.mat'), 1, which_structures);
         
         subplot(2, 1, 1);
@@ -670,7 +670,7 @@ switch figure_name
         bar(P_means);
         xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
         ylabel('Posterior probability');
-        legend({'M1', 'M2', 'M3'}, 'Position', [0.15 0.3 1 1]);
+        legend({'M1', 'M2', 'M1'''}, 'Position', [0.15 0.3 1 1]);
         ylim([0 1.1]);
         set(gca,'fontsize',13);
         
@@ -697,14 +697,14 @@ switch figure_name
         %
      
         % pilot 
-        [data, metadata, simulated] = simulate_subjects_helper(false, fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'), 1, 'simple_collins');
+        [data, metadata, simulated] = simulate_subjects_helper(false, fullfile('results', 'fit_params_results_simple_collins_25nstarts_0-10alpha_Q0.mat'), 1, 'simple_collins');
         subplot(2,2,1);
         plot_curves_helper(data, metadata, simulated);
         title('Collins: Behavioral pilot');
         text(-4, 1.05, 'A', 'FontSize', 20, 'FontWeight', 'bold')
 
         % fmri
-        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'), 1, 'simple_collins');
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_25nstarts_0-10alpha_Q0.mat'), 1, 'simple_collins');
         subplot(2,2,2);
         plot_curves_helper(data, metadata, simulated);
         title('Collins: fMRI');
@@ -738,9 +738,10 @@ switch figure_name
 
         subplot(2,1,1);
 
-        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'), 1, 'simple_collins');
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_25nstarts_0-10alpha_Q0.mat'), 1, 'simple_collins');
 
         plot_behavior_helper(data, metadata, simulated);
+        title('Collins');
 
         % Flat Q learning
         %
@@ -750,6 +751,7 @@ switch figure_name
         [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_flat_collins_5nstarts.mat'), 1, 'flat_collins');
 
         plot_behavior_helper(data, metadata, simulated);
+        title('Flat RL');
 
     case 'collins_posteriors'
         
