@@ -4447,8 +4447,71 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
             multi.pmod(1).name{2} = 'SPEs';
             multi.pmod(1).param{2} = SPEs';
             multi.pmod(1).poly{2} = 1; % first order        
+
+
+        %
+        % -------------------- from now on -- with 25nstarts
+        %
+
         
+        % Collins & frank GLM from their 2016 paper
+        %
+        case 161
+            [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_flat_collins_25nstarts_Q0.mat', 1, 'flat_collins');
+            FPEs = simulated.PEs(which_train);
+
+            [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_simple_collins_25nstarts_0-10alpha_Q0.mat', 1, 'simple_collins');
+            SPEs = simulated.PEs(which_train);
             
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them -- I want to see them individually before doing the contrast; IMPORTANT: collins orthogonalizes them (FPE comes first)
+                        
+            multi.pmod(1).name{1} = 'FPEs';
+            multi.pmod(1).param{1} = FPEs';
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'SPEs';
+            multi.pmod(1).param{2} = SPEs';
+            multi.pmod(1).poly{2} = 1; % first order        
+        
+        % Collins & frank GLM total KL
+        %
+        case 162
+            [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_simple_collins_25nstarts_0-10alpha_Q0.mat', 1, 'simple_collins');
+
+            KL_c = simulated.surprise_Zc_given_c(which_train);
+            KL_s = simulated.surprise_Zs_given_s(which_train);
+            PEs = simulated.PEs(which_train);
+            
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them!
+                        
+            multi.pmod(1).name{1} = 'KL_clusters';
+            multi.pmod(1).param{1} = KL_s' + KL_c';
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'PEs';
+            multi.pmod(1).param{2} = PEs';
+            multi.pmod(1).poly{2} = 1; % first order        
+            
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+           
+
+
         otherwise
             assert(false, 'invalid glmodel -- should be one of the above');
             

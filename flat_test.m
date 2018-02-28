@@ -3,8 +3,6 @@ function test_results = flat_test(stimuli, contexts, train_results, params, DO_P
 % Collins & Frank flat RL model
 %
 
-Q0 = 0.1; % prior outcome expectaiton TODO collins = 0.5; Sam = 0; maybe fit?
-
 eta = params(1); % learning rate
 inv_softmax_temp = params(2); 
 %alpha = 1.5; % TODO fix

@@ -166,6 +166,14 @@ for isFmriData = isFmriDataRange
                 param(2).logpdf = @(x) 1;
                 param(2).lb = 0;
                 param(2).ub = 10; 
+
+                if nparams >= 3
+                    param(3).name = 'initial Q-value'; 
+                    param(3).logpdf = @(x) 1;
+                    param(3).lb = 0;
+                    param(3).ub = 1; 
+                end
+
             else
                 % Sam's model
                 assert(~ischar(which_structures));

@@ -431,6 +431,7 @@ switch figure_name
 
             % these all have 25 nstarts
 
+
             idx = idx + 1;
             models(idx).which_structures = 'simple_collins'; 
             models(idx).name = 'Collins 2016';
@@ -444,6 +445,13 @@ switch figure_name
             models(idx).params_file = fullfile('results', 'fit_params_results_simple_collins_25nstarts_0-10alpha_Q0.mat');
             models(idx).params_idx = 1;
             models(idx).params_format = '\\eta = %.4f, \\beta = %.4f, \\alpha = %.4f, Q_0 = %.4f';
+
+            idx = idx + 1;
+            models(idx).which_structures = 'flat_collins'; 
+            models(idx).name = 'Flat RL';
+            models(idx).params_file = fullfile('results', 'fit_params_results_flat_collins_25nstarts_Q0.mat');
+            models(idx).params_idx = 1;
+            models(idx).params_format = '\\eta = %.4f, \\beta = %.4f, Q_0 = %.4f';
 
             idx = idx + 1;
             models(idx).which_structures = [1 1 1 0 0]; 

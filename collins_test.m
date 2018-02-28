@@ -3,8 +3,6 @@ function test_results = collins_test(stimuli, contexts, train_results, params, D
 % Collins & Frank clustering model. Clusters stimuli and contexts independently using DP (CRP).
 %
 
-Q0 = 0.1; % prior outcome expectaiton TODO collins = 0.5; Sam = 0; maybe fit?
-
 eta = params(1); % learning rate
 inv_softmax_temp = params(2); 
 alpha = params(3); % concentration parameter

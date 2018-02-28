@@ -14,7 +14,6 @@ if numel(params) >= 4
 else
     Q0 = 0.1; % prior outcome expectaiton; collins = 0.5; Sam = 0;
 end
-%alpha = 1.5; % TODO fix
 
 if DO_PRINT
     disp('Collins Train');

@@ -3,11 +3,14 @@ function train_results = flat_train(stimuli, contexts, rewards, params, DO_PRINT
 % Collins & Frank flat RL model.
 %
 
-Q0 = 0.1; % prior outcome expectaiton TODO collins = 0.5; Sam = 0; maybe fit?
-
+assert(numel(params) == 2 || numel(params) == 3);
 eta = params(1); % learning rate
 inv_softmax_temp = params(2); 
-%alpha = 1.5; % TODO fix
+if numel(params) >= 3
+    Q0 = params(3);
+else
+    Q0 = 0.1; % prior outcome expectaiton; collins = 0.5; Sam = 0;
+end
 
 if DO_PRINT
     disp('Collins Train');
