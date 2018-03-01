@@ -585,7 +585,7 @@ switch figure_name
 
         % Output table
         %
-        disp('Model & params & BIC & pPXP & fPXP & Log lik & Pearson''s r\\\\');
+        disp('Model & params & BIC & pPXP & fPXP & Log lik & Pearson''s r\\');
         for i = 1:numel(models)
             models(i).pilot_pxp = pilot_pxp(i);
             models(i).pxp = pxp(i);
@@ -715,7 +715,7 @@ switch figure_name
         % TODO random effects? LME? repeated measures?
         rt = [];
         g = [];
-        i = 1;
+        i = 0;
         for condition = metadata.contextRoles
             which_rows = data.which_rows & data.isTrain & strcmp(data.contextRole, condition) & ~data.timeout;
           
@@ -727,6 +727,8 @@ switch figure_name
             g = [g; repmat(i, numel(RTs), 1)];
             rt = [rt; RTs];
         end
+
+        save shit.mat;
 
         h = bar(RT_means);
         hold on;
@@ -740,6 +742,11 @@ switch figure_name
 
         [p, anovatab, stats] = anova1(rt, g)
 
+        mean(rt(g == 1))
+        mean(rt(g == 3))
+        [h, p, ci, stats] = ttest2(rt(g == 1), rt(g == 3))
+
+
         %
         % test trials
         %
@@ -751,7 +758,7 @@ switch figure_name
         % TODO random effects? LME? repeated measures?
         rt = [];
         g = [];
-        i = 1;
+        i = 0;
         for condition = metadata.contextRoles
             which_rows = data.which_rows & data.isTest & strcmp(data.contextRole, condition) & ~data.timeout;
           
@@ -775,6 +782,10 @@ switch figure_name
         ylabel('RT (s)');
 
         [p, anovatab, stats] = anova1(rt, g)
+
+        mean(rt(g == 1))
+        mean(rt(g == 3))
+        [h, p, ci, stats] = ttest2(rt(g == 1), rt(g == 3))
 
     case 'collins_curves'
         %

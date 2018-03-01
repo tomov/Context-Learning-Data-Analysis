@@ -240,8 +240,8 @@ title('Flat: PEs');
 %
 
 which_structures = logical([1 1 0 1 0]);
-struct_idx = [1 2 4];
-[data, metadata, simulated] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts.mat', 1, which_structures);
+struct_idx = find(which_structures);
+[data, metadata, simulated] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat', 1, which_structures);
 
 
 subplot_idx = subplot_idx + 1;
@@ -260,11 +260,10 @@ title('KL structures');
 subplot_idx = subplot_idx + 1;
 subplot(nplots,1,subplot_idx);
 KL_weights = [];
-KL_sum = zeros(sum(which_train),1);
 for i = struct_idx
     KL_weights = [KL_weights simulated.KL_weights{i}(which_train)];
-    KL_sum = KL_sum + simulated.KL_weights{i}(which_train);
 end
+KL_sum = sum(KL_weights, 2);
 plot(feedback_onsets, [KL_weights KL_sum], 'o-', 'LineWidth', 2);
 legend({'M1', 'M2', 'M1''', 'sum'});
 title('KL weights');
@@ -272,11 +271,10 @@ title('KL weights');
 subplot_idx = subplot_idx + 1;
 subplot(nplots,1,subplot_idx);
 KL_weights = [];
-KL_sum = zeros(sum(which_train),1);
 for i = struct_idx
     KL_weights = [KL_weights simulated.KL_weights{i}(which_train) .* simulated.P(which_train,i)];
-    KL_sum = KL_sum + simulated.KL_weights{i}(which_train) .* simulated.P(which_train,i);
 end
+KL_sum = sum(KL_weights, 2);
 plot(feedback_onsets, [KL_weights KL_sum], 'o-', 'LineWidth', 2);
 legend({'M1', 'M2', 'M1''', 'sum'});
 title('KL weights, weighted');

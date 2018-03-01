@@ -4509,6 +4509,252 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
             multi.names{2} = 'trial_onset';
             multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
+
+        
+        %
+        % ------------ M1, M2, M1' KL structures & KL weights
+        %
+
+
+        % M1, M2, M1' with KL structures and summed KL weights
+        %
+        case 163
+            which_structures = logical([1 1 0 1 0]);
+            struct_idx = find(which_structures);
+
+            [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat', 1, which_structures);
+
+            KL_structures = simulated.surprise(which_train); 
+
+            KL_weights = [];
+            for i = struct_idx
+                KL_weights = [KL_weights simulated.KL_weights{i}(which_train)];
+            end
+            KL_sum = sum(KL_weights, 2);
+
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them!
+                        
+            multi.pmod(1).name{1} = 'KL_structures';
+            multi.pmod(1).param{1} = KL_structures';
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'KL_weights';
+            multi.pmod(1).param{2} = KL_sum';
+            multi.pmod(1).poly{2} = 1; % first order        
+            
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+           
+
+        % M1, M2, M1' with KL structures and summed KL weights, weighted by posterior
+        %
+        case 164
+            which_structures = logical([1 1 0 1 0]);
+            struct_idx = find(which_structures);
+
+            [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat', 1, which_structures);
+
+            KL_structures = simulated.surprise(which_train); 
+
+            KL_weights = [];
+            for i = struct_idx
+                KL_weights = [KL_weights simulated.KL_weights{i}(which_train) .* simulated.P(which_train,i)];
+            end
+            KL_sum = sum(KL_weights, 2);
+
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them!
+                        
+            multi.pmod(1).name{1} = 'KL_structures';
+            multi.pmod(1).param{1} = KL_structures';
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'KL_weights';
+            multi.pmod(1).param{2} = KL_sum';
+            multi.pmod(1).poly{2} = 1; % first order        
+            
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+           
+
+        % M1, M2, M1' with KL structures and MAP KL weights
+        %
+        case 165
+            which_structures = logical([1 1 0 1 0]);
+            struct_idx = find(which_structures);
+
+            [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat', 1, which_structures);
+
+            KL_structures = simulated.surprise(which_train); 
+
+            KL_weights = [];
+            [~,map] = max(simulated.P(which_train,:), [], 2);
+            for i = 1:sum(which_train)
+                KL_map = simulated.KL_weights{map(i)}(which_train);
+                KL_weights = [KL_weights; KL_map(i)];
+            end
+
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them!
+                        
+            multi.pmod(1).name{1} = 'KL_structures';
+            multi.pmod(1).param{1} = KL_structures';
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'KL_weights';
+            multi.pmod(1).param{2} = KL_weights';
+            multi.pmod(1).poly{2} = 1; % first order        
+            
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+           
+        
+        %
+        % ------------ M1, M2, M3 KL structures & KL weights
+        %
+
+
+        % M1, M2, M3 with KL structures and summed KL weights
+        %
+        case 166
+            which_structures = logical([1 1 1 0 0]);
+            struct_idx = find(which_structures);
+
+            [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M3_25nstarts_tau_w0.mat', 1, which_structures);
+
+            KL_structures = simulated.surprise(which_train); 
+
+            KL_weights = [];
+            for i = struct_idx
+                KL_weights = [KL_weights simulated.KL_weights{i}(which_train)];
+            end
+            KL_sum = sum(KL_weights, 2);
+
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them!
+                        
+            multi.pmod(1).name{1} = 'KL_structures';
+            multi.pmod(1).param{1} = KL_structures';
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'KL_weights';
+            multi.pmod(1).param{2} = KL_sum';
+            multi.pmod(1).poly{2} = 1; % first order        
+            
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+           
+
+        % M1, M2, M3 with KL structures and summed KL weights, weighted by posterior
+        %
+        case 167
+            which_structures = logical([1 1 1 0 0]);
+            struct_idx = find(which_structures);
+
+            [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M3_25nstarts_tau_w0.mat', 1, which_structures);
+
+            KL_structures = simulated.surprise(which_train); 
+
+            KL_weights = [];
+            for i = struct_idx
+                KL_weights = [KL_weights simulated.KL_weights{i}(which_train) .* simulated.P(which_train,i)];
+            end
+            KL_sum = sum(KL_weights, 2);
+
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them!
+                        
+            multi.pmod(1).name{1} = 'KL_structures';
+            multi.pmod(1).param{1} = KL_structures';
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'KL_weights';
+            multi.pmod(1).param{2} = KL_sum';
+            multi.pmod(1).poly{2} = 1; % first order        
+            
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+           
+
+        % M1, M2, M3 with KL structures and MAP KL weights
+        %
+        case 168
+            which_structures = logical([1 1 1 0 0]);
+            struct_idx = find(which_structures);
+
+            [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M3_25nstarts_tau_w0.mat', 1, which_structures);
+
+            KL_structures = simulated.surprise(which_train); 
+
+            KL_weights = [];
+            [~,map] = max(simulated.P(which_train,:), [], 2);
+            for i = 1:sum(which_train)
+                KL_map = simulated.KL_weights{map(i)}(which_train);
+                KL_weights = [KL_weights; KL_map(i)];
+            end
+
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them!
+                        
+            multi.pmod(1).name{1} = 'KL_structures';
+            multi.pmod(1).param{1} = KL_structures';
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'KL_weights';
+            multi.pmod(1).param{2} = KL_weights';
+            multi.pmod(1).poly{2} = 1; % first order        
+            
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
            
 
 
