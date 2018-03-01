@@ -28,7 +28,7 @@ switch figure_name
      
         % pilot 
         %[data, metadata, simulated] = simulate_subjects_helper(false);
-        [data, metadata, simulated] = simulate_subjects_helper(false, fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, [1 1 0 1 0]);
+        [data, metadata, simulated] = simulate_subjects_helper(false, fullfile('results', 'kalman_wrong/fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, [1 1 0 1 0]);
         subplot(1,2,1);
         plot_curves_helper(data, metadata, simulated);
         title('Behavioral pilot');
@@ -36,7 +36,7 @@ switch figure_name
 
         % fmri
         %[data, metadata, simulated] = simulate_subjects_helper(true);
-        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, [1 1 0 1 0]);
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'kalman_wrong/fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, [1 1 0 1 0]);
         subplot(1,2,2);
         plot_curves_helper(data, metadata, simulated);
         title('fMRI');
@@ -662,7 +662,7 @@ switch figure_name
      
         % M1, M2, M1'
         which_structures = logical([1 1 0 1 0]);
-        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, [1 1 0 1 0]);
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'kalman_wrong/fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, [1 1 0 1 0]);
         %[data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_reviewer2.mat'), 1, which_structures);
         
         subplot(2, 1, 1);

@@ -265,28 +265,24 @@ for who = metadata.subjects
                 simulated.Q3(which_train) = Q(:,3);
                 simulated.Q4(which_train) = Q(:,4);
                 simulated.Q(which_train, :) = Q;
-                simulated.ww_after{1}(which_train, :) = train_results.ww_after{1};
-                simulated.ww_after{2}(which_train, :) = train_results.ww_after{2};
-                simulated.ww_after{3}(which_train, :) = train_results.ww_after{3};
-                simulated.ww_after{4}(which_train, :) = train_results.ww_after{4};
-                simulated.ww_before{1}(which_train, :) = train_results.ww_before{1};
-                simulated.ww_before{2}(which_train, :) = train_results.ww_before{2};
-                simulated.ww_before{3}(which_train, :) = train_results.ww_before{3};
-                simulated.ww_before{4}(which_train, :) = train_results.ww_before{4};
                 simulated.values(which_train, :) = train_results.values;
                 simulated.valuess(which_train, :) = train_results.valuess;
                 surprise = KL_divergence(train_results.P, Q);
                 simulated.surprise(which_train, :) = surprise;
+
                 simulated.likelihoods(which_train, :) = train_results.likelihoods;
                 simulated.new_values(which_train, :) = train_results.new_values;
                 simulated.new_valuess(which_train, :) = train_results.new_valuess;
-                simulated.Sigma_after{1}(:, :, which_train) = train_results.Sigma_after{1};
-                simulated.Sigma_after{2}(:, :, which_train) = train_results.Sigma_after{2};
-                simulated.Sigma_after{3}(:, :, which_train) = train_results.Sigma_after{3};
-                simulated.Sigma_before{1}(:, :, which_train) = train_results.Sigma_before{1};
-                simulated.Sigma_before{2}(:, :, which_train) = train_results.Sigma_before{2};
-                simulated.Sigma_before{3}(:, :, which_train) = train_results.Sigma_before{3};
                 simulated.lambdas(which_train, :) = train_results.lambdas;
+
+                for i = 1:4
+                    simulated.ww_after{i}(which_train, :) = train_results.ww_after{i};
+                    simulated.ww_before{i}(which_train, :) = train_results.ww_before{i};
+                    simulated.Sigma_after{i}(:, :, which_train) = train_results.Sigma_after{i};
+                    simulated.Sigma_before{i}(:, :, which_train) = train_results.Sigma_before{i};
+
+                    simulated.KL_weights{i}(which_train, :) = KL_divergence_gauss(train_results.ww_after{i}, train_results.Sigma_after{i}, train_results.ww_before{i}, train_results.Sigma_before{i});
+                end
                 
                 % Concatenate weights 
                 %
@@ -334,6 +330,7 @@ for who = metadata.subjects
 
                 % compute the KL divergence for the weights
                 %
+                %{
                 ww_prior = [train_results.ww_before{1} train_results.ww_before{2} train_results.ww_before{3}];
                 Sigma_prior = nan(size(ww_prior, 2), size(ww_prior, 2), size(ww_prior, 1));
                 for i = 1:size(Sigma_prior, 3)
@@ -345,6 +342,7 @@ for who = metadata.subjects
                     Sigma_posterior(:,:,i) = blkdiag(train_results.Sigma_after{1}(:,:,i), train_results.Sigma_after{2}(:,:,i), train_results.Sigma_after{3}(:,:,i));
                 end
                 simulated.KL_weights(which_train, :) = KL_divergence_gauss(ww_posterior, Sigma_posterior, ww_prior, Sigma_prior);
+                %}
 
             end % end switch statement which_structures 
 
