@@ -28,7 +28,7 @@ switch figure_name
      
         % pilot 
         %[data, metadata, simulated] = simulate_subjects_helper(false);
-        [data, metadata, simulated] = simulate_subjects_helper(false, fullfile('results', 'kalman_wrong/fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, [1 1 0 1 0]);
+        [data, metadata, simulated] = simulate_subjects_helper(false, fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, [1 1 0 1 0]);
         subplot(1,2,1);
         plot_curves_helper(data, metadata, simulated);
         title('Behavioral pilot');
@@ -36,7 +36,7 @@ switch figure_name
 
         % fmri
         %[data, metadata, simulated] = simulate_subjects_helper(true);
-        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'kalman_wrong/fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, [1 1 0 1 0]);
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, [1 1 0 1 0]);
         subplot(1,2,2);
         plot_curves_helper(data, metadata, simulated);
         title('fMRI');
@@ -662,7 +662,7 @@ switch figure_name
      
         % M1, M2, M1'
         which_structures = logical([1 1 0 1 0]);
-        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'kalman_wrong/fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, [1 1 0 1 0]);
+        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, [1 1 0 1 0]);
         %[data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_reviewer2.mat'), 1, which_structures);
         
         subplot(2, 1, 1);
@@ -693,6 +693,88 @@ switch figure_name
 
         plot_behavior_helper(data, metadata, simulated);
 
+
+    case 'RTs'
+
+        figure;
+        %set(handle, 'Position', [500, 500, 450, 200])
+     
+        % M1, M2, M1'
+        which_structures = logical([1 1 0 1 0]);
+        %[data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, which_structures);
+        [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
+
+        %
+        % training trials
+        %
+
+        subplot(2,1,1);
+
+        RT_means = [];
+        RT_sems = [];
+        % TODO random effects? LME? repeated measures?
+        rt = [];
+        g = [];
+        i = 1;
+        for condition = metadata.contextRoles
+            which_rows = data.which_rows & data.isTrain & strcmp(data.contextRole, condition) & ~data.timeout;
+          
+            RTs = data.response.rt(which_rows);
+            RT_means = [RT_means, mean(RTs)];
+            RT_sems = [RT_sems, std(RTs)/sqrt(length(RTs))];
+
+            i = i + 1;
+            g = [g; repmat(i, numel(RTs), 1)];
+            rt = [rt; RTs];
+        end
+
+        h = bar(RT_means);
+        hold on;
+        xs = h(1).XData;
+        errorbar(xs, RT_means, RT_sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+        hold off;
+        xticklabels({'irr', 'mod', 'add'});
+        title('training');
+        ylim([1 1.5]);
+        ylabel('RT (s)');
+
+        [p, anovatab, stats] = anova1(rt, g)
+
+        %
+        % test trials
+        %
+
+        subplot(2,1,2);
+
+        RT_means = [];
+        RT_sems = [];
+        % TODO random effects? LME? repeated measures?
+        rt = [];
+        g = [];
+        i = 1;
+        for condition = metadata.contextRoles
+            which_rows = data.which_rows & data.isTest & strcmp(data.contextRole, condition) & ~data.timeout;
+          
+            RTs = data.response.rt(which_rows);
+            RT_means = [RT_means, mean(RTs)];
+            RT_sems = [RT_sems, std(RTs)/sqrt(length(RTs))];
+
+            i = i + 1;
+            g = [g; repmat(i, numel(RTs), 1)];
+            rt = [rt; RTs];
+        end
+
+        h = bar(RT_means);
+        hold on;
+        xs = h(1).XData;
+        errorbar(xs, RT_means, RT_sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+        hold off;
+        xticklabels({'irr', 'mod', 'add'});
+        ylim([1 2.2]);
+        title('test');
+        ylabel('RT (s)');
+
+        [p, anovatab, stats] = anova1(rt, g)
 
     case 'collins_curves'
         %
