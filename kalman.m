@@ -42,6 +42,8 @@ function [x, P, z_mean, z_var] = kalman(z, x, P, F, B, u, Q, H, R)
 % Prediction
 % Note x and P now correspond to x_hat_t|t-1 and P_t|t-1
 %
+z_mean = H * x;
+
 x = F * x + B * u;
 P = F * P * F' + Q;
 
@@ -54,4 +56,3 @@ K = P * H' / (H * P * H' + R);
 x = x + K * (z - H * x);
 P = P - K * H * P;
 
-z_mean = H * x;

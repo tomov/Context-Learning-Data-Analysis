@@ -88,7 +88,7 @@ function [w, S, lik, rhat, lambda] = kalman_update(w,S,x,r,tau2,sr2)
     
     D = length(x);
     Q = tau2*eye(D);
-    rhat = w'*x; % TODO SAM this looks like w_n-1 * x_n, not w_n * x_n (see Eq 13 in Gershman 2017)
+    rhat = w'*x;
     S2 = S + Q;
     lambda = x'*S2*x + sr2;
     g = (S2*x)/lambda;

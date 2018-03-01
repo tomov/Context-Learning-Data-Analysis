@@ -160,8 +160,7 @@ for n = 1:N % for each trial
                 if k == contexts(n)
                     H = x{i}';
                 else
-                    continue; % TODO SAM bug!!!!!!! my implementation has the continue; Sam's doesn't.... should remove & compare w/ Sam's... and rerun GLM & RSA
-                    H = zeros(1, D); % inactive contexts updated with empty stimulus -> only covariance changes TODO 
+                    H = zeros(1, D); % inactive contexts updated with empty stimulus -> only covariance changes
                 end
                 F = eye(size(w{i}(:,k), 1));
                 B = zeros(size(F));
@@ -181,8 +180,7 @@ for n = 1:N % for each trial
                 if stimuli(n,d)
                     H = x{i}';
                 else
-                    continue; % TODO SAM bug!!!!!!! see above
-                    H = zeros(1, K);
+                    H = zeros(1, K); % inactive cues updated with empty stimulus -> only covariance changes
                 end
                 F = eye(size(w{i}(:,d), 1));
                 B = zeros(size(F));
