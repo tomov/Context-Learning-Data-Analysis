@@ -4454,7 +4454,7 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
         %
 
         
-        % Collins & frank GLM from their 2016 paper
+        % Collins & frank GLM from their 2016 paper, without orthogonalization
         %
         case 161
             [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_flat_collins_25nstarts_Q0.mat', 1, 'flat_collins');
@@ -4756,6 +4756,31 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
             multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
            
+
+        % Collins & frank GLM from their 2016 paper, with orthogonalization (as they did it)
+        %
+        case 169
+            [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_flat_collins_25nstarts_Q0.mat', 1, 'flat_collins');
+            FPEs = simulated.PEs(which_train);
+
+            [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_simple_collins_25nstarts_0-10alpha_Q0.mat', 1, 'simple_collins');
+            SPEs = simulated.PEs(which_train);
+            
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 1; % DO orthogonalize them; FPE first
+                        
+            multi.pmod(1).name{1} = 'FPEs';
+            multi.pmod(1).param{1} = FPEs';
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'SPEs';
+            multi.pmod(1).param{2} = SPEs';
+            multi.pmod(1).poly{2} = 1; % first order        
 
 
         otherwise

@@ -693,6 +693,55 @@ switch figure_name
 
         plot_behavior_helper(data, metadata, simulated);
 
+    case 'RTs_new'
+
+        [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
+
+        figure;
+
+        subplot(2,1,1);
+
+        which_irr_old = data.which_rows & ~data.isTrain & strcmp(data.contextRole, 'irrelevant') & data.cueId == 0 & data.contextId == 2;
+        which_irr_new = data.which_rows & ~data.isTrain & strcmp(data.contextRole, 'irrelevant') & data.cueId == 2 & data.contextId == 0;
+
+        which_add_old = data.which_rows & ~data.isTrain & strcmp(data.contextRole, 'additive') & data.cueId == 2 & data.contextId == 0;
+        which_add_new = data.which_rows & ~data.isTrain & strcmp(data.contextRole, 'additive') & data.cueId == 0 & data.contextId == 2;
+
+        rt_irr_old = data.response.rt(which_irr_old);
+        rt_irr_new = data.response.rt(which_irr_new);
+        rt_add_old = data.response.rt(which_add_old);
+        rt_add_new = data.response.rt(which_add_new);
+
+        RT_means = [mean(rt_irr_old) mean(rt_irr_new) mean(rt_add_old) mean(rt_add_new)];
+        RT_sems = [sem(rt_irr_old) sem(rt_irr_new) sem(rt_add_old) sem(rt_add_new)];
+
+        h = bar(RT_means);
+        hold on;
+        xs = h(1).XData;
+        errorbar(xs, RT_means, RT_sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+        hold off;
+        xticklabels({'irr old', 'irr new', 'add old', 'add new'});
+
+        save shit.mat;
+
+        %[h, p, ci, stats] = ttest2(rt_irr, rt_add)
+
+
+        subplot(2,1,2);
+
+        rt_irr_diff = rt_irr_new - rt_irr_old;
+        rt_add_diff = rt_add_new - rt_add_old;
+
+        RT_means = [mean(rt_irr_diff) mean(rt_irr_diff)];
+        RT_sems = [sem(rt_irr_diff) sem(rt_irr_diff)];
+
+        h = bar(RT_means);
+        hold on;
+        xs = h(1).XData;
+        errorbar(xs, RT_means, RT_sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+        hold off;
+        xticklabels({'irr diff', 'add diff'});
+
 
     case 'RTs'
 
@@ -1011,10 +1060,10 @@ switch figure_name
         end
         
     case 'searchlight_posterior'
-        bspmview('rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', '../neural/mean.nii');
+        bspmview('rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 'masks/mean.nii');
         
     case 'searchlight_prior'
-        bspmview('rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', '../neural/mean.nii');
+        bspmview('rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 'masks/mean.nii');
         
     case 'KL_structures'
         ccnl_view(context_expt(), 154, 'KL_structures');
