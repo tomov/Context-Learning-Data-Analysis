@@ -619,30 +619,33 @@ switch figure_name
 
         [r, p] = corrcoef(KL_154, KL_156)
 
-    case 'KL_157_vs_159'
+    case 'KL_162_vs_163'
         
-        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'), 1, 'simple_collins');
+        [data, metadata, simulated] = simulate_subjects_helper(true, 'results/fit_params_results_simple_collins_25nstarts_0-10alpha_Q0.mat', 1, 'simple_collins');
         which_rows = data.which_rows & data.isTrain;
-        KL_157 = simulated.surprise_Zc_given_c(which_rows) + simulated.surprise_Zs_given_s(which_rows);
+        KL_162 = simulated.surprise_Zc_given_c(which_rows) + simulated.surprise_Zs_given_s(which_rows);
 
-        [data, metadata, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_25nstarts.mat'), 1, 'simple_collins');
+        [data, metadata, simulated] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat', 1, [1 1 0 1 0]);
         which_rows = data.which_rows & data.isTrain;
-        KL_159 = simulated.surprise_Zc_given_c(which_rows) + simulated.surprise_Zs_given_s(which_rows);
+        KL_163 = simulated.surprise(which_rows);
 
         figure;
-        plotregression(KL_157, KL_159);
-        xlabel('KL 5 starts');
-        ylabel('KL 25 starts');
+        plotregression(KL_162, KL_163);
+        xlabel('KL clusters (Collins)');
+        ylabel('KL structures (M1,M2,M1'')');
 
-        [r, p] = corrcoef(KL_157, KL_159)
+        [r, p] = corrcoef(KL_162, KL_163)
 
 
     case 'ccnl_bic_bms'
-        bic_154 = ccnl_bic(context_expt(), 154, 'masks/mask.nii', getGoodSubjects());
-        bic_156 = ccnl_bic(context_expt(), 156, 'masks/mask.nii', getGoodSubjects());
-        bic_157 = ccnl_bic(context_expt(), 157, 'masks/mask.nii', getGoodSubjects());
+        glms = [161:165 169];
+        bics = [];
+        for glm = glms
+            bic = ccnl_bic(context_expt(), glm, 'masks/mask.nii', getGoodSubjects());
+            bics = [bics bic];
+        end
 
-        lme = -0.5 * [bic_154 bic_156 bic_157];
+        lme = -0.5 * bics;
 
         [alpha, exp_r, xp, pxp, bor] = bms(lme);
 
@@ -693,7 +696,78 @@ switch figure_name
 
         plot_behavior_helper(data, metadata, simulated);
 
-    case 'RTs_new'
+
+    case 'RTs_mod'
+        % show that modulatory is slower than irr and add, controlling for # of Collins clusters => attention matters => M1,M2,M1'
+        % doesn't apply -- hard to control for # of clusters, e.g. if x1c1 came last in the test trials, you already have 3 clusters for each dimension
+        %
+        [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
+
+        figure;
+
+        subplot(2,1,1);
+
+        which_irr = data.which_rows & ~data.isTrain & strcmp(data.contextRole, 'irrelevant') & data.cueId == 2 & data.contextId == 2;
+        which_add = data.which_rows & ~data.isTrain & strcmp(data.contextRole, 'additive') & data.cueId == 2 & data.contextId == 2;
+        which_mod = data.which_rows & ~data.isTrain & strcmp(data.contextRole, 'modulatory') & data.cueId == 0 & data.contextId == 0;
+
+        rt_irr_add = data.response.rt(which_irr | which_add);
+        rt_irr = data.response.rt(which_irr);
+        rt_mod = data.response.rt(which_mod);
+
+        RT_means = [mean(rt_irr) mean(rt_mod)];
+        RT_sems = [sem(rt_irr) sem(rt_mod)];
+
+        h = bar(RT_means);
+        hold on;
+        xs = h(1).XData;
+        errorbar(xs, RT_means, RT_sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+        hold off;
+        xticklabels({'irr x3c3', 'mod x1c1'});
+        ylim([1 2]);
+        ylabel('RT (s)')
+
+        [h, p, ci, stats] = ttest2(rt_irr_add, rt_mod)
+
+        % across subjects -- compare within-subject rt_mod - mean(rt_add, rt_irr) with 0
+        %
+        subplot(2,1,2);
+
+        mod = [];
+        irr = [];
+        for who = metadata.subjects
+            which_irr = data.which_rows & ~data.isTrain & strcmp(data.contextRole, 'irrelevant') & data.cueId == 2 & data.contextId == 2 & strcmp(data.participant, who);
+            which_add = data.which_rows & ~data.isTrain & strcmp(data.contextRole, 'additive') & data.cueId == 2 & data.contextId == 2 & strcmp(data.participant, who);
+            which_mod = data.which_rows & ~data.isTrain & strcmp(data.contextRole, 'modulatory') & data.cueId == 0 & data.contextId == 0 & strcmp(data.participant, who);
+
+            rt_irr_add = data.response.rt(which_irr | which_add);
+            rt_irr = data.response.rt(which_irr);
+            rt_mod = data.response.rt(which_mod);
+
+            mod = [mod mean(rt_mod)];
+            irr = [irr mean(rt_irr)];
+        end
+
+        RT_means = [mean(mod - irr)];
+        RT_sems = [sem(mod - irr)];
+
+        h = bar(RT_means);
+        hold on;
+        xs = h(1).XData;
+        errorbar(xs, RT_means, RT_sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
+        hold off;
+        xticklabels({'irr/add x3c3', 'mod x1c1'});
+        ylabel('RT (s)')
+        title('done properly');
+
+        [h, p, ci, stats] = ttest(mod - irr)
+
+        save shit.mat;
+         
+
+    case 'RTs_add'
+        % show that additive == irrelevant in terms of feature attention; it's just that 
+        % processing text takes longer
 
         [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
 
@@ -743,7 +817,8 @@ switch figure_name
         xticklabels({'irr diff', 'add diff'});
 
 
-    case 'RTs'
+    case 'RTs_condition'
+        % RTs across conditions
 
         figure;
         %set(handle, 'Position', [500, 500, 450, 200])
@@ -789,7 +864,7 @@ switch figure_name
         ylim([1 1.5]);
         ylabel('RT (s)');
 
-        [p, anovatab, stats] = anova1(rt, g)
+        %[p, anovatab, stats] = anova1(rt, g)
 
         mean(rt(g == 1))
         mean(rt(g == 3))
@@ -830,7 +905,7 @@ switch figure_name
         title('test');
         ylabel('RT (s)');
 
-        [p, anovatab, stats] = anova1(rt, g)
+        %[p, anovatab, stats] = anova1(rt, g)
 
         mean(rt(g == 1))
         mean(rt(g == 3))
