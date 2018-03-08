@@ -25,6 +25,12 @@ dirname = 'rdms';
 
 which_rows = data.which_rows & data.isTrain; % Look at training trials only
 
+
+%% Get the model RDMs
+%
+[Model, control_model_idxs, params, which_structures] = rdms_get_model_collins(data, metadata, which_rows);
+
+
 %% Get the searchlight RDMs
 %
 rng default; % make sure it's the same every time
@@ -48,10 +54,6 @@ disp(end_idx);
 
 Searchlight = rdms_get_searchlight(data, metadata, which_rows, x, y, z, r, true, false, false); % use pregen'd betas, use tmaps, use nosmooth
 
-%% Get the model RDMs
-%
-[Model, control_model_idxs] = rdms_get_model_3(data, metadata, which_rows);
-
 
 %% Get second-order RDM
 %
@@ -69,4 +71,4 @@ cols = Model;
 
 filename = sprintf('searchlight_weights_%d-%d.mat', start_idx, end_idx);
 fprintf('SAVING %s\n', filename);
-save(fullfile(dirname, filename), 'table_Rho', 'table_T', 'table_P', 'all_subject_rhos', 'x', 'y', 'z', 'r', 'idx');
+save(fullfile(dirname, filename), 'table_Rho', 'table_T', 'table_P', 'all_subject_rhos', 'x', 'y', 'z', 'r', 'idx', 'params', 'which_structures');

@@ -94,38 +94,42 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
             assert(isequal(options.which_structures, [1 1 1 0]));
             which_structures = options.which_structures;
         end
-    else
-        % Use the M1, M2, M1' structures
-        %
-        [params, which_structures] = model_default_params();
-    end
-    
-    simulated = simulate_subjects(data, metadata, params, which_structures, which_rows);        
-    
-    % get the data for training trials on this run only
-    %
-    outcomes = data.outcome(which_train);
-    choices = simulated.pred(which_train, :);
-    P = simulated.P(which_train, :);
-    values = simulated.values(which_train, :);
-    valuess = simulated.valuess(which_train, :);
-    likelihoods = simulated.likelihoods(which_train, :);
-    new_values = simulated.new_values(which_train, :);
-    new_valuess = simulated.new_valuess(which_train, :);
-    lambdas = simulated.lambdas(which_train, :);
-    
-    % calculate entropy
-    % exclude M4 which has P = 0
-    %
-    H = - sum(P(:,1:3) .* log(P(:, 1:3)), 2);
-    H(isnan(H)) = 0; % if a posterior is 0, the entropy is 0
-    
-    % get the data for test trials on this run only
-    %
-    test_choices = simulated.pred(which_test, :);
-    test_values = simulated.values(which_test, :);
-    test_valuess = simulated.valuess(which_test, :);
 
+        simulated = simulate_subjects(data, metadata, params, which_structures, which_rows);        
+
+        % get the data for training trials on this run only
+        %
+        outcomes = data.outcome(which_train);
+        choices = simulated.pred(which_train, :);
+        P = simulated.P(which_train, :);
+        values = simulated.values(which_train, :);
+        valuess = simulated.valuess(which_train, :);
+        likelihoods = simulated.likelihoods(which_train, :);
+        new_values = simulated.new_values(which_train, :);
+        new_valuess = simulated.new_valuess(which_train, :);
+        lambdas = simulated.lambdas(which_train, :);
+        
+        % calculate entropy
+        % exclude M4 which has P = 0
+        %
+        H = - sum(P(:,1:3) .* log(P(:, 1:3)), 2);
+        H(isnan(H)) = 0; % if a posterior is 0, the entropy is 0
+        
+        % get the data for test trials on this run only
+        %
+        test_choices = simulated.pred(which_test, :);
+        test_values = simulated.values(which_test, :);
+        test_valuess = simulated.valuess(which_test, :);
+
+    else
+        % for later GLMs, subjects are loaded and simulated within the specific glm, rather than here
+        % this is b/c we have many models now
+        %
+    end
+
+
+    
+    
     % Parametric modulators
     %
     switch glmodel
@@ -4784,7 +4788,7 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
 
 
         %
-        % ----------- same as above but orthogonalized
+        % ================= same as above but orthogonalized ================
         %
 
 

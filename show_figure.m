@@ -638,7 +638,9 @@ switch figure_name
 
 
     case 'ccnl_bic_bms'
-        glms = [161:165 169];
+        %glms = [161:165 169];
+        glms = [169 170  171 172 173];
+
         bics = [];
         for glm = glms
             bic = ccnl_bic(context_expt(), glm, 'masks/mask.nii', getGoodSubjects());

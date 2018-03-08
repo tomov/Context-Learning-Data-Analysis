@@ -113,6 +113,7 @@ save('results/betas_to_behavior_alpha=0.001_Num=1.mat');
 
 % eLife reviewer comment -- contextual tracking confounding KL
 
+%{
 %% Load data
 %
 [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
@@ -192,7 +193,7 @@ fprintf('ANOVA for context changes: p(means are equal) = %e\n', p);
 [p, anovatab, stats] = anova1(simulated.surprise(which), cue_changed(which));
 fprintf('ANOVA for cue changes: p(means are equal) = %e\n', p);
 
-
+%}
 
 
 
@@ -208,7 +209,6 @@ end
 %}
 
 
-%{
 
 method = 'cvglmnet';
 mask = fullfile('masks', 'hippocampus.nii');
@@ -220,26 +220,26 @@ subjs = getGoodSubjects();
 
 [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, subjs);
 
-leftout_run = 9;
-runs(runs == leftout_run) = [];
-which_rows = data.which_rows & ismember(data.trialId, trials) & data.runId ~= leftout_run;
+%leftout_run = 9;
+%runs(runs == leftout_run) = [];
+%which_rows = data.which_rows & ismember(data.trialId, trials) & data.runId ~= leftout_run;
+%
+%m = containers.Map(metadata.subjects, subjs);
+%subj_id = cellfun(@(x) m(x), data.participant(which_rows));
+%
+%foldid = data.runId(which_rows) + subj_id * (metadata.runsPerSubject + 1);
+%assert(numel(unique(foldid)) == numel(subjs) * (metadata.runsPerSubject - 1));
+%unique_foldid = unique(foldid);
+%foldid = arrayfun(@(x) find(unique_foldid == x), foldid);
+%assert(numel(unique(foldid)) == numel(subjs) * (metadata.runsPerSubject - 1));
+%assert(max(foldid) == numel(subjs) * (metadata.runsPerSubject - 1));
 
-m = containers.Map(metadata.subjects, subjs);
-subj_id = cellfun(@(x) m(x), data.participant(which_rows));
+foldid = [];
 
-foldid = data.runId(which_rows) + subj_id * (metadata.runsPerSubject + 1);
-assert(numel(unique(foldid)) == numel(subjs) * (metadata.runsPerSubject - 1));
-unique_foldid = unique(foldid);
-foldid = arrayfun(@(x) find(unique_foldid == x), foldid);
-assert(numel(unique(foldid)) == numel(subjs) * (metadata.runsPerSubject - 1));
-assert(max(foldid) == numel(subjs) * (metadata.runsPerSubject - 1));
+[classifier, inputs, targets, outputs, which_rows] = classify_train(method, runs, trials, subjs, mask, predict_what, z_score, 'feedback_onset', foldid);
 
+[test_inputs, test_targets, test_outputs, test_which_rows] = classify_test(method, classifier, leftout_run, trials, subjs, mask, predict_what, z_score, 'feedback_onset');
 
-[classifier, inputs, targets, outputs, which_rows] = classify_train(method, runs, trials, subjs, mask, predict_what, z_score, foldid);
-
-[test_inputs, test_targets, test_outputs, test_which_rows] = classify_test(method, classifier, leftout_run, trials, subjs, mask, predict_what, z_score);
-
-%}
 
 %{
 EXPT = context_expt();

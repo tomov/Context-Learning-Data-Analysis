@@ -287,7 +287,7 @@ for who = metadata.subjects
                 % Concatenate weights 
                 %
                 dim = 0;
-                for M = 1:3
+                for M = 1:4
                     dim = dim + size(train_results.ww_before{M}, 2); 
                 end
                 simulated.ww_prior(which_train, :) = zeros(sum(which_train), dim);
@@ -296,7 +296,7 @@ for who = metadata.subjects
                 simulated.Sigma_posterior(:, :, which_train) = zeros(dim, dim, sum(which_train));
                 
                 dim = 0;
-                for M = 1:3
+                for M = 1:4
                     dims = dim + 1 : dim + size(train_results.ww_before{M}, 2);
                     
                     simulated.ww_prior(which_train, dims) = train_results.ww_before{M};

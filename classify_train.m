@@ -141,12 +141,14 @@ switch method
         opts.lambda_min = 0.00000001; % as a fraction of lambda_max which is derived from the data; default = 0.0001
         options = glmnetSet(opts);
 
-        % each run is a separate fold TODO rm
+        % each run is a separate fold
         %
-        [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
-        foldid = data.runId(which_rows);
-        foldid = arrayfun(@(x) find(x == runs), foldid);
-        % each (subject, run) is a separate fold TODO rm
+        if isempty(foldid)
+            [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
+            foldid = data.runId(which_rows);
+            foldid = arrayfun(@(x) find(x == runs), foldid);
+        end
+        % each (subject, run) is a separate fold 
         %
         %{
         [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
@@ -182,6 +184,24 @@ switch method
         fprintf('Success rate (lambda = %.4f) is %.2f%%\n', CVfit.lambda_1se, accuracy);
 
         classifier = CVfit;
+
+    case 'fitcoco'
+        % ensure folds contain whole runs, i.e. no run is split across training & test
+        % this is to ensure cross-run predictions
+        % b/c of temporal autocorrelation within runs, it is very easy to classify conditions within runs
+        %
+        k = 10; % TODO param
+        c_runs = cvpartition_my(numel(subjs) * numel(runs), 'Kfold', k);
+        assert(size(inputs, 1) == numel(subjs) * numel(runs) * numel(trials));
+        c = cvpartition_my(size(inputs, 1), 'Kfold', k);
+        i = repmat(c_runs.Impl.indices, 1, numel(trials));
+        i = i'; 
+        i = i(:);
+        c.Impl.indices = i;
+        c.Impl.TestSize = accumarray(i, 1)';
+        c.Impl.TrainSize = size(i, 1) - c.Impl.TestSize;
+
+
         
     otherwise
         assert(false, 'should be one of the above');

@@ -1,4 +1,4 @@
-function [Model, control_model_idxs] = rdms_get_model_4(data, metadata, which_rows)
+function [Model, control_model_idxs, params, which_structures] = rdms_get_model_collins(data, metadata, which_rows)
 
 % Compute the RDMs for some more different models
 % WARNING: a bunch of hardcoded stuffs...
@@ -18,7 +18,8 @@ control_model_idxs = [];
 
 %% Simulate behavior using Kalman filter
 %
-[~, ~, simulated] = simulate_subjects_helper(true, fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'), 1, 'simple_collins');
+[params, which_structures] = model_params('results/fit_params_results_simple_collins_25nstarts_0-10alpha_Q0.mat')
+simulated = simulate_subjects(data, metadata, params, which_structures);
 
 % vector that specifies the structure corresponding to the condition
 %

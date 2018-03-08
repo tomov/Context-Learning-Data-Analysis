@@ -1,4 +1,4 @@
-function [Model, control_model_idxs] = rdms_get_model_3(data, metadata, which_rows)
+function [Model, control_model_idxs, params, which_structures] = rdms_get_model_3(data, metadata, which_rows)
 
 % Compute the RDMs for some more different models
 % WARNING: a bunch of hardcoded stuffs...
@@ -18,7 +18,7 @@ control_model_idxs = [];
 
 %% Simulate behavior using Kalman filter
 %
-[params, which_structures] = model_default_params();
+[params, which_structures] = model_params('results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat')
 simulated = simulate_subjects(data, metadata, params, which_structures);
 
 % vector that specifies the structure corresponding to the condition
@@ -83,12 +83,12 @@ Model(model_idx).name = 'ww_prior';
 Model(model_idx).color = [0 1 0];
 
 
-
+%{
 
 % Posterior Sigma: normalized correlation of posterior weights
 % WARNING: hardcoded ...
 %
-Sigma_posterior = reshape(simulated.Sigma_posterior, 100, 5228)';
+Sigma_posterior = reshape(simulated.Sigma_posterior, 12*12, 5228)';
 [posteriorRDMs, avgPosteriorRDM] = compute_rdms(Sigma_posterior, 'cosine', data, metadata, which_rows);
 model_idx = model_idx + 1;
 Model(model_idx).RDMs = posteriorRDMs;
@@ -99,7 +99,7 @@ Model(model_idx).color = [0 1 0];
 % Prior Sigma: normalized correlation of prior weights
 % WARNING: hardcoded...
 %
-Sigma_prior = reshape(simulated.Sigma_prior, 100, 5228)';
+Sigma_prior = reshape(simulated.Sigma_prior, 12*12, 5228)';
 [priorRDMs, avgPriorRDM] = compute_rdms(Sigma_prior, 'cosine', data, metadata, which_rows);
 model_idx = model_idx + 1;
 Model(model_idx).RDMs = priorRDMs;
@@ -114,7 +114,7 @@ Model(model_idx).color = [0 1 0];
 % Posterior weights + Sigma: normalized correlation of posterior weights
 % WARNING: hardcoded ...
 %
-Sigma_posterior = reshape(simulated.Sigma_posterior, 100, 5228)';
+Sigma_posterior = reshape(simulated.Sigma_posterior, 12*12, 5228)';
 [posteriorRDMs, avgPosteriorRDM] = compute_rdms([simulated.ww_posterior Sigma_posterior], 'cosine', data, metadata, which_rows);
 model_idx = model_idx + 1;
 Model(model_idx).RDMs = posteriorRDMs;
@@ -125,7 +125,7 @@ Model(model_idx).color = [0 1 0];
 % Prior weights + Sigma: normalized correlation of prior weights
 % WARNING: hardcoded...
 %
-Sigma_prior = reshape(simulated.Sigma_prior, 100, 5228)';
+Sigma_prior = reshape(simulated.Sigma_prior, 12*12, 5228)';
 [priorRDMs, avgPriorRDM] = compute_rdms([simulated.ww_prior Sigma_prior], 'cosine', data, metadata, which_rows);
 model_idx = model_idx + 1;
 Model(model_idx).RDMs = priorRDMs;
@@ -133,6 +133,7 @@ Model(model_idx).RDM = avgPriorRDM;
 Model(model_idx).name = 'ww_Sigma_prior';
 Model(model_idx).color = [0 1 0];
 
+%}
 
 % CONTROL RDMs
 

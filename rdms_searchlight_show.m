@@ -13,7 +13,7 @@ close all;
 event = 'feedback_onset';
 model = 'posterior';
 %dirname = 'rdms/betas_smooth';
-dirname = 'rdms';
+dirname = 'rdms/M1M2M1_25nstarts_tau_w0';
 
 % posterior @ feedback_onset -- bilateral AG, bilateral dlPFC, IT, visual... :(
 % prior @ feedback_onset -- same
@@ -37,7 +37,7 @@ assert(ismember(event, {'trial_onset', 'feedback_onset'}));
 %
 [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
 which_rows = data.which_rows & data.isTrain; % Look at training trials only
-Model = rdms_get_model_3(data, metadata, which_rows);
+Model = rdms_get_model_3(data, metadata, which_rows); % WARNING == TIGHT COUPLING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! sanity check if params are same as in the searchlight file
 model_names = {Model.name};
 assert(ismember(model, model_names));
 
@@ -63,7 +63,7 @@ for i = 1:length(files)
             % so inverting:
             % t = icdf('T', 1 - p / 2, df)
             % note that this doesn't tell you anything about the sign (it's
-            % a two-tailed t-test), so we have to use rho to get it
+            % a two-tailed t-test), so we have to use rho to get it.
             % as a reminder, this was a 1-sample t-test that rho != 0
             %
             df = metadata.N - 1;
@@ -88,6 +88,6 @@ spm_write_vol(V, tmap);
 %% visualize
 %
 EXPT = context_expt();
-struc = fullfile(EXPT.modeldir,'mean.nii');
+struc = fullfile('masks','mean.nii');
 
 bspmview(V.fname, struc);
