@@ -1,9 +1,9 @@
 % momchil's hacked version
 %
-classdef cvpartitionInMemoryImpl_my < cvpartitionImpl_my
+classdef cvpartitionInMemoryImpl < cvpartitionImpl
    
 methods
-        function cv = cvpartitionInMemoryImpl_my(N,method,T,varargin)
+        function cv = cvpartitionInMemoryImpl(N,method,T,varargin)
             
             if nargin>0 && isstruct(N) && isfield(N,'BckCmpBackdoorConstructor')
                 % only loadobj uses this backdoor constructor for backward

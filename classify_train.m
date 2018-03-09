@@ -20,6 +20,8 @@ disp(method);
 
 [inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, trials, subjs, mask, predict_what, z_score, event);
 
+save shit.mat
+
 assert(isempty(foldid) || numel(foldid) == sum(which_rows));
 
 [~, maskname, ~] = fileparts(mask);
@@ -185,15 +187,15 @@ switch method
 
         classifier = CVfit;
 
-    case 'fitcoco'
+    case 'fitcecoc'
         % ensure folds contain whole runs, i.e. no run is split across training & test
         % this is to ensure cross-run predictions
         % b/c of temporal autocorrelation within runs, it is very easy to classify conditions within runs
         %
         k = 10; % TODO param
-        c_runs = cvpartition_my(numel(subjs) * numel(runs), 'Kfold', k);
+        c_runs = cvpartition(numel(subjs) * numel(runs), 'Kfold', k);
         assert(size(inputs, 1) == numel(subjs) * numel(runs) * numel(trials));
-        c = cvpartition_my(size(inputs, 1), 'Kfold', k);
+        c = cvpartition(size(inputs, 1), 'Kfold', k);
         i = repmat(c_runs.Impl.indices, 1, numel(trials));
         i = i'; 
         i = i(:);
@@ -201,6 +203,10 @@ switch method
         c.Impl.TestSize = accumarray(i, 1)';
         c.Impl.TrainSize = size(i, 1) - c.Impl.TestSize;
 
+        [~, labels] = max(targets, [], 2);
+        Mdl = fitcecoc(inputs, targets, 'CVPartition', c);
+
+        classifier = Mdl;
 
         
     otherwise

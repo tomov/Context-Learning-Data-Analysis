@@ -1,6 +1,6 @@
 % Momchil's hacked version 
 %
-classdef cvpartition_my
+classdef cvpartition
     %CVPARTITION Create a cross-validation partition for data.
     %   An object of the CVPARTITION class defines a random partition on a
     %   set of data of a specified size.  This partition can be used to
@@ -143,11 +143,11 @@ classdef cvpartition_my
         function n = get.NumObservations(this)
             n = this.Impl.NumObservations;
         end        
-        function cv = cvpartition_my(varargin)
+        function cv = cvpartition(varargin)
             if nargin>0 && isstruct(varargin{1}) && isfield(varargin{1},'BckCmpBackdoorConstructor')
                 % Backdoor constructor used only by cvpartition.loadobj for
                 % compatibility compliance.
-                cv.Impl = cvpartitionInMemoryImpl_my(varargin{1});
+                cv.Impl = cvpartitionInMemoryImpl(varargin{1});
             elseif (nargin>0 && iscell(varargin{1}) && istall(varargin{1}{1})) 
                 % Backdoor constructor for tall variables used only by
                 % tall.cvpartition by wraping a tall within a cell and
@@ -155,7 +155,7 @@ classdef cvpartition_my
                 cv.Impl = internal.stats.bigdata.cvpartitionTallImpl(varargin{:});
             else
                 % Regular constructor
-                cv.Impl = cvpartitionInMemoryImpl_my(varargin{:});
+                cv.Impl = cvpartitionInMemoryImpl(varargin{:});
             end
         end % cvpartition constructor
 

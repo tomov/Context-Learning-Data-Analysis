@@ -1,3 +1,24 @@
+%[classifier, inputs, targets, outputs, which_rows] = classify_train('fitcecoc', 1:9, 11:20, getGoodSubjects(), 'masks/hippocampus.nii', 'condition', 'z-none', 'feedback_onset', []);
+
+
+k = 10; % TODO param
+c_runs = cvpartition(numel(subjs) * numel(runs), 'Kfold', k);
+assert(size(inputs, 1) == numel(subjs) * numel(runs) * numel(trials));
+c = cvpartition(size(inputs, 1), 'Kfold', k);
+i = repmat(c_runs.Impl.indices, 1, numel(trials));
+i = i'; 
+i = i(:);
+c.Impl.indices = i;
+c.Impl.TestSize = accumarray(i, 1)';
+c.Impl.TrainSize = size(i, 1) - c.Impl.TestSize;
+
+[~, labels] = max(targets, [], 2);
+Mdl = fitcecoc(inputs, labels, 'CVPartition', c);
+
+
+
+
+
 %[m, V] = load_mask('masks/prior_left_IFG.nii');
 %whole_brain_betas = get_betas('masks/mask.nii', 'trial_onset', data, metadata, false);
 %betas1 = get_activations_submask(m, whole_brain_betas);
@@ -210,6 +231,8 @@ end
 
 
 
+
+%{
 method = 'cvglmnet';
 mask = fullfile('masks', 'hippocampus.nii');
 z_score = 'z-none';
@@ -239,6 +262,10 @@ foldid = [];
 [classifier, inputs, targets, outputs, which_rows] = classify_train(method, runs, trials, subjs, mask, predict_what, z_score, 'feedback_onset', foldid);
 
 [test_inputs, test_targets, test_outputs, test_which_rows] = classify_test(method, classifier, leftout_run, trials, subjs, mask, predict_what, z_score, 'feedback_onset');
+%}
+
+
+
 
 
 %{

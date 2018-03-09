@@ -1,6 +1,6 @@
 % momchil's hacked version
 %
-classdef cvpartitionImpl_my
+classdef cvpartitionImpl
     %CVPARTITION Create a cross-validation partition for data.
     %   An object of the CVPARTITION class defines a random partition on a
     %   set of data of a specified size.  This partition can be used to
