@@ -13,10 +13,12 @@ c.Impl.TestSize = accumarray(i, 1)';
 c.Impl.TrainSize = size(i, 1) - c.Impl.TestSize;
 
 [~, labels] = max(targets, [], 2);
-Mdl = fitcecoc(inputs, labels, 'CVPartition', c);
+Mdl = fitcecoc(inputs, labels, 'CVPartition', c, 'FitPosterior', 1, 'Verbose', 2);
 
+[outputs, negloss, cost, posterior] = kfoldPredict(Mdl);
 
-
+%accuracy = mean(outputs == labels);  lame -- don't use this
+accuracy = mean(sum(posterior .* targets, 2));
 
 
 %[m, V] = load_mask('masks/prior_left_IFG.nii');

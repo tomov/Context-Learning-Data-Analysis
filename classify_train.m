@@ -1,4 +1,4 @@
-function [classifier, inputs, targets, outputs, which_rows] = classify_train(method, runs, trials, subjs, mask, predict_what, z_score, event, foldid)
+function [classifier, inputs, targets, outputs, which_rows, accuracy] = classify_train(method, runs, trials, subjs, mask, predict_what, z_score, event, foldid)
 % Train classifier to predict stuff based on neural activity at trial onset
 % returns a fitObj that you can pass to glmnetPredict
 % or a petternnet net that you can use e.g. like net(inputs)
@@ -20,7 +20,7 @@ disp(method);
 
 [inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, trials, subjs, mask, predict_what, z_score, event);
 
-save shit.mat
+accuracy = NaN; % TODO make all of them output it
 
 assert(isempty(foldid) || numel(foldid) == sum(which_rows));
 
@@ -204,9 +204,12 @@ switch method
         c.Impl.TrainSize = size(i, 1) - c.Impl.TestSize;
 
         [~, labels] = max(targets, [], 2);
-        Mdl = fitcecoc(inputs, targets, 'CVPartition', c);
+        Mdl = fitcecoc(inputs, labels, 'CVPartition', c, 'FitPosterior', 1, 'Verbose', 2);
 
-        classifier = Mdl;
+        [outputs, negloss, cost, posterior] = kfoldPredict(Mdl);
+
+        %accuracy = mean(outputs == labels);  lame -- don't use this
+        accuracy = mean(sum(posterior .* targets, 2));
 
         
     otherwise
