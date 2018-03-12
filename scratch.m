@@ -1,6 +1,6 @@
-%[classifier, inputs, targets, outputs, which_rows] = classify_train('fitcecoc', 1:9, 11:20, getGoodSubjects(), 'masks/hippocampus.nii', 'condition', 'z-none', 'feedback_onset', []);
+[classifier, inputs, targets, outputs, which_rows, accuracy] = classify_train('fitcecoc', 1:9, 11:20, getGoodSubjects(), 'masks/glm154 KL_structures - KL_weights sphere t=4.001 extent=27 roi=Cerebelum_6_L peak=[-28 -62 -18].nii', 'condition', 'z-none', 'feedback_onset', []);
 
-
+%{
 k = 10; % TODO param
 c_runs = cvpartition(numel(subjs) * numel(runs), 'Kfold', k);
 assert(size(inputs, 1) == numel(subjs) * numel(runs) * numel(trials));
@@ -18,7 +18,8 @@ Mdl = fitcecoc(inputs, labels, 'CVPartition', c, 'FitPosterior', 1, 'Verbose', 2
 [outputs, negloss, cost, posterior] = kfoldPredict(Mdl);
 
 %accuracy = mean(outputs == labels);  lame -- don't use this
-accuracy = mean(sum(posterior .* targets, 2));
+%accuracy = mean(sum(posterior .* targets, 2));
+%}
 
 
 %[m, V] = load_mask('masks/prior_left_IFG.nii');

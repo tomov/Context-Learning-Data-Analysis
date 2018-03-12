@@ -206,11 +206,14 @@ switch method
         [~, labels] = max(targets, [], 2);
         Mdl = fitcecoc(inputs, labels, 'CVPartition', c, 'FitPosterior', 1, 'Verbose', 2);
 
-        [outputs, negloss, cost, posterior] = kfoldPredict(Mdl);
+        [out_labels, negloss, cost, outputs] = kfoldPredict(Mdl);
 
         %accuracy = mean(outputs == labels);  lame -- don't use this
-        accuracy = mean(sum(posterior .* targets, 2));
+        %accuracy = mean(sum(outputs .* targets, 2));
+        accuracy = classify_get_accuracy(outputs, targets);
+        fprintf('Success rate is %.2f%%\n', accuracy);
 
+        classifier = Mdl;
         
     otherwise
         assert(false, 'should be one of the above');
