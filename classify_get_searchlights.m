@@ -1,6 +1,6 @@
-function Searchlight = rdms_get_searchlight(data, metadata, which_rows, x, y, z, r, use_pregenerated_activations, use_tmaps, use_nosmooth)
+function Searchlight = classify_get_searchlights(data, metadata, which_rows, x, y, z, r, use_pregenerated_activations, use_tmaps, use_nosmooth)
 
-% Compute the searchlight neural RDMs
+% Get searclight betas for classifier. Similar to rdms_get_searchlight.m
 %
 % INPUT:
 % data, metadata = subject data and metadata as output by load_data
@@ -15,11 +15,11 @@ function Searchlight = rdms_get_searchlight(data, metadata, which_rows, x, y, z,
 % use_nosmooth = whether to use the non-smoothed neural data
 %
 % OUTPUT:
-% Searchlight = struct array of RDMs
+% Searchlight = struct array of searchlight betas 
 
 searchlight_idx = 0;
 
-disp('Computing searchlight RDMs...');
+disp('Computing searchlights...');
 tic
 
 if use_tmaps
@@ -57,22 +57,9 @@ for event = {'trial_onset', 'feedback_onset'}
     %
     for i=1:length(x)
 
-        % Build spherical mask TODO use create_spherical_mask_helper
+        % Build spherical mask
         %
-        sphere_mask = zeros(size(mask));
-        for newx = floor(x(i) - r) : ceil(x(i) + r)
-            if newx < min_x || newx > max_x, continue; end
-            for newy = floor(y(i) - r) : ceil(y(i) + r)
-                if newy < min_y || newy > max_y, continue; end
-                for newz = floor(z(i) - r) : ceil(z(i) + r)
-                    if newz < min_z || newz > max_z, continue; end
-                    if ~mask(newx, newy, newz), continue; end
-                    if (x(i) - newx)^2 + (y(i) - newy)^2 + (z(i) - newz)^2 > r^2, continue; end
-                    sphere_mask(newx, newy, newz) = 1;
-                end
-            end
-        end
-        sphere_mask = logical(sphere_mask);
+        sphere_mask = create_spherical_mask_helper(mask, x(i), y(i), z(i), r, min_x, max_x, min_y, max_y, min_z, max_z, Vmask);
 
         % Get sphere center coordinates in MNI space
         %
@@ -83,12 +70,12 @@ for event = {'trial_onset', 'feedback_onset'}
         else
             sphere_activations = load_activations(sphere_mask, event, data, metadata, use_nosmooth); % old fashioned SUPER SLOW
         end
-        [sphereRDMs, avgSphereRDM] = compute_rdms(sphere_activations, 'cosine', data, metadata, which_rows);
+
+        save shit.mat
+
         searchlight_idx = searchlight_idx + 1;
-        Searchlight(searchlight_idx).RDMs = sphereRDMs;
-        Searchlight(searchlight_idx).RDM = avgSphereRDM;
+        Searchlight(searchlight_idx).activations = sphere_activations;
         Searchlight(searchlight_idx).name = ['sphere_', sprintf('%d_%d_%d', mni), '_', event(1)];
-        Searchlight(searchlight_idx).color = [0 1 0];
         Searchlight(searchlight_idx).center = [x(i) y(i) z(i)];
         Searchlight(searchlight_idx).radius = r;
         Searchlight(searchlight_idx).center_mni = mni;
@@ -96,5 +83,5 @@ for event = {'trial_onset', 'feedback_onset'}
 
 end
 
-disp('Computed searchlight RDMs.');
+disp('Computed searchlights.');
 toc

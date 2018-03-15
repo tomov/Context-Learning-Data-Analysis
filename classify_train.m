@@ -13,12 +13,27 @@ if ~exist('foldid', 'var')
     foldid = [];
 end
 
-rng('shuffle');
+%rng('shuffle');
+rng default;
 
 fprintf('classify_train\n');
 disp(method);
 
 [inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, trials, subjs, mask, predict_what, z_score, event);
+% for debugging, pass the 
+%
+%{
+[data,metadata,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat', 1, [1 1 0 1 0]);
+which_rows = data.which_rows & ismember(data.participant, metadata.allSubjects(subjs)) & ...
+    ismember(data.runId, runs) & ismember(data.newTrialId, trials);
+condition_labels = containers.Map(metadata.conditions, ...
+                        {[1 0 0], [0 1 0], [0 0 1]});
+targets = values(condition_labels, data.contextRole(which_rows));
+targets = cell2mat(targets);
+p = simulated.P(which_rows,:);
+inputs = p + rand(size(p));
+%}
+
 
 accuracy = NaN; % TODO make all of them output it
 
@@ -36,7 +51,7 @@ disp('training classifier...');
 
 switch method
     
-    case 'patternnet'
+    case 'patternnet' % neural network classifier
         
         % patternnet wants column feature vectors. I.e. each data point is a column
         % so we have to rotate it ...
@@ -101,7 +116,7 @@ switch method
         %}
     
         
-    case 'glmnet'
+    case 'glmnet' % multinomial GLM classifier
     
         opts.alpha = 1; % 0 = ridge penalty; 1 = lasso penalty (force betas to zero); default = 1
         opts.mtype = 'ungrouped'; % 'grouped' = for multinomial, all betas are in our out together; default = 'ungrouped'
@@ -133,9 +148,10 @@ switch method
         end
 
         classifier = fitObj;
-    
+   
+
         
-    case 'cvglmnet'
+    case 'cvglmnet' % cross-validated multinomial GLM classifier
     
         opts.alpha = 1; % 0 = ridge penalty; 1 = lasso penalty (force betas to zero); default = 1
         opts.mtype = 'ungrouped'; % 'grouped' = for multinomial, all betas are in our out together; default = 'ungrouped'
@@ -143,13 +159,19 @@ switch method
         opts.lambda_min = 0.00000001; % as a fraction of lambda_max which is derived from the data; default = 0.0001
         options = glmnetSet(opts);
 
+        nfolds = 10;
+        c = cvpartition_runs(nfolds, subjs, runs, trials, inputs);
+        foldid = c.Impl.indices;
+
         % each run is a separate fold
         %
+        %{
         if isempty(foldid)
             [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
             foldid = data.runId(which_rows);
             foldid = arrayfun(@(x) find(x == runs), foldid);
         end
+        %}
         % each (subject, run) is a separate fold 
         %
         %{
@@ -187,21 +209,11 @@ switch method
 
         classifier = CVfit;
 
-    case 'fitcecoc'
-        % ensure folds contain whole runs, i.e. no run is split across training & test
-        % this is to ensure cross-run predictions
-        % b/c of temporal autocorrelation within runs, it is very easy to classify conditions within runs
-        %
-        k = 10; % TODO param
-        c_runs = cvpartition(numel(subjs) * numel(runs), 'Kfold', k);
-        assert(size(inputs, 1) == numel(subjs) * numel(runs) * numel(trials));
-        c = cvpartition(size(inputs, 1), 'Kfold', k);
-        i = repmat(c_runs.Impl.indices, 1, numel(trials));
-        i = i'; 
-        i = i(:);
-        c.Impl.indices = i;
-        c.Impl.TestSize = accumarray(i, 1)';
-        c.Impl.TrainSize = size(i, 1) - c.Impl.TestSize;
+
+    case 'fitcecoc' % multinomial SVM classifier, cross-validated
+
+        kfolds = 10;
+        c = cvpartition_runs(kfolds, subjs, runs, trials, inputs);
 
         [~, labels] = max(targets, [], 2);
         Mdl = fitcecoc(inputs, labels, 'CVPartition', c, 'FitPosterior', 1, 'Verbose', 2);
@@ -214,6 +226,11 @@ switch method
         fprintf('Success rate is %.2f%%\n', accuracy);
 
         classifier = Mdl;
+
+
+    case 'mnrfit'
+        % 
+        %
         
     otherwise
         assert(false, 'should be one of the above');
@@ -225,3 +242,23 @@ toc
 %
 fprintf('SAVING to %s\n', outFilename);
 save(outFilename,'-regexp','^(?!(inputs)$).');
+
+end
+
+
+
+% ensure folds contain whole runs, i.e. no run is split across training & test
+% this is to ensure cross-run predictions
+% b/c of temporal autocorrelation within runs, it is very easy to classify conditions within runs
+%
+function c = cvpartition_runs(k, subjs, runs, trials, inputs)
+    c_runs = cvpartition(numel(subjs) * numel(runs), 'Kfold', k);
+    assert(size(inputs, 1) == numel(subjs) * numel(runs) * numel(trials));
+    c = cvpartition(size(inputs, 1), 'Kfold', k);
+    i = repmat(c_runs.Impl.indices, 1, numel(trials));
+    i = i'; 
+    i = i(:);
+    c.Impl.indices = i;
+    c.Impl.TestSize = accumarray(i, 1)';
+    c.Impl.TrainSize = size(i, 1) - c.Impl.TestSize;
+end

@@ -22,36 +22,8 @@
 sem = @(x) std(x) / sqrt(length(x));
 
 %% load behavioral stuff
-
-% Load data
 %
-[data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
-
-% Load parameters
-%
-load(fullfile('results', 'fit_params_results_fmri_random_effects_20_nstarts_5_prior.mat'), 'results', 'results_options');
-params = results(1).x;
-options = results_options(1);
-
-% OVERRIDE -- use pilot params as before
-%
-params = [0.1249 2.0064]; WRONG
-options.isFmriData = false;
-options.fixedEffects = true;
-
-disp('Using parameters:');
-disp(params);
-disp('generated with options:');
-disp(options);
-% safeguards
-%assert(options.isFmriData == true);
-%assert(~options.fixedEffects);
-assert(isequal(options.which_structures, [1 1 1 0]));
-which_structures = logical([1 1 1 0]);
-
-% Run the model with the parameters
-%
-simulated = simulate_subjects(data, metadata, params, which_structures);
+[data,metadata,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat', 1, [1 1 0 1 0]);
 
 %% load betas -- SLOW
 %
@@ -318,7 +290,7 @@ end
 
 
 
-
+assert(false);
 
 
 %% PC1 over time for each condition for each subject, collapsed across

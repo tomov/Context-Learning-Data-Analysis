@@ -1,4 +1,4 @@
-[classifier, inputs, targets, outputs, which_rows, accuracy] = classify_train('fitcecoc', 1:9, 11:20, getGoodSubjects(), 'masks/glm154 KL_structures - KL_weights sphere t=4.001 extent=27 roi=Cerebelum_6_L peak=[-28 -62 -18].nii', 'condition', 'z-none', 'feedback_onset', []);
+[classifier, inputs, targets, outputs, which_rows, accuracy] = classify_train('cvglmnet', 1:9, 11:20, getGoodSubjects(), 'masks/glm154 KL_structures - KL_weights sphere t=4.001 extent=27 roi=Cerebelum_6_L peak=[-28 -62 -18].nii', 'condition', 'z-none', 'feedback_onset', []);
 
 %{
 k = 10; % TODO param

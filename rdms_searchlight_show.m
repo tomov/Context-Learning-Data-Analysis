@@ -10,10 +10,14 @@ close all;
 % given voxel RDM? (we have spearman's rho for all participants)
 %
 
-event = 'feedback_onset';
-model = 'posterior';
+%event = 'feedback_onset';
+%model = 'ww_posterior';
 %dirname = 'rdms/betas_smooth';
-dirname = 'rdms/M1M2M1_25nstarts_tau_w0';
+%dirname = 'rdms/M1M2M1_25nstarts_tau_w0';
+event = 'feedback_onset';
+%model = 'Q_posteosterior';
+model = 'cond_posterior';
+dirname = 'rdms/Collins_25nstarts';
 
 % posterior @ feedback_onset -- bilateral AG, bilateral dlPFC, IT, visual... :(
 % prior @ feedback_onset -- same
@@ -37,7 +41,8 @@ assert(ismember(event, {'trial_onset', 'feedback_onset'}));
 %
 [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
 which_rows = data.which_rows & data.isTrain; % Look at training trials only
-Model = rdms_get_model_3(data, metadata, which_rows); % WARNING == TIGHT COUPLING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! sanity check if params are same as in the searchlight file
+%Model = rdms_get_model_3(data, metadata, which_rows); % WARNING == TIGHT COUPLING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! sanity check if params are same as in the searchlight file
+Model = rdms_get_model_collins(data, metadata, which_rows); % WARNING == TIGHT COUPLING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! sanity check if params are same as in the searchlight file
 model_names = {Model.name};
 assert(ismember(model, model_names));
 

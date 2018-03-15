@@ -18,7 +18,7 @@ function [sphere_mask, sphere_coords, sphere_vol] = create_spherical_mask(x, y, 
 %
 [mask, Vmask] = load_mask('masks/mask.nii');
 Vmask.fname = ''; % !!!! IMPORTANT!!!!! b/c we return it
-if exist('filename', 'var')
+if exist('filename', 'var') && ~isempty(filename)
     Vmask.fname = filename;
 end
 sphere_vol = Vmask;
@@ -40,31 +40,14 @@ max_y = max(all_y);
 min_z = min(all_z);
 max_z = max(all_z);
 
-sphere_coords = [];
 
 % create the spherical mask
 %
-sphere_mask = zeros(size(mask));
-for newx = floor(x - r) : ceil(x + r)
-    if newx < min_x || newx > max_x, continue; end
-    for newy = floor(y - r) : ceil(y + r)
-        if newy < min_y || newy > max_y, continue; end
-        for newz = floor(z - r) : ceil(z + r)
-            if newz < min_z || newz > max_z, continue; end
-            if ~mask(newx, newy, newz), continue; end
-            if (x - newx)^2 + (y - newy)^2 + (z - newz)^2 > r^2, continue; end
-            sphere_mask(newx, newy, newz) = 1;
-            mni = cor2mni([newx newy newz], Vmask.mat);
-            sphere_coords = [sphere_coords; mni];
-        end
-    end
-end
-
-sphere_mask = logical(sphere_mask);
+[sphere_mask, sphere_coords] = create_spherical_mask_helper(mask, x, y, z, r, min_x, max_x, min_y, max_y, min_z, max_z, Vmask);
 
 % optionally save the mask
 %
-if exist('filename', 'var')
+if exist('filename', 'var') && ~isempty(filename)
     sphere_vol.fname = filename;
     spm_write_vol(sphere_vol, sphere_mask);
 end

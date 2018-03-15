@@ -5,6 +5,6 @@ function check_mask( mask )
 % mask = path of .nii file with mask
 %
 EXPT = context_expt();
-P = {fullfile(EXPT.modeldir, 'mean.nii'), fullfile(mask)};
+P = {fullfile('masks', 'mean.nii'), fullfile(mask)};
 spm_check_registration(char(P));
 

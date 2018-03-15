@@ -19,6 +19,7 @@ control_model_idxs = [];
 %% Simulate behavior using Kalman filter
 %
 [params, which_structures] = model_params('results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat')
+which_structures = logical(which_structures);
 simulated = simulate_subjects(data, metadata, params, which_structures);
 
 % vector that specifies the structure corresponding to the condition
