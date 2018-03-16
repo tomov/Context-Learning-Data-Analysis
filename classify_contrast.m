@@ -1,6 +1,7 @@
 function [rois, targets, which_rows] = classify_contrast(glmodel, contrast, what)
 
 % Train classifier using ROIs from a contrast.
+% similar to classify_searchlight.m
 %
 % INPUT:
 % glmodel = glm as in context_create_multi.m
@@ -14,6 +15,19 @@ function [rois, targets, which_rows] = classify_contrast(glmodel, contrast, what
 if ~exist('contrast', 'var')
     contrast = regressor;
 end
+
+use_tmaps = false;
+use_nosmooth = false;
+
+if use_tmaps
+    get_activations = @get_tmaps;
+    load_activations = @load_tmaps;
+else
+    get_activations = @get_betas;
+    load_activations = @load_betas;
+end
+
+dirname = 'classify';
 
 % fmri cluster params
 %
@@ -34,9 +48,12 @@ runs = 1:metadata.runsPerSubject;
 trials = 6:metadata.trainingTrialsPerRun; % TODO arbitrary
 subjs = getGoodSubjects();
 predict_what = 'condition';
-z_score = 'none';
+z_score = 'z-none';
 event = 'feedback_onset';
 
+% get whole-brain betas
+%
+whole_brain_activations = get_activations('masks/mask.nii', event, data, metadata, use_nosmooth);
 
 % extract clusters
 %
@@ -55,12 +72,25 @@ end
 % train & cross-validate classifiers
 %
 for mask_idx = 1:numel(filenames)
-    fprintf('Cluster %d: mask %d\n', mask_idx, filenames{mask_idx});
+    fprintf('Cluster %d: mask %s\n', mask_idx, filenames{mask_idx});
+
+    [m, V] = load_mask(filenames{mask_idx});
+    activations = get_activations_submask(m, whole_brain_activations);
+
+    [inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, subjs, activations, predict_what, z_score, data, metadata);
+
+    outFilename = []; % don't save it
+    [classifier, outputs, accuracy] = classify_train_helper(method, inputs, targets, runs, trials, subjs, outFilename);
+
+    %[classifier, ~, targets, outputs, which_rows, accuracy] = classify_train(method, runs, trials, subjs, filenames{mask_idx}, predict_what, z_score, event);
 
     rois(mask_idx).filename = filenames{mask_idx};
     rois(mask_idx).rdm_name = masknames{mask_idx};
-    [classifier, ~, targets, outputs, which_rows, accuracy] = classify_train(method, runs, trials, subjs, filenames{mask_idx}, predict_what, z_score, event);
     rois(mask_idx).classifier = classifier;
     rois(mask_idx).accuracy = accuracy;
     rois(mask_idx).outputs = outputs;
 end
+
+filename = sprintf('classify_contrast_%d_%s_%s.mat', glmodel, contrast, what);
+fprintf('SAVING %s\n', filename);
+save(fullfile(dirname, filename), 'rois', 'targets', 'which_rows');

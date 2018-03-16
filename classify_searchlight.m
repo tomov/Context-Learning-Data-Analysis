@@ -80,4 +80,4 @@ disp('Classified.');
 
 filename = sprintf('searchlight_classifier_%d-%d.mat', start_idx, end_idx);
 fprintf('SAVING %s\n', filename);
-save(fullfile(dirname, filename), 'Searchlight', 'x', 'y', 'z', 'r', 'idx', 'params', 'which_structures', 'targets', 'which_rows');
+save(fullfile(dirname, filename), 'Searchlight', 'x', 'y', 'z', 'r', 'idx', 'targets', 'which_rows');
