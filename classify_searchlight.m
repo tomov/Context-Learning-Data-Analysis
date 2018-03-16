@@ -60,7 +60,7 @@ save shit.mat
 % Actually run the classifier
 %
 for i = 1:numel(Searchlight)
-    [inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, subjs, activations, predict_what, z_score, data, metadata);
+    [inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, subjs, Searchlight(i).activations, predict_what, z_score, data, metadata);
 
 end
 

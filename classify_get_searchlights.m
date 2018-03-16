@@ -71,8 +71,6 @@ for event = {'trial_onset', 'feedback_onset'}
             sphere_activations = load_activations(sphere_mask, event, data, metadata, use_nosmooth); % old fashioned SUPER SLOW
         end
 
-        save shit.mat
-
         searchlight_idx = searchlight_idx + 1;
         Searchlight(searchlight_idx).activations = sphere_activations;
         Searchlight(searchlight_idx).name = ['sphere_', sprintf('%d_%d_%d', mni), '_', event(1)];
