@@ -1,4 +1,4 @@
-function [rois] = classify_contrast(glmodel, contrast, what)
+function [rois, targets, which_rows] = classify_contrast(glmodel, contrast, what)
 
 % Train classifier using ROIs from a contrast.
 %
@@ -55,9 +55,12 @@ end
 % train & cross-validate classifiers
 %
 for mask_idx = 1:numel(filenames)
+    fprintf('Cluster %d: mask %d\n', mask_idx, filenames{mask_idx});
+
     rois(mask_idx).filename = filenames{mask_idx};
     rois(mask_idx).rdm_name = masknames{mask_idx};
-    [classifier, ~, ~, ~, ~, accuracy] = classify_train(method, runs, trials, subjs, filenames{mask_idx}, predict_what, z_score, event);
+    [classifier, ~, targets, outputs, which_rows, accuracy] = classify_train(method, runs, trials, subjs, filenames{mask_idx}, predict_what, z_score, event);
     rois(mask_idx).classifier = classifier;
     rois(mask_idx).accuracy = accuracy;
+    rois(mask_idx).outputs = outputs;
 end

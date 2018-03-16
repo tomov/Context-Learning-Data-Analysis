@@ -6,9 +6,6 @@ function [classifier, outputs, accuracy] = classify_train_helper(method, inputs,
 accuracy = NaN; % TODO make all of them output it
 
 
-tic
-disp('training classifier...');
-
 %
 % Fit them
 %
@@ -154,8 +151,8 @@ switch method
         end
         %}
         assert(length(foldid) == size(inputs, 1));
-        disp('folds:');
-        disp(foldid);
+        %disp('folds:');
+        %disp(foldid);
 
         
         % x = inputs
@@ -164,7 +161,7 @@ switch method
         parallel = false;
         keep = true;
         CVfit = cvglmnet(inputs, targets, 'multinomial', options, 'deviance', [], foldid, parallel, keep);
-        disp(CVfit);
+        %disp(CVfit);
 
         outputs = cvglmnetPredict(CVfit, inputs, CVfit.lambda_1se, 'response');
 
@@ -195,17 +192,20 @@ switch method
     case 'mnrfit'
         % 
         %
+        assert(false);
         
     otherwise
         assert(false, 'should be one of the above');
 end
 
-toc
 
 % Save everything except for inputs (too big)
 %
-fprintf('SAVING to %s\n', outFilename);
-save(outFilename,'-regexp','^(?!(inputs)$).');
+if ~isempty(outFilename)
+    fprintf('SAVING to %s\n', outFilename);
+    save(outFilename,'-regexp','^(?!(inputs)$).');
+end
+
 
 end
 

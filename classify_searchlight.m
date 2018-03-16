@@ -18,11 +18,12 @@ function [table_Rho, table_P, all_subject_rhos, idx, x, y, z] = classify_searchl
 
 dirname = 'classify';
 
+method = 'cvglmnet';
 runs = 1:9; 
 trials = 5:20;
 subjs = getGoodSubjects();
 predict_what = 'condition';
-z_score = 'z-none';
+z_score = 'z-none'; 
 
 %% Load data and compute first-order RDMs
 %
@@ -55,20 +56,28 @@ disp(end_idx);
 
 Searchlight = classify_get_searchlights(data, metadata, which_rows, x, y, z, r, true, false, false); % use pregen'd betas, use tmaps, use nosmooth
 
-save shit.mat
+disp('Classifying...');
 
 % Actually run the classifier
 %
 for i = 1:numel(Searchlight)
+    fprintf('row %d\n', i);
+
     [inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, subjs, Searchlight(i).activations, predict_what, z_score, data, metadata);
 
+    outFilename = []; % don't save it
+    [classifier, outputs, accuracy] = classify_train_helper(method, inputs, targets, runs, trials, subjs, outFilename);
+
+    Searchlight(i).classifier = classifier;
+    Searchlight(i).outputs = outputs;
+    Searchlight(i).accuracy = accuracy;
 end
+
+disp('Classified.');
 
 %% Save output
 %
 
-%which = table_Rho > 0 & table_P < 0.05 / numel(table_P); % Bonferroni correction
-
-%filename = sprintf('searchlight_weights_%d-%d.mat', start_idx, end_idx);
-%fprintf('SAVING %s\n', filename);
-%save(fullfile(dirname, filename), 'table_Rho', 'table_T', 'table_P', 'all_subject_rhos', 'x', 'y', 'z', 'r', 'idx', 'params', 'which_structures');
+filename = sprintf('searchlight_classifier_%d-%d.mat', start_idx, end_idx);
+fprintf('SAVING %s\n', filename);
+save(fullfile(dirname, filename), 'Searchlight', 'x', 'y', 'z', 'r', 'idx', 'params', 'which_structures', 'targets', 'which_rows');

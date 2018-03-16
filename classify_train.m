@@ -12,6 +12,7 @@ rng default;
 
 fprintf('classify_train\n');
 disp(method);
+tic
 
 [inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, trials, subjs, mask, predict_what, z_score, event);
 % for debugging, pass the 
@@ -34,3 +35,5 @@ inputs = p + rand(size(p));
 outFilename = fullfile('classifier', ['classify_train_', method, '_', maskname, '_', predict_what, '_', z_score, '_', random_string(), '.mat']);
 
 [classifier, outputs, accuracy] = classify_train_helper(method, inputs, targets, runs, trials, subjs, outFilename);
+
+toc
