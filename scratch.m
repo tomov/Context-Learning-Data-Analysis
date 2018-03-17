@@ -1,7 +1,30 @@
-%classify_contrast(171, 'KL_structures', 'cluster');
-%[rois, targets, which_rows] = classify_contrast(171, 'KL_structures', 'sphere');
-%classify_contrast(170, 'KL_clusters', 'cluster');
-[rois, targets, which_rows] = classify_contrast(170, 'KL_clusters', 'sphere');
+
+[rois, targets, which_rows] = classify_contrast('rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii', 0, 'posterior_light', 'sphere');
+[rois, targets, which_rows] = classify_contrast('rdms/M1M2M1_4mm/searchlight_tmap_prior_trial_onset.nii', 0, 'prior_light', 'sphere');
+[rois, targets, which_rows] = classify_contrast(context_expt(), 171, 'KL_structures', 'sphere');
+[rois, targets, which_rows] = classify_contrast(context_expt(), 170, 'KL_clusters', 'sphere');
+
+
+
+
+% for printing PCA's from classifier
+%{
+load shit.mat;
+figure;
+for i = 1:20
+    for j = 1:9
+        subplot(20,9,(i-1)*9 + j);
+
+        s = ((i-1)*9 + j - 1)*15 + 1; 
+        e = s + 14;
+       % fprintf('%d %d\n', s, e);
+        plot(inputs( s:e , 1:3));
+
+        set(gca,'xtick',[]);
+        set(gca,'ytick',[]);
+    end
+end
+%}
 
 %[classifier, inputs, targets, outputs, which_rows, accuracy] = classify_train('cvglmnet', 1:9, 11:20, getGoodSubjects(), 'masks/glm154 KL_structures - KL_weights sphere t=4.001 extent=27 roi=Cerebelum_6_L peak=[-28 -62 -18].nii', 'condition', 'z-none', 'feedback_onset', []);
 

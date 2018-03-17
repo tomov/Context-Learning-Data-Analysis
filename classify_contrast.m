@@ -1,4 +1,4 @@
-function [rois, targets, which_rows] = classify_contrast(glmodel, contrast, what)
+function [rois, targets, which_rows] = classify_contrast(EXPT, glmodel, contrast, what)
 
 % Train classifier using ROIs from a contrast.
 % similar to classify_searchlight.m
@@ -31,24 +31,28 @@ dirname = 'classify';
 
 % fmri cluster params
 %
-EXPT = context_expt();
 p = 0.001;
 alpha = 0.05;
 Dis = 20;
 Num = 1; % # peak voxels per cluster; default in bspmview is 3
 %r = 1.814;
-r = 2.6667;
+r = 2.6667; 
 direct = '+';
 
 % classifier params
 %
 [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
-method = 'cvglmnet';
+%method = 'cvglmnet';
+method = 'patternnet';
 runs = 1:metadata.runsPerSubject;
 trials = 6:metadata.trainingTrialsPerRun; % TODO arbitrary
 subjs = getGoodSubjects();
 predict_what = 'condition';
-z_score = 'z-none';
+%z_score = 'z-none';
+%z_score = 'z-run';
+z_score = 'z-run-voxel';
+%z_score = 'pca-subj';
+%z_score = 'z-run-voxel-pca-subj';
 event = 'feedback_onset';
 
 % get whole-brain betas
@@ -93,4 +97,4 @@ end
 
 filename = sprintf('classify_contrast_%d_%s_%s.mat', glmodel, contrast, what);
 fprintf('SAVING %s\n', filename);
-save(fullfile(dirname, filename), 'rois', 'targets', 'which_rows');
+save(fullfile(dirname, filename), 'rois', 'targets', 'which_rows', 'p', 'alpha', 'Dis', 'Num', 'r', 'direct', 'method', 'runs', 'trials', 'subjs', 'predict_what', 'z_score');

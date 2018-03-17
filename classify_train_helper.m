@@ -23,7 +23,7 @@ switch method
         % from https://github.com/tomov/food-recognition/blob/master/neural_train.m
 
         % Create a Pattern Recognition Network
-        hiddenLayerSize = 8; % TODO param
+        hiddenLayerSize = 20; % TODO param
         net = patternnet(hiddenLayerSize);
 
         % Set up Division of Data for Training, Validation, Testing
@@ -160,7 +160,8 @@ switch method
         %
         parallel = false;
         keep = true;
-        CVfit = cvglmnet(inputs, targets, 'multinomial', options, 'deviance', [], foldid, parallel, keep);
+        %CVfit = cvglmnet(inputs, targets, 'multinomial', options, 'deviance', [], foldid, parallel, keep);
+        CVfit = cvglmnet(inputs, targets, 'multinomial', options, 'deviance', nfolds, [], parallel, keep);
         %disp(CVfit);
 
         outputs = cvglmnetPredict(CVfit, inputs, CVfit.lambda_1se, 'response');

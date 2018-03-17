@@ -38,6 +38,7 @@ for i = 1:numel(aal2_labels.atlas.data.label)
     label = aal2_labels.atlas.data.label{i}.name.Text;
     x = [x, {label}];
 end
+
 assert(numel(x) == numel(aal2_labels.atlas.data.label));
 valid_labels = ismember(my_roi_labels, x);
 if sum(~valid_labels) ~= 0

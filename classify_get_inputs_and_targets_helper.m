@@ -89,35 +89,69 @@ switch z_score
         % do nothing
         
     case 'z-run'
-        % z-score all voxels within the same run
-        %
-        for subj = subjs
-            for run = runs
-                which = strcmp(participant, metadata.allSubjects{subj}) & runId == run;
-                assert(sum(which) == numel(trials));
-                
-                inputs_for_run = inputs(which, :);
-                z_scored_inputs_for_run = reshape(zscore(inputs_for_run(:)), size(inputs_for_run));
-                inputs(which, :) = z_scored_inputs_for_run;
-                assert(abs(mean(z_scored_inputs_for_run(:))) < 1e-10);
-            end
-        end
+        inputs = z_run(metadata, runId, newTrialId, participant, subjs, runs, inputs);
         
     case 'z-run-voxel'
-        % z-score each voxel within the same run
-        %
-        for subj = subjs
-            for run = runs
-                which = strcmp(participant, metadata.allSubjects{subj}) & runId == run;
-                assert(sum(which) == numel(trials));
-                
-                inputs_for_run = inputs(which, :);
-                inputs(which, :) = zscore(inputs_for_run, 0, 1);
-                assert(max(abs(mean(inputs(which, :), 1))) < 1e-10);
-            end
-        end
+        inputs = z_run_voxel(metadata, runId, newTrialId, participant, subjs, runs, trials, inputs);
+
+    case 'pca-subj' 
+        inputs = pca_subj(metadata, runId, newTrialId, participant, subjs, runs, inputs);
+
+    case 'z-run-voxel-pca-subj' 
+        inputs = z_run_voxel(metadata, runId, newTrialId, participant, subjs, runs, trials, inputs);
+        inputs = pca_subj(metadata, runId, newTrialId, participant, subjs, runs, inputs);
         
     otherwise
         assert(false, 'invalid z_score -- should be one of the above');        
-    
+end
+
+
+end % end f'n 
+
+
+
+% z-score all voxels within the same run 
+% i.e. mean to subtract = mean of all voxels across the run (n_trials_per_run x n_voxels data points)
+%
+function [inputs] = z_run(metadata, runId, newTrialId, participant, subjs, runs, inputs)
+    for subj = subjs
+        for run = runs
+            which = strcmp(participant, metadata.allSubjects{subj}) & runId == run;
+            assert(sum(which) == numel(trials));
+            
+            inputs_for_run = inputs(which, :);
+            z_scored_inputs_for_run = reshape(zscore(inputs_for_run(:)), size(inputs_for_run));
+            inputs(which, :) = z_scored_inputs_for_run;
+            assert(abs(mean(z_scored_inputs_for_run(:))) < 1e-10);
+        end
+    end
+end
+
+% z-score each voxel within the same run
+% i.e. mean to subtract = mean of given voxel across the run (n_trials_per_run data points)
+%
+function [inputs] = z_run_voxel(metadata, runId, newTrialId, participant, subjs, runs, trials, inputs)
+    for subj = subjs
+        for run = runs
+            which = strcmp(participant, metadata.allSubjects{subj}) & runId == run;
+            assert(sum(which) == numel(trials));
+            
+            inputs_for_run = inputs(which, :);
+            inputs(which, :) = zscore(inputs_for_run, 0, 1);
+            assert(max(abs(mean(inputs(which, :), 1))) < 1e-10);
+        end
+    end
+end
+
+% PCA for each subject
+%
+function [inputs] = pca_subj(metadata, runId, newTrialId, participant, subjs, runs, inputs)
+    nscores = 10; % how many PCs to include
+    for subj = subjs
+        which = strcmp(participant, metadata.allSubjects{subj});
+        [coeff,score,latent,tsquared,explained,mu] = pca(inputs(which, :));
+
+        new_inputs(which,:) = score(:,1:nscores);
+    end
+    inputs = new_inputs;
 end

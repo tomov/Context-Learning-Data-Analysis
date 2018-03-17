@@ -4,8 +4,8 @@
 % The ROI AAL2 labels (we make them bilateral later)
 %
 hippocampus = {'Hippocampus'};
-ofc = {'OFCmed', 'OFCant', 'OFCpost', 'OFClat'};
-med_ofc = {'OFCmed'};
+ofc = {'OFCmed', 'OFCant', 'OFCpost', 'OFClat', 'Frontal_Med_Orb', 'Frontal_Inf_Orb_2', 'Rectus'};
+med_ofc = {'OFCmed', 'Frontal_Med_Orb', 'Rectus'};
 rectus = {'Rectus'};
 vmpfc = {'Rectus', 'Frontal_Sup_Medial', 'Frontal_Med_Orb', 'Cingulate_Ant', 'OFCmed'};
 striatum = {'Caudate', 'Putamen'};
