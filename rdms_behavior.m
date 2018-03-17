@@ -21,13 +21,29 @@ clear all;
 
 utils;
 
+%[params, which_structures] = model_params('results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat');
+[params, which_structures] = model_params('results/fit_params_results_simple_collins_25nstarts_0-10alpha_Q0.mat');
+
 [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
 
 which_trials = data.which_rows & data.isTrain; % Look at training trials only
 
 %% get the neural rdms
 %
-Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.001, '+', 0.05, 20, 5, 1.814);
+p = 0.001;
+alpha = 0.05;
+Dis = 20;
+Num = 1; % # peak voxels per cluster; default in bspmview is 3
+%r = 1.814;
+r = 2.6667; 
+direct = '+';
+
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', p, direct, alpha, Dis, Num, r);  % <-- nothing
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/M1M2M1_4mm/searchlight_tmap_prior_trial_onset.nii', 0, 'light', p, direct, alpha, Dis, Num, r); % <-- nothing
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 171, 'KL_structures', p, direct, alpha, Dis, Num, r); %  <------!!!! RLPFC!
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 170, 'KL_clusters', p, direct, alpha, Dis, Num, r); %  <--- Precentral
+
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.001, '+', 0.05, 20, 5, 1.814);
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 1, 1.814);
 %Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+');
 
@@ -102,7 +118,7 @@ end
 
 %% Get the test choice likelihoods and plot the correlation
 %
-test_log_liks = get_test_behavior();
+test_log_liks = get_test_behavior(params, which_structures);
 
 for half = 1:2
     if half == 1

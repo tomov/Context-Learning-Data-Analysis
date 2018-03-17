@@ -48,9 +48,9 @@ runs = 1:metadata.runsPerSubject;
 trials = 6:metadata.trainingTrialsPerRun; % TODO arbitrary
 subjs = getGoodSubjects();
 predict_what = 'condition';
-%z_score = 'z-none';
+z_score = 'z-none';
 %z_score = 'z-run';
-z_score = 'z-run-voxel';
+%z_score = 'z-run-voxel';
 %z_score = 'pca-subj';
 %z_score = 'z-run-voxel-pca-subj';
 event = 'feedback_onset';
@@ -81,18 +81,30 @@ for mask_idx = 1:numel(filenames)
     [m, V] = load_mask(filenames{mask_idx});
     activations = get_activations_submask(m, whole_brain_activations);
 
+    % one classifier for all subjects
+    %
     [inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, subjs, activations, predict_what, z_score, data, metadata);
+    [classifier, outputs, accuracy] = classify_train_helper(method, inputs, targets, runs, trials, subjs, []);
 
-    outFilename = []; % don't save it
-    [classifier, outputs, accuracy] = classify_train_helper(method, inputs, targets, runs, trials, subjs, outFilename);
-
-    %[classifier, ~, targets, outputs, which_rows, accuracy] = classify_train(method, runs, trials, subjs, filenames{mask_idx}, predict_what, z_score, event);
+    %[classifier, ~, targets, outputs, which_rows, accuracy] = classify_train(method, runs, trials, subjs, filenames{mask_idx}, predict_what, z_score, event); <-- too much overhead loading the betas
 
     rois(mask_idx).filename = filenames{mask_idx};
     rois(mask_idx).rdm_name = masknames{mask_idx};
     rois(mask_idx).classifier = classifier;
     rois(mask_idx).accuracy = accuracy;
     rois(mask_idx).outputs = outputs;
+
+    % one classifier per subject
+    %
+    accuracies = [];
+    for subj = subjs
+        fprintf('    subj %d\n', subj);
+        [inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, [subj], activations, predict_what, z_score, data, metadata);
+        [classifier, outputs, accuracy] = classify_train_helper(method, inputs, targets, runs, trials, [subj], []);
+        accuracies = [accuracies, accuracy];
+    end
+
+    rois(mask_idx).accuracies = accuracies;
 end
 
 filename = sprintf('classify_contrast_%d_%s_%s.mat', glmodel, contrast, what);

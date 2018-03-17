@@ -19,7 +19,7 @@ do
 	classify_searchlight_call="classify_searchlight(${start_idx},${end_idx},${r},'${event}')"
 	echo $classify_searchlight_call
 
-    sbatch_output=`CMD="$classify_searchlight_call" sbatch -p ncf --mem 25000 -t 20-18:20 -o ${outfileprefix}_%j.out --mail-type=END slurm_matlab.sh`
+    sbatch_output=`CMD="$classify_searchlight_call" sbatch -p ncf --mem 50000 -t 20-18:20 -o ${outfileprefix}_%j.out --mail-type=END slurm_matlab.sh`
 	#sbatch_output=`sbatch -p ncf --mem 25000 -t 20-18:20 -o ${outfileprefix}_%j.out --mail-type=END --wrap="matlab -nodisplay -nosplash -nojvm -r $\"$classify_searchlight_call; exit\""`
         #sbatch_output=`echo Submitted batch job 88725418`
 	echo $sbatch_output
