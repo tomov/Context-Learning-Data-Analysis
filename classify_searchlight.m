@@ -1,4 +1,4 @@
-function [table_Rho, table_P, all_subject_rhos, idx, x, y, z] = classify_searchlight(start_idx, end_idx, r, idx)
+function [table_Rho, table_P, all_subject_rhos, idx, x, y, z] = classify_searchlight(start_idx, end_idx, r, event)
 
 % Run classifier for different searchlight spheres
 % Similar to rdms_searchlight.m
@@ -40,16 +40,10 @@ which_rows = data.which_rows & data.isTrain; % Look at training trials only
 whole_brain = load_mask('masks/mask.nii');
 [x, y, z] = ind2sub(size(whole_brain), find(whole_brain)); % binary mask --> voxel indices --> voxel coordinates in AAL2 space
 
-% get voxel order
+% get voxel order based on ANOVA
 %
-if ~exist('idx', 'var') || isempty(idx)
-    % no voxel order supplied => random shuffle them (deterministically)
-    %
-    rng default; % make sure it's the same every time
-    idx = randperm(length(x));
-else
-    assert(numel(idx) == numel(x));
-end
+idx = classify_anova_get_voxel_idx(event);
+assert(numel(idx) == numel(x));
 
 % reorder voxels
 x = x(idx);
@@ -65,30 +59,34 @@ z = z(i);
 idx = idx(i);
 disp(end_idx);
 
-Searchlight = classify_get_searchlights(data, metadata, which_rows, x, y, z, r, true, false, false); % use pregen'd betas, use tmaps, use nosmooth
+Searchlight = classify_get_searchlights(data, metadata, which_rows, event, x, y, z, r, true, false, false); % use pregen'd betas, use tmaps, use nosmooth
 
 disp('Classifying...');
+tic
 
 % Actually run the classifier
 %
 for i = 1:numel(Searchlight)
-    fprintf('Row %d: [%d %d %d]\n', i, Searchlight(i).center);
+    fprintf('Row %d: vox_idx = %d [%d %d %d]\n', i, idx(i), Searchlight(i).center);
 
     [inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, subjs, Searchlight(i).activations, predict_what, z_score, data, metadata);
 
     outFilename = []; % don't save it
     [classifier, outputs, accuracy] = classify_train_helper(method, inputs, targets, runs, trials, subjs, outFilename);
 
-    Searchlight(i).classifier = classifier;
-    Searchlight(i).outputs = outputs;
+    %Searchlight(i).classifier = classifier;
+    %Searchlight(i).outputs = outputs;
     Searchlight(i).accuracy = accuracy;
+
+    Searchlight(i).activations = []; % for saving...
 end
 
 disp('Classified.');
+toc
 
 %% Save output
 %
 
-filename = sprintf('searchlight_classifier_%d-%d.mat', start_idx, end_idx);
+filename = sprintf('searchlight_classifier_%d-%d-%s.mat', start_idx, end_idx, event);
 fprintf('SAVING %s\n', filename);
-save(fullfile(dirname, filename), 'Searchlight', 'x', 'y', 'z', 'r', 'idx', 'targets', 'which_rows');
+save(fullfile(dirname, filename), 'Searchlight', 'event', 'x', 'y', 'z', 'r', 'idx', 'targets', 'which_rows');

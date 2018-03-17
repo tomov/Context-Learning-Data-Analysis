@@ -4,18 +4,19 @@ echo ---------------- >> jobs.txt
 echo --- Here we go classify_searchlight >> jobs.txt
 echo ---------------- >> jobs.txt
 
-batch_size=1000;
+batch_size=50000;
 r=2.6667;
+event="feedback_onset";
 
-for batch in {1..10}
+for batch in {1..1}
 do
 	start_idx=$(((batch - 1) * batch_size + 1))
 	end_idx=$((batch * batch_size))
 
-	outfileprefix="output/classify_searchlight_${start_idx}_${end_idx}_${r}"
+	outfileprefix="output/classify_searchlight_${start_idx}_${end_idx}_${r}_${event}"
 	echo File prefix = $outfileprefix
 
-	classify_searchlight_call="classify_searchlight(${start_idx},${end_idx},${r})"
+	classify_searchlight_call="classify_searchlight(${start_idx},${end_idx},${r},'${event}')"
 	echo $classify_searchlight_call
 
     sbatch_output=`CMD="$classify_searchlight_call" sbatch -p ncf --mem 25000 -t 20-18:20 -o ${outfileprefix}_%j.out --mail-type=END slurm_matlab.sh`
