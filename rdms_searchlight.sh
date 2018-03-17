@@ -8,7 +8,7 @@ echo --- Here we go rdms_searchlight >> jobs.txt
 echo ---------------- >> jobs.txt
 
 batch_size=1000;
-r=1.814;
+r=2.6667;
 
 for batch in {1..10}
 do

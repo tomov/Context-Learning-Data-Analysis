@@ -15,7 +15,7 @@ disp(method);
 tic
 
 [inputs, targets, which_rows] = classify_get_inputs_and_targets(runs, trials, subjs, mask, predict_what, z_score, event);
-% for debugging, pass the 
+% for debugging, pass fake inputs = posterior + noise
 %
 %{
 [data,metadata,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat', 1, [1 1 0 1 0]);

@@ -1,8 +1,8 @@
 
-[rois, targets, which_rows] = classify_contrast('rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii', 0, 'posterior_light', 'sphere');
-[rois, targets, which_rows] = classify_contrast('rdms/M1M2M1_4mm/searchlight_tmap_prior_trial_onset.nii', 0, 'prior_light', 'sphere');
-[rois, targets, which_rows] = classify_contrast(context_expt(), 171, 'KL_structures', 'sphere');
-[rois, targets, which_rows] = classify_contrast(context_expt(), 170, 'KL_clusters', 'sphere');
+%[rois, targets, which_rows] = classify_contrast('rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii', 0, 'posterior_light', 'sphere');
+%[rois, targets, which_rows] = classify_contrast('rdms/M1M2M1_4mm/searchlight_tmap_prior_trial_onset.nii', 0, 'prior_light', 'sphere');
+%[rois, targets, which_rows] = classify_contrast(context_expt(), 171, 'KL_structures', 'sphere');
+%[rois, targets, which_rows] = classify_contrast(context_expt(), 170, 'KL_clusters', 'sphere');
 
 
 

@@ -1,7 +1,8 @@
 % Display Fmap computed by classify_anova.m
 %
 
-event = 'feedback_onset';
+%event = 'feedback_onset';
+event = 'trial_onset';
 
 load(['results/classify_anova_', event, '.mat']);
 
@@ -13,9 +14,6 @@ assert(numel(x) == numel(F_values));
 
 Fmap = nan(size(mask));
 Fmap(mask) = F_values;
-%for i = 1:numel(x)
-%    Fmap(x(i), y(i), z(i)) = F_values(i);
-%end
 
 spm_write_vol(V, Fmap);
 

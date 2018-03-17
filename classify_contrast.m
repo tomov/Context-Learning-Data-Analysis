@@ -42,8 +42,8 @@ direct = '+';
 % classifier params
 %
 [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
-%method = 'cvglmnet';
-method = 'patternnet';
+method = 'cvglmnet';
+%method = 'patternnet';
 runs = 1:metadata.runsPerSubject;
 trials = 6:metadata.trainingTrialsPerRun; % TODO arbitrary
 subjs = getGoodSubjects();

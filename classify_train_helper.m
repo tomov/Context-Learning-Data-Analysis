@@ -121,39 +121,12 @@ switch method
         options = glmnetSet(opts);
 
         nfolds = 10;
-        c = cvpartition_runs(nfolds, subjs, runs, trials, inputs);
-        foldid = c.Impl.indices;
 
-        % each run is a separate fold
-        %
-        %{
-        if isempty(foldid)
-            [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
-            foldid = data.runId(which_rows);
-            foldid = arrayfun(@(x) find(x == runs), foldid);
-        end
-        %}
-        % each (subject, run) is a separate fold 
-        %
-        %{
-        [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
-        cur_participant = '';
-        cur_run = NaN;
-        cur_fold = 0;
-        foldid = [];
-        for i = find(which_rows)'
-            if ~isequal(data.participant{i}, cur_participant) || ~isequal(data.runId(i), cur_run)
-                cur_fold = cur_fold + 1;
-            end
-            foldid = [foldid; cur_fold];
-            cur_participant = data.participant{i};
-            cur_run = data.runId(i);
-        end
-        %}
-        assert(length(foldid) == size(inputs, 1));
+        %c = cvpartition_runs(nfolds, subjs, runs, trials, inputs);
+        %foldid = c.Impl.indices;
+        %assert(length(foldid) == size(inputs, 1));
         %disp('folds:');
         %disp(foldid);
-
         
         % x = inputs
         % y = targets
@@ -202,7 +175,7 @@ end
 
 % Save everything except for inputs (too big)
 %
-if ~isempty(outFilename)
+if exist('outFilename', 'var') && ~isempty(outFilename)
     fprintf('SAVING to %s\n', outFilename);
     save(outFilename,'-regexp','^(?!(inputs)$).');
 end

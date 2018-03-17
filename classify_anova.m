@@ -11,13 +11,14 @@ else
     get_activations = @get_betas;
     load_activations = @load_betas;
 end
-event = 'feedback_onset';
+%event = 'feedback_onset';
+event = 'trial_onset';
 
 [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
 
 % get betas
 %
-%betas = get_activations('masks/mask.nii', event, data, metadata, use_nosmooth);
+betas = get_activations('masks/mask.nii', event, data, metadata, use_nosmooth);
 
 which_rows = data.which_rows & data.isTrain;
 
