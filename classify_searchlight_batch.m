@@ -3,7 +3,7 @@ function classify_searchlight_batch(start_idx, end_idx, r, event)
 % similar to rdms_searchlight_batch
 %
 
-batch_size = 5000;
+batch_size = 10000;
 N = ceil((end_idx - start_idx + 1) / batch_size);
 
 for i = start_idx:batch_size:end_idx

@@ -59,26 +59,66 @@ z = z(i);
 idx = idx(i);
 disp(end_idx);
 
-Searchlight = classify_get_searchlights(data, metadata, which_rows, event, x, y, z, r, true, false, false); % use pregen'd betas, use tmaps, use nosmooth
+% get betas
+%
+use_tmaps = false;
+use_nosmooth = false;
+
+if use_tmaps
+    get_activations = @get_tmaps;
+    load_activations = @load_tmaps;
+else
+    get_activations = @get_betas;
+    load_activations = @load_betas;
+end
+
+whole_brain_activations = get_activations('masks/mask.nii', event, data, metadata, use_nosmooth);
+
+% get coordinate limits
+%
+[mask, Vmask] = load_mask('masks/mask.nii');
+Vmask.fname = 'masks/searchlight.nii'; % !!!! IMPORTANT! in case we save it
+
+[all_x, all_y, all_z] = ind2sub(size(mask), find(mask)); % binary mask --> voxel indices --> voxel coordinates in AAL2 space
+min_x = min(all_x);
+max_x = max(all_x);
+min_y = min(all_y);
+max_y = max(all_y);
+min_z = min(all_z);
+max_z = max(all_z);
 
 disp('Classifying...');
 tic
 
 % Actually run the classifier
 %
-for i = 1:numel(Searchlight)
-    fprintf('Row %d: vox_idx = %d [%d %d %d]\n', i, idx(i), Searchlight(i).center);
+for i = 1:numel(x)
+    fprintf('Row %d: vox_idx = %d [%d %d %d]\n', i, idx(i), x(i), y(i), z(i));
 
-    [inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, subjs, Searchlight(i).activations, predict_what, z_score, data, metadata);
+    % Build spherical mask
+    %
+    sphere_mask = create_spherical_mask_helper(mask, x(i), y(i), z(i), r, min_x, max_x, min_y, max_y, min_z, max_z, Vmask);
 
-    outFilename = []; % don't save it
-    [classifier, outputs, accuracy] = classify_train_helper(method, inputs, targets, runs, trials, subjs, outFilename);
+    % Get mask betas
+    %
+    sphere_activations = get_activations_submask(sphere_mask, whole_brain_activations);
 
-    %Searchlight(i).classifier = classifier;
-    %Searchlight(i).outputs = outputs;
+    % Create inputs and targets for classifier
+    %
+    [inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, subjs, sphere_activations, predict_what, z_score, data, metadata);
+
+    % Train classifier
+    %
+    [classifier, outputs, accuracy] = classify_train_helper(method, inputs, targets, runs, trials, subjs, []);
+
+    % Save results
+    %
+    mni = cor2mni([x(i) y(i) z(i)], Vmask.mat); % coords in MNI space
     Searchlight(i).accuracy = accuracy;
-
-    Searchlight(i).activations = []; % for saving...
+    Searchlight(i).name = ['sphere_', sprintf('%d_%d_%d', mni), '_', event(1)];
+    Searchlight(i).center = [x(i) y(i) z(i)];
+    Searchlight(i).radius = r;
+    Searchlight(i).center_mni = mni;
 end
 
 disp('Classified.');
@@ -87,6 +127,6 @@ toc
 %% Save output
 %
 
-filename = sprintf('searchlight_classifier_%d-%d-%s.mat', start_idx, end_idx, event);
+filename = sprintf('searchlight_classifier_%s_%d-%d-%s.mat', method, start_idx, end_idx, event);
 fprintf('SAVING %s\n', filename);
 save(fullfile(dirname, filename), 'Searchlight', 'event', 'x', 'y', 'z', 'r', 'idx', 'targets', 'which_rows');

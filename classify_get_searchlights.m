@@ -1,6 +1,7 @@
 function Searchlight = classify_get_searchlights(data, metadata, which_rows, event, x, y, z, r, use_pregenerated_activations, use_tmaps, use_nosmooth)
 
 % Get searclight betas for classifier. Similar to rdms_get_searchlight.m
+% Returns multiple searchlights.
 %
 % INPUT:
 % data, metadata = subject data and metadata as output by load_data
