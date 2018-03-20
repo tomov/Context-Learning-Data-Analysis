@@ -21,7 +21,7 @@ clear all;
 
 utils;
 
-%[params, which_structures] = model_params('results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat');
+%[params, which_structures] = model_params('results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat'); % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! important which one! !!!!!!!!
 [params, which_structures] = model_params('results/fit_params_results_simple_collins_25nstarts_0-10alpha_Q0.mat');
 
 [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
@@ -40,8 +40,10 @@ direct = '+';
 
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', p, direct, alpha, Dis, Num, r);  % <-- nothing
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/M1M2M1_4mm/searchlight_tmap_prior_trial_onset.nii', 0, 'light', p, direct, alpha, Dis, Num, r); % <-- nothing
-%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 171, 'KL_structures', p, direct, alpha, Dis, Num, r); %  <------!!!! RLPFC!
+Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 171, 'KL_structures', p, direct, alpha, Dis, Num, r, {'trial_onset', 'feedback_onset'}); %  <------!!!! RLPFC!
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 170, 'KL_clusters', p, direct, alpha, Dis, Num, r); %  <--- Precentral
+
+% ... OLD ...
 
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.001, '+', 0.05, 20, 5, 1.814);
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 1, 1.814);

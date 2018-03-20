@@ -23,8 +23,22 @@ which_trials = data.which_rows & data.isTrain; % Look at training trials only
 
 %% get the neural rdms
 %
+p = 0.001;
+alpha = 0.05;
+Dis = 20;
+Num = 1; % # peak voxels per cluster; default in bspmview is 3
+%r = 1.814;
+r = 2.6667; 
+direct = '+';
+
+Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 171, 'KL_structures', p, direct, alpha, Dis, Num, r, {'feedback_onset'}); % <-- RLPFC !!
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', p, direct, alpha, Dis, Num, r);  % <-- nothing
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/M1M2M1_4mm/searchlight_tmap_prior_trial_onset.nii', 0, 'light', p, direct, alpha, Dis, Num, r);  % <-- nothing
+
+% ... OLD ...
+
 %Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.0001, '+', 0.99, 20, 3);
-Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.001, '+', 0.05, 20, 3, 1.814);
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_prior_trial_onset.nii', 0, 'light', 0.001, '+', 0.05, 20, 3, 1.814);
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 3, 1.814);
 %Neural = rdms_get_rois_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 3);
 
@@ -54,12 +68,16 @@ Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/beta
 % sanity check -- make sure that the posterior actually correlates both
 %with the ROIs and with the test choices ... well shit
 
-Model = rdms_get_model(data, metadata, which_trials);
-control_model_idxs = [8, 12]; % #KNOB control for time and run
-assert(isequal(Model(8).name, 'time'));
-assert(isequal(Model(12).name, 'run'));
+Model = rdms_get_model_3(data, metadata, which_trials); % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! COUPLING!!!!!!!!!!!!
+%showRDMs(Model, 2);
+
+control_model_idxs = [5, 6]; % #KNOB control for time and run
+assert(isequal(Model(5).name, 'time'));
+assert(isequal(Model(6).name, 'run'));
 
 model_idx = 1; % !!!!!!!!! depends on which searchlight tmap we're looking at
+assert(isequal(Model(1).name, 'posterior'));
+assert(isequal(Model(2).name, 'prior'));
 
 %Model = [Model(1) Model(8) Model(12)];
 %[table_Rho, table_H, table_T, table_P, all_subject_rhos] = rdms_second_order(metadata, Neural, Model, [2 3], false, [], []);

@@ -14,20 +14,7 @@ tic
 
 %% Simulate behavior
 %
-load(fullfile('results', 'fit_params_results.mat'), 'results', 'results_options');
-params = results(1).x;
-options = results_options(1);
-% OVERRIDE -- use params from pilot data
-params = [0.1249 2.0064]; WRONG
-disp('Using parameters:');
-disp(params);
-disp('generated with options:');
-disp(options);
-% safeguards
-assert(options.isFmriData == false);
-assert(options.fixedEffects == 1);
-assert(isequal(options.which_structures, [1 1 1 0]));
-which_structures = logical(options.which_structures);
+[params, which_structures] = model_params('results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat'); % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! COUPLING !!!
 
 %% Simulate behavior using Kalman filter
 %
@@ -59,9 +46,9 @@ model_idx = 0;
 
 % Posterior: normalized correlation of posterior
 %
+which_structss = {logical([1 0 0 0 0]), logical([0 1 0 0 0]), logical([0 0 0 1 0])};
 for which_one = 1:3
-    which_structs = logical([0 0 0 0]);
-    which_structs(which_one) = 1;
+    which_structs = which_structss{which_one};
     [posteriorRDMs, avgPosteriorRDM] = compute_rdms(simulated.P(:, which_structs), 'euclidean', data, metadata, which_rows);
     model_idx = model_idx + 1;
     Model(model_idx).RDMs = posteriorRDMs;

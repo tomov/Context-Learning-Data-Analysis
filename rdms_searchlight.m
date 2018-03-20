@@ -29,6 +29,7 @@ which_rows = data.which_rows & data.isTrain; % Look at training trials only
 %% Get the model RDMs
 %
 [Model, control_model_idxs, params, which_structures] = rdms_get_model_collins(data, metadata, which_rows);
+%[Model, control_model_idxs, params, which_structures] = rdms_get_model_3(data, metadata, which_rows);
 
 
 %% Get the searchlight RDMs

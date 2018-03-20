@@ -8,7 +8,7 @@ clear all;
 
 utils;
 
-[params, which_structures] = model_params('results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat');
+[params, which_structures] = model_params('results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat'); % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! COUPLING !!!
 
 [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
 
@@ -24,7 +24,11 @@ Num = 1; % # peak voxels per cluster; default in bspmview is 3
 r = 2.6667; 
 direct = '+';
 
-%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 171, 'KL_structures', p, direct, alpha, Dis, Num, r);
+Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 171, 'KL_structures', p, direct, alpha, Dis, Num, r); % <-- nothing
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', p, direct, alpha, Dis, Num, r);  % <-- nothing
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/M1M2M1_4mm/searchlight_tmap_prior_trial_onset.nii', 0, 'light', p, direct, alpha, Dis, Num, r);  % <-- nothing
+
+% ... OLD ...
 
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures', 0.001, '+', 0.001, 20, 1, 1.814);
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 1, 1.814);
@@ -41,15 +45,16 @@ Neural = Neural(numel(Neural)/2+1:end); % cut the trial_onset bs
 
 %% Get the model RDMs
 %
-Model = rdms_get_model(data, metadata, which_trials);
+Model = rdms_get_model_3(data, metadata, which_trials); % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! COUPLING!!!!!!!!!!!!
 %showRDMs(Model, 2);
 
-control_model_idxs = [8, 12]; % #KNOB control for time and run
-assert(isequal(Model(8).name, 'time'));
-assert(isequal(Model(12).name, 'run'));
+control_model_idxs = [5, 6]; % #KNOB control for time and run
+assert(isequal(Model(5).name, 'time'));
+assert(isequal(Model(6).name, 'run'));
 
 model_idx = 1;
 assert(isequal(Model(1).name, 'posterior'));
+assert(isequal(Model(2).name, 'prior'));
 
 
 %% find how similar representations are to posterior (model_idx = 1) in different ROIs per-run
@@ -109,6 +114,6 @@ end
 
 %% Get the test choice likelihoods and plot the correlation
 %
-test_log_liks = get_test_behavior();
+test_log_liks = get_test_behavior(params, which_structures);
 
-correlate_neural_and_behavior(rhos, {Neural.name}, test_log_liks, 'Neural ~ posterior, correlated w/ test log likelihood: t-test');
+[means, sems, ps] = correlate_neural_and_behavior(rhos, {Neural.name}, test_log_liks, 'Neural ~ posterior, correlated w/ test log likelihood: t-test');

@@ -1,4 +1,4 @@
-function Neural = rdms_get_spheres_from_contrast(data, metadata, which_rows, EXPT, model, contrast, p, direct, alpha, Dis, Num, r)
+function Neural = rdms_get_spheres_from_contrast(data, metadata, which_rows, EXPT, model, contrast, p, direct, alpha, Dis, Num, r, events)
 % Compute the neural RDMs for a bunch of ROIs based on spheres around the peak voxels of clusters from the
 % GLM. Input is same as create_sphere_masks_from_contrast
 %
@@ -22,7 +22,10 @@ function Neural = rdms_get_spheres_from_contrast(data, metadata, which_rows, EXP
 
 assert(ismember(direct, {'+/-', '+', '-'}));
 
-events = {'trial_onset', 'feedback_onset'};
+if ~exist('events', 'var') || isempty(events)
+    events = {'trial_onset', 'feedback_onset'};
+end
+
 use_tmaps = false;
 use_nosmooth = false;
 

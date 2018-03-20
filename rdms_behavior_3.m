@@ -1,10 +1,11 @@
-% Idea: predict condition based on similarity between neural RDM and RDMs
-% for posterior for structures M1, M2, or M3
+% Idea: predict condition based on similarity between neural RDM and RDMs for posterior for structures M1, M2, or M1'
 
 close all;
 clear all;
 
 utils;
+
+[params, which_structures] = model_params('results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat'); % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! COUPLING !!!
 
 [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
 
@@ -12,7 +13,22 @@ which_trials = data.which_rows & data.isTrain; % Look at training trials only
 
 %% Get the neural RDMs
 %
-Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures', 0.001, '+', 0.001, 20, 1, 1.814);
+p = 0.001;
+alpha = 0.05;
+Dis = 20;
+Num = 1; % # peak voxels per cluster; default in bspmview is 3
+%r = 1.814;
+r = 2.6667; 
+direct = '+';
+
+Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', p, direct, alpha, Dis, Num, r);  % <-- all above chance? slightly but hmm..
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 171, 'KL_structures', p, direct, alpha, Dis, Num, r); % <-- nothing
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 170, 'KL_clusters', p, direct, alpha, Dis, Num, r); % <-- nothing
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/M1M2M1_4mm/searchlight_tmap_prior_trial_onset.nii', 0, 'light', p, direct, alpha, Dis, Num, r);  
+
+% ... OLD ...
+
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 154, 'KL_structures', 0.001, '+', 0.001, 20, 1, 1.814);
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 1, 1.814);
 
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', 0.001, '+', 0.001, 20, 1, 1.814);
@@ -27,7 +43,7 @@ Neural = Neural(numel(Neural)/2+1:end); % cut the trial_onset bs
 
 %% Get the model RDMs
 %
-Model = rdms_get_model_2(data, metadata, which_trials);
+Model = rdms_get_model_2(data, metadata, which_trials); % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! COUPLING inside !!!
 showRDMs(Model, 2);
 
 control_model_idxs = [4, 5]; % #KNOB control for time and run
@@ -51,7 +67,7 @@ subjs = metadata.allSubjects(goodSubjects);
 which_trials_per_subj = which_trials & strcmp(data.participant, subjs{1});
 [t1, t2] = meshgrid(find(which_trials_per_subj), find(which_trials_per_subj));
 
-[~, ~, test_log_liks_all] = get_test_behavior();
+[~, ~, test_log_liks_all] = get_test_behavior(params, which_structures);
 
 
 tally = zeros(numel(Neural), 1);
@@ -112,6 +128,7 @@ for run = 1:metadata.runsPerSubject
     end
 end
 
+disp('accuracy for each ROI');
 tally ./ totals
 
 %% Get the test choice likelihoods and plot the correlation

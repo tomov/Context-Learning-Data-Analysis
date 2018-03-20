@@ -1,10 +1,10 @@
-function [classifier, outputs, accuracy] = classify_train_helper(method, inputs, targets, runs, trials, subjs, outFilename)
+function [classifier, outputs, accuracy, stats] = classify_train_helper(method, inputs, targets, runs, trials, subjs, outFilename)
 
 % helper for classify_train.m
 %
 
 accuracy = NaN; % TODO make all of them output it
-
+stats = struct;
 
 %
 % Fit them
@@ -23,28 +23,42 @@ switch method
         % from https://github.com/tomov/food-recognition/blob/master/neural_train.m
 
         % Create a Pattern Recognition Network
-        hiddenLayerSize = 20; % TODO param
-        net = patternnet(hiddenLayerSize);
+        net = patternnet(10, 'trainscg', 'crossentropy'); % important to use cross-entropy error for multinomial classification
 
         % Set up Division of Data for Training, Validation, Testing
-        net.divideParam.trainRatio = 70/100;
-        net.divideParam.valRatio = 15/100;
-        net.divideParam.testRatio = 15/100;
+        net.divideParam.trainRatio = 50/100;
+        net.divideParam.valRatio = 25/100;
+        net.divideParam.testRatio = 25/100;
         net.trainParam.showWindow = false; % don't show GUI on NCF
 
         % Train the Network
         [net,tr] = train(net,inputs,targets);
+        stats.tr = tr;
 
         % Test the Network
         outputs = net(inputs);
+
+        % Evaluate performance
         errors = gsubtract(targets,outputs);
-        performance = perform(net,targets,outputs);
+
+        stats.performance = perform(net,targets,outputs);
+        stats.p = 1 - binocdf(size(targets,2) * stats.performance, size(targets,2), 1/size(targets,1));
+
+        stats.trainPerformance = perform(net, targets(:,tr.trainInd), outputs(:,tr.trainInd));
+        stats.p_train = 1 - binocdf(numel(tr.trainInd) * stats.trainPerformance, numel(tr.trainInd), 1/size(targets,1));
+
+        stats.valPerformance = perform(net, targets(:,tr.valInd), outputs(:,tr.valInd));
+        stats.p_val = 1 - binocdf(numel(tr.valInd) * stats.valPerformance, numel(tr.valInd), 1/size(targets,1));
+
+        stats.testPerformance = perform(net, targets(:,tr.testInd), outputs(:,tr.testInd));
+        stats.p_test = 1 - binocdf(numel(tr.testInd) * stats.testPerformance, numel(tr.testInd), 1/size(targets,1));
+
 
         % View the Network
         %view(net)
 
         % View confusion matrix
-        [c,cm,ind,per] = confusion(targets,outputs);
+        %[c,cm,ind,per] = confusion(targets,outputs);
 
         % patternnet wants column feature vectors, so we rotated those
         % but the rest of the code expects them to be rotated
@@ -54,8 +68,9 @@ switch method
         targets = targets';
         outputs = outputs';
 
-        accuracy = classify_get_accuracy(outputs, targets);
-        fprintf('Success rate = %.2f%%\n', accuracy);    
+        accuracy = classify_get_accuracy(outputs, targets); % note this include training data too!
+        %accuracy = 100 * stats.performance; % WRONG!!!! this is cross-entropy, NOT accuracy!
+        fprintf('Success rate = %.2f%%\n', stats.testPerformance);    
 
         classifier = net;
 
@@ -75,7 +90,63 @@ switch method
         sprintf('%.2f %% top 10', mean(b(41:50) * 100))
         sprintf('%.2f %% correct', (1 - c) * 100)
         %}
-    
+   
+
+    case 'cvpatternnet' % manually cross-validated neural network classifier
+        
+        inputs = inputs'; % ugh MATLAB
+        targets = targets';
+
+        nhidden = 20;
+
+        kfolds = 9;
+        cv = cvpartition(size(inputs,2), 'kfold', kfolds);
+        %cv = cvpartition_runs(kfolds, subjs, runs, trials, inputs'); DON'T -- then the folds are unbalanced...
+        
+        classifier = [];
+
+        testOutputs = [];
+
+        for i = 1:kfolds
+            % setup network
+            net = patternnet(nhidden, 'trainscg', 'crossentropy'); % important to use cross-entropy error for multinomial classification
+            net.divideParam.trainRatio = 75/100;
+            net.divideParam.valRatio = 25/100;
+            net.divideParam.testRatio = 0/100; % we test manually
+            net.trainParam.showWindow = false; % don't show GUI on NCF
+
+            % Train the Network
+            train_idx = training(cv,i);
+            [net,tr] = train(net, inputs(:,train_idx), targets(:,train_idx));
+            stats.folds(i).tr = tr;
+
+            % Test the Network
+            outputs = net(inputs);
+
+            test_idx = test(cv,i);
+            %stats.folds(i).performance = perform(net, targets, outputs);  WARNING -- THIS IS NOT ACCURACY!!! this is the cross-entropy error
+            %stats.folds(i).testPerformance = perform(net, targets(:,test_idx), outputs(:,test_idx)); DONT DO IT!
+            stats.folds(i).net = net;
+
+            testOutputs(test_idx,:) = outputs(:,test_idx)';
+        end
+
+        outputs = testOutputs; % only consider the outputs from the test trials (from all folds)
+
+        accuracy = classify_get_accuracy(outputs, targets');
+        stats.p = 1 - binocdf(size(targets,2) * accuracy / 100, size(targets,2), 1/size(targets,1));
+
+        fprintf('Success rate = %.0f%%, p = %f\n', accuracy, stats.p);
+
+
+        % undo this atrocity
+        % 
+        inputs = inputs';
+        targets = targets';
+
+        classifier = net;
+
+
         
     case 'glmnet' % multinomial GLM classifier
     

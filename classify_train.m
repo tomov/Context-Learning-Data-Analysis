@@ -1,4 +1,4 @@
-function [classifier, inputs, targets, outputs, which_rows, accuracy] = classify_train(method, runs, trials, subjs, mask, predict_what, z_score, event)
+function [classifier, inputs, targets, outputs, which_rows, accuracy, stats] = classify_train(method, runs, trials, subjs, mask, predict_what, z_score, event)
 % Train classifier to predict stuff based on neural activity at trial onset
 % returns a fitObj that you can pass to glmnetPredict
 % or a petternnet net that you can use e.g. like net(inputs)
@@ -34,6 +34,6 @@ inputs = p + rand(size(p));
 [~, maskname, ~] = fileparts(mask);
 outFilename = fullfile('classifier', ['classify_train_', method, '_', maskname, '_', predict_what, '_', z_score, '_', random_string(), '.mat']);
 
-[classifier, outputs, accuracy] = classify_train_helper(method, inputs, targets, runs, trials, subjs, outFilename);
+[classifier, outputs, accuracy, stats] = classify_train_helper(method, inputs, targets, runs, trials, subjs, outFilename);
 
 toc

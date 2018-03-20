@@ -20,7 +20,8 @@ function [table_Rho, table_P, all_subject_rhos, idx, x, y, z] = classify_searchl
 dirname = 'classify';
 
 %method = 'cvglmnet';
-method = 'patternnet';
+%method = 'patternnet';
+method = 'cvpatternnet';
 runs = 1:9; 
 trials = 6:20;
 subjs = getGoodSubjects();
@@ -103,18 +104,31 @@ for i = 1:numel(x)
     %
     sphere_activations = get_activations_submask(sphere_mask, whole_brain_activations);
 
-    % Create inputs and targets for classifier
+    % one classifier for all subjects -- not standard
     %
-    [inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, subjs, sphere_activations, predict_what, z_score, data, metadata);
+    %[inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, subjs, sphere_activations, predict_what, z_score, data, metadata);
+    %[classifier, outputs, accuracy] = classify_train_helper(method, inputs, targets, runs, trials, subjs, []);
 
-    % Train classifier
+    % one classifier per subject
     %
-    [classifier, outputs, accuracy] = classify_train_helper(method, inputs, targets, runs, trials, subjs, []);
+    accuracies = [];
+    ps = [];
+    for subj = subjs
+        fprintf('    subj %d\n', subj);
+
+        [inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, [subj], sphere_activations, predict_what, z_score, data, metadata);
+        [classifier, outputs, accuracy, stats] = classify_train_helper(method, inputs, targets, runs, trials, [subj], []);
+
+        accuracies = [accuracies, accuracy];
+        ps = [ps, stats.p];
+    end
 
     % Save results
     %
     mni = cor2mni([x(i) y(i) z(i)], Vmask.mat); % coords in MNI space
-    Searchlight(i).accuracy = accuracy;
+    %Searchlight(i).accuracy = accuracy;
+    Searchlight(i).accuracies = accuracies;
+    Searchlight(i).ps = ps;
     Searchlight(i).name = ['sphere_', sprintf('%d_%d_%d', mni), '_', event(1)];
     Searchlight(i).center = [x(i) y(i) z(i)];
     Searchlight(i).radius = r;
@@ -129,4 +143,4 @@ toc
 
 filename = sprintf('searchlight_classifier_%s_%d-%d-%s.mat', method, start_idx, end_idx, event);
 fprintf('SAVING %s\n', filename);
-save(fullfile(dirname, filename), 'Searchlight', 'event', 'x', 'y', 'z', 'r', 'idx', 'targets', 'which_rows');
+save(fullfile(dirname, filename), 'Searchlight', 'event', 'x', 'y', 'z', 'r', 'idx', 'targets', 'which_rows', 'method', 'runs', 'trials', 'subjs', 'predict_what', 'z_score');

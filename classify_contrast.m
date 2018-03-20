@@ -4,12 +4,16 @@ function [rois, targets, which_rows] = classify_contrast(EXPT, glmodel, contrast
 % similar to classify_searchlight.m
 %
 % INPUT:
+% EXPT = expt struct
 % glmodel = glm as in context_create_multi.m
 % contrast = contrast from which to extract the clusters; by
 % what = 'sphere', or 'cluster' -- what area to take around the
 %        peak voxel from each cluster
+% EXAMPLE:
+% classify_contrast(context_expt(), 171, 'KL_structures', 'sphere')
 %
 % OUTPUT:
+% rois = struct array of results for each ROI
 %
 
 if ~exist('contrast', 'var')
@@ -42,8 +46,8 @@ direct = '+';
 % classifier params
 %
 [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
-method = 'cvglmnet';
-%method = 'patternnet';
+%method = 'cvglmnet';
+method = 'cvpatternnet';
 runs = 1:metadata.runsPerSubject;
 trials = 6:metadata.trainingTrialsPerRun; % TODO arbitrary
 subjs = getGoodSubjects();
@@ -81,30 +85,30 @@ for mask_idx = 1:numel(filenames)
     [m, V] = load_mask(filenames{mask_idx});
     activations = get_activations_submask(m, whole_brain_activations);
 
-    % one classifier for all subjects
+    % one classifier for all subjects -- not standard
     %
-    [inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, subjs, activations, predict_what, z_score, data, metadata);
-    [classifier, outputs, accuracy] = classify_train_helper(method, inputs, targets, runs, trials, subjs, []);
+    %[inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, subjs, activations, predict_what, z_score, data, metadata);
+    %[classifier, outputs, accuracy] = classify_train_helper(method, inputs, targets, runs, trials, subjs, []);
 
     %[classifier, ~, targets, outputs, which_rows, accuracy] = classify_train(method, runs, trials, subjs, filenames{mask_idx}, predict_what, z_score, event); <-- too much overhead loading the betas
-
-    rois(mask_idx).filename = filenames{mask_idx};
-    rois(mask_idx).rdm_name = masknames{mask_idx};
-    rois(mask_idx).classifier = classifier;
-    rois(mask_idx).accuracy = accuracy;
-    rois(mask_idx).outputs = outputs;
 
     % one classifier per subject
     %
     accuracies = [];
+    ps = [];
     for subj = subjs
         fprintf('    subj %d\n', subj);
+
         [inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, [subj], activations, predict_what, z_score, data, metadata);
-        [classifier, outputs, accuracy] = classify_train_helper(method, inputs, targets, runs, trials, [subj], []);
+        [classifier, outputs, accuracy, stats] = classify_train_helper(method, inputs, targets, runs, trials, [subj], []);
         accuracies = [accuracies, accuracy];
+        ps = [ps, stats.p];
     end
 
+    rois(mask_idx).filename = filenames{mask_idx};
+    rois(mask_idx).name = masknames{mask_idx};
     rois(mask_idx).accuracies = accuracies;
+    rois(mask_idx).ps = ps;
 end
 
 filename = sprintf('classify_contrast_%d_%s_%s.mat', glmodel, contrast, what);
