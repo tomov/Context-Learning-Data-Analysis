@@ -94,14 +94,39 @@ switch method
 
     case 'cvpatternnet' % manually cross-validated neural network classifier
         
+        % TODO HACK to get folds such that each fold has 1 irr, 1 mod, and 1 add run
+        % but randomly shuffled
+        %
+        assert(isequal(numel(runs), 9));
+        assert(isequal(numel(subjs), 1));
+        % which group of 3 runs we're in (1st 2nd or 3rd)
+        iter = [1 * ones(numel(trials) * 3, 1); 2 * ones(numel(trials) * 3, 1); 3 * ones(numel(trials) * 3, 1)];
+        % which condition the current run is in
+        [~,cond] = max(targets, [], 2);
+        foldid = NaN(size(targets,1), 1);
+        for c = 1:3 % for each condition
+            f = randperm(3); % randomly assign its runs to foldid
+            for i = 1:3 % for each iteration of that condition
+                assert(sum(iter == i & cond == c) == numel(trials) && sum(isnan(foldid(iter == i & cond == c))) == numel(trials));
+                foldid(iter == i & cond == c) = f(i); % assign that iteration of that condition (i.e. the specific run) to a random fold
+            end
+        end
+        assert(sum(foldid == 1) == numel(trials) * 3);
+        assert(sum(foldid == 2) == numel(trials) * 3);
+        assert(sum(foldid == 3) == numel(trials) * 3);
+        assert(sum(isnan(foldid)) == 0);
+        kfolds = 3;
+
+
         inputs = inputs'; % ugh MATLAB
         targets = targets';
 
         nhidden = 20;
 
-        kfolds = 9;
-        cv = cvpartition(size(inputs,2), 'kfold', kfolds);
+        %kfolds = 9;
+        %cv = cvpartition(size(inputs,2), 'kfold', kfolds);
         %cv = cvpartition_runs(kfolds, subjs, runs, trials, inputs'); DON'T -- then the folds are unbalanced...
+
         
         classifier = [];
 
@@ -116,14 +141,16 @@ switch method
             net.trainParam.showWindow = false; % don't show GUI on NCF
 
             % Train the Network
-            train_idx = training(cv,i);
+            %train_idx = training(cv,i);
+            train_idx = find(foldid ~= i);
             [net,tr] = train(net, inputs(:,train_idx), targets(:,train_idx));
             stats.folds(i).tr = tr;
 
             % Test the Network
             outputs = net(inputs);
 
-            test_idx = test(cv,i);
+            %test_idx = test(cv,i); 
+            test_idx = find(foldid == i);
             %stats.folds(i).performance = perform(net, targets, outputs);  WARNING -- THIS IS NOT ACCURACY!!! this is the cross-entropy error
             %stats.folds(i).testPerformance = perform(net, targets(:,test_idx), outputs(:,test_idx)); DONT DO IT!
             stats.folds(i).net = net;

@@ -105,10 +105,20 @@ for mask_idx = 1:numel(filenames)
         ps = [ps, stats.p];
     end
 
+    % H0: none of the subjects are significant
+    n = size(inputs, 1) * numel(subjs);
+    k = mean(accuracies) / 100 * n;
+    p = 1 - binocdf(k, n, 1/3);
+
+    save shit.mat;
+
     rois(mask_idx).filename = filenames{mask_idx};
     rois(mask_idx).name = masknames{mask_idx};
     rois(mask_idx).accuracies = accuracies;
     rois(mask_idx).ps = ps;
+    rois(mask_idx).p = p; 
+
+    fprintf(' ROI p = %f\n', p);
 end
 
 filename = sprintf('classify_contrast_%d_%s_%s.mat', glmodel, contrast, what);
