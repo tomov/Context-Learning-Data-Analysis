@@ -273,7 +273,9 @@ for who = metadata.subjects
                 simulated.likelihoods(which_train, :) = train_results.likelihoods;
                 simulated.new_values(which_train, :) = train_results.new_values;
                 simulated.new_valuess(which_train, :) = train_results.new_valuess;
-                simulated.lambdas(which_train, :) = train_results.lambdas;
+                simulated.lambdas(which_train, :) = train_results.lambdas; 
+
+                simulated.ww_n{which_train & data.trialId == metadata.trainingTrialsPerRun} = train_results.ww_n;
 
                 for i = 1:4
                     simulated.ww_after{i}(which_train, :) = train_results.ww_after{i};

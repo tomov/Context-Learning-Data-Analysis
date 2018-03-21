@@ -18,6 +18,9 @@ function [table_Rho, table_P, all_subject_rhos, idx, x, y, z] = rdms_searchlight
 
 dirname = 'rdms';
 
+use_tmaps = false;
+use_nosmooth = false;
+
 %% Load data and compute first-order RDMs
 %
 
@@ -53,7 +56,7 @@ y = y(idx);
 z = z(idx);
 disp(end_idx);
 
-Searchlight = rdms_get_searchlight(data, metadata, which_rows, x, y, z, r, true, false, false); % use pregen'd betas, use tmaps, use nosmooth
+Searchlight = rdms_get_searchlight(data, metadata, which_rows, x, y, z, r, true, use_tmaps, use_nosmooth); % use pregen'd betas, use tmaps, use nosmooth
 
 
 %% Get second-order RDM
@@ -72,4 +75,4 @@ cols = Model;
 
 filename = sprintf('searchlight_weights_%d-%d.mat', start_idx, end_idx);
 fprintf('SAVING %s\n', filename);
-save(fullfile(dirname, filename), 'table_Rho', 'table_T', 'table_P', 'all_subject_rhos', 'x', 'y', 'z', 'r', 'idx', 'params', 'which_structures');
+save(fullfile(dirname, filename), 'table_Rho', 'table_T', 'table_P', 'all_subject_rhos', 'x', 'y', 'z', 'r', 'idx', 'params', 'which_structures', 'use_tmaps', 'use_nosmooth');

@@ -1,0 +1,37 @@
+# writen by Luis Silva 02/10/2012
+# For assistance please contact rchelp@fas.harvard.edu
+#
+#################################
+# NCF Base setup install script #
+#################################
+#
+
+#default environment, by using 'current' it will be updated automatcially with new releases.  This should not change the default versions of software without assuring backwards compatibility.
+
+. /ncf/tools/current/code/bin/env_setup.sh
+
+#this makes your history file larger and easier to read so RC can more easily help you
+HISTFILESIZE=10000
+HISTCONTROL=ignoreboth
+HISTSIZE=10000
+
+#This makes your command prompt pretty, including having the pathname to where you are
+
+PS1='\[\033[0;36m\]\u\[\033[0;35m\]@\h:\[\033[0;36m\]\w\n\[\033[0;35m\][\!]\[\033[0m\] ';
+
+#
+##################################################################
+# Insert additional configuration below this line, like module loading and alis setting #
+##################################################################
+
+source new-modules.sh
+
+module load ncf matlab/R2015b-ncf spm/12.6225b.1-ncf cbs_spm/master-ncf miniconda2/3.19.0-ncf freesurfer/5.3.1-ncf fsl/5.0.9.cpac-ncf nipype/0.11.0.1-ncf R_packages
+
+#export PYTHONPATH=/ncf/tools/apps/arch/linux_x86_64/nipype/0.9.2:$PYTHONPATH # nipype library
+export https_proxy=http://rcsocks:8888
+export http_proxy=$https_proxy
+#export PYTHONPATH=/ncf/nrg/sw/lib/pylib/3.0:$PYTHONPATH # pylib library
+export R_LIBS_USER=~/apps/R:$R_LIBS_USER
+export PYTHONPATH=/ncf/nrg/sw/lib/workflows:$PYTHONPATH # workflows library
+export PATH=/ncf/nrg/sw/bin:$PATH # procfaster executable

@@ -143,4 +143,4 @@ toc
 
 filename = sprintf('searchlight_classifier_%s_%d-%d-%s.mat', method, start_idx, end_idx, event);
 fprintf('SAVING %s\n', filename);
-save(fullfile(dirname, filename), 'Searchlight', 'event', 'x', 'y', 'z', 'r', 'idx', 'targets', 'which_rows', 'method', 'runs', 'trials', 'subjs', 'predict_what', 'z_score');
+save(fullfile(dirname, filename), 'Searchlight', 'event', 'x', 'y', 'z', 'r', 'idx', 'targets', 'which_rows', 'method', 'runs', 'trials', 'subjs', 'predict_what', 'z_score', 'use_tmaps', 'use_nosmooth');

@@ -1,4 +1,4 @@
-function [rois, targets, which_rows] = classify_contrast(EXPT, glmodel, contrast, what)
+function [rois, targets, which_rows] = classify_contrast(EXPT, glmodel, contrast, what, event)
 
 % Train classifier using ROIs from a contrast.
 % similar to classify_searchlight.m
@@ -15,10 +15,6 @@ function [rois, targets, which_rows] = classify_contrast(EXPT, glmodel, contrast
 % OUTPUT:
 % rois = struct array of results for each ROI
 %
-
-if ~exist('contrast', 'var')
-    contrast = regressor;
-end
 
 use_tmaps = false;
 use_nosmooth = false;
@@ -46,8 +42,8 @@ direct = '+';
 % classifier params
 %
 [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
-%method = 'cvglmnet';
-method = 'cvpatternnet';
+method = 'cvglmnet';
+%method = 'cvpatternnet';
 runs = 1:metadata.runsPerSubject;
 trials = 6:metadata.trainingTrialsPerRun; % TODO arbitrary
 subjs = getGoodSubjects();
@@ -57,7 +53,7 @@ z_score = 'z-none';
 %z_score = 'z-run-voxel';
 %z_score = 'pca-subj';
 %z_score = 'z-run-voxel-pca-subj';
-event = 'feedback_onset';
+%event = 'feedback_onset';
 
 % get whole-brain betas
 %
@@ -105,22 +101,31 @@ for mask_idx = 1:numel(filenames)
         ps = [ps, stats.p];
     end
 
-    % H0: none of the subjects are significant
-    n = size(inputs, 1) * numel(subjs);
-    k = mean(accuracies) / 100 * n;
-    p = 1 - binocdf(k, n, 1/3);
-
-    save shit.mat;
-
     rois(mask_idx).filename = filenames{mask_idx};
     rois(mask_idx).name = masknames{mask_idx};
     rois(mask_idx).accuracies = accuracies;
     rois(mask_idx).ps = ps;
-    rois(mask_idx).p = p; 
 
-    fprintf(' ROI p = %f\n', p);
+    % some hypothesis testing
+    %
+
+    % H0: none of the subjects are significant = all of the correct classificiations were by chance
+    %
+    n = size(inputs, 1) * numel(subjs);
+    k = mean(accuracies) / 100 * n;
+    p = 1 - binocdf(k, n, 1/3);
+    rois(mask_idx).bino.n = n; 
+    rois(mask_idx).bino.k = k; 
+    rois(mask_idx).bino.p = p; 
+
+    % H0: none of the subjects are significant = all accuracies should be at 33%  (Kriegeskorte & Bandettini 2007)
+    %
+    [h,p,ci,stats] = ttest(accuracies/100, 1/3);
+    rois(mask_idx).ttest.stats = stats; 
+    rois(mask_idx).ttest.ci = ci; 
+    rois(mask_idx).ttest.p = p; 
 end
 
-filename = sprintf('classify_contrast_%d_%s_%s.mat', glmodel, contrast, what);
+filename = sprintf('classify_contrast_%d_%s_%s_%s_%s.mat', glmodel, contrast, method, what, event);
 fprintf('SAVING %s\n', filename);
-save(fullfile(dirname, filename), 'rois', 'targets', 'which_rows', 'p', 'alpha', 'Dis', 'Num', 'r', 'direct', 'method', 'runs', 'trials', 'subjs', 'predict_what', 'z_score');
+save(fullfile(dirname, filename), 'rois', 'targets', 'which_rows', 'p', 'alpha', 'Dis', 'Num', 'r', 'direct', 'method', 'runs', 'trials', 'subjs', 'predict_what', 'z_score', 'use_tmaps', 'use_nosmooth');
