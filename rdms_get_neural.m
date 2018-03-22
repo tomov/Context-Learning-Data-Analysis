@@ -45,11 +45,30 @@ for event = events
         [mask, Vmask] = load_mask(masks(i).filename);
         assert(isequal(Vwhole.mat, Vmask.mat)); % it is imperative that they are in the same coordinate space if we're getting the betas like this !!!
 
+        % get betas
+        %
         activations = get_activations_submask(mask, whole_brain_activations);
-        [hippocampusRDMs, avgHippocampusRDM] = compute_rdms(activations, 'cosine', data, metadata, which_rows);
+
+        % if a voxel is NaN even for 1 trial, ignore it
+        %
+        good_voxels = sum(isnan(activations(which_rows,:)), 1) == 0; 
+        if sum(good_voxels) == 0
+            assert(use_nosmooth); % doesn't happen if we have smoothing b/c we are using the mask that by definition contains no NaNs
+            warning(sprintf('Skipping mask %d -- no good voxels', i));
+            continue;
+        end
+        if sum(good_voxels) < size(activations, 2)
+            assert(use_nosmooth);
+            activations = activations(:,good_voxels);
+            warning(sprintf('Mask %d has only %d good voxels', i, sum(good_voxels)));
+        end
+
+        % compute RDM
+        %
+        [neuralRDMs, avgNeuralRDM] = compute_rdms(activations, 'cosine', data, metadata, which_rows);
         neural_idx = neural_idx + 1;
-        Neural(neural_idx).RDMs = hippocampusRDMs;
-        Neural(neural_idx).RDM = avgHippocampusRDM;
+        Neural(neural_idx).RDMs = neuralRDMs;
+        Neural(neural_idx).RDM = avgNeuralRDM;
         Neural(neural_idx).name = [masks(i).rdm_name, '_', event(1)];
         Neural(neural_idx).color = [0 1 0];
     end

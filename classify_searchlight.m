@@ -1,7 +1,7 @@
-function [table_Rho, table_P, all_subject_rhos, idx, x, y, z] = classify_searchlight(start_idx, end_idx, r, event)
+function [Searchlight, idx, x, y, z] = classify_searchlight(start_idx, end_idx, r, event)
 
 % Run classifier for different searchlight spheres
-% Similar to rdms_searchlight.m
+% Similar to rdms_searchlight.m and rdms_get_searchlight.m
 %
 % INPUT:
 % start_idx, end_idx = range of voxel indices where to center the spheres
@@ -63,7 +63,7 @@ disp(end_idx);
 % get betas
 %
 use_tmaps = false;
-use_nosmooth = false;
+use_nosmooth = true;
 
 if use_tmaps
     get_activations = @get_tmaps;
@@ -104,6 +104,20 @@ for i = 1:numel(x)
     %
     sphere_activations = get_activations_submask(sphere_mask, whole_brain_activations);
 
+    % if a voxel is NaN even for 1 trial, ignore it
+    %
+    good_voxels = sum(isnan(sphere_activations(which_rows,:)), 1) == 0; 
+    if sum(good_voxels) == 0
+        assert(use_nosmooth); % doesn't happen if we have smoothing b/c we are using the mask that by definition contains no NaNs
+        warning(sprintf('Skipping sphere at %d [%d %d %d] -- no good voxels', idx(i), x(i), y(i), z(i)));
+        continue;
+    end
+    if sum(good_voxels) < size(sphere_activations, 2)
+        assert(use_nosmooth);
+        sphere_activations = sphere_activations(:,good_voxels);
+        warning(sprintf('Sphere at %d [%d %d %d] has only %d good voxels', idx(i), x(i), y(i), z(i), sum(good_voxels)));
+    end
+
     % one classifier for all subjects -- not standard
     %
     %[inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, subjs, sphere_activations, predict_what, z_score, data, metadata);
@@ -123,12 +137,18 @@ for i = 1:numel(x)
         ps = [ps, stats.p];
     end
 
+    % H0: none of the subjects are significant = all accuracies should be at 33%  (Kriegeskorte & Bandettini 2007)
+    %
+    [h,p,ci,stats] = ttest(accuracies/100, 1/3);
+
     % Save results
     %
     mni = cor2mni([x(i) y(i) z(i)], Vmask.mat); % coords in MNI space
     %Searchlight(i).accuracy = accuracy;
     Searchlight(i).accuracies = accuracies;
     Searchlight(i).ps = ps;
+    Searchlight(i).p = p;
+    Searchlight(i).tstat = stats.tstat;
     Searchlight(i).name = ['sphere_', sprintf('%d_%d_%d', mni), '_', event(1)];
     Searchlight(i).center = [x(i) y(i) z(i)];
     Searchlight(i).radius = r;

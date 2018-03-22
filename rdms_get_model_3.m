@@ -84,6 +84,7 @@ Model(model_idx).name = 'ww_prior';
 Model(model_idx).color = [0 1 0];
 
 
+
 %{
 
 % Posterior Sigma: normalized correlation of posterior weights

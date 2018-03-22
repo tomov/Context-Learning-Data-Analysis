@@ -28,12 +28,12 @@ end
 %}
 
 
-%[rois, targets, which_rows] = classify_contrast('rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii', 0, 'posterior_light', 'sphere', 'feedback_onset'); % <-- nothing
+%[rois, targets, which_rows] = classify_contrast('rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii', 0, 'posterior_light', 'sphere', 'feedback_onset'); % <-- w00t maybe something? for use_nosmooth, 4mm
 %[rois, targets, which_rows] = classify_contrast('rdms/M1M2M1_4mm/searchlight_tmap_prior_trial_onset.nii', 0, 'prior_light', 'sphere', 'trial_onset'); % nothing
-[rois, targets, which_rows] = classify_contrast(context_expt(), 171, 'KL_structures', 'sphere', 'feedback_onset'); % <-- nothing
+%[rois, targets, which_rows] = classify_contrast(context_expt(), 171, 'KL_structures', 'sphere', 'feedback_onset'); % <-- nothing
 %[rois, targets, which_rows] = classify_contrast(context_expt(), 171, 'KL_structures', 'sphere', 'trial_onset'); % <-- nothing
-%[rois, targets, which_rows] = classify_contrast(context_expt(), 170, 'KL_clusters', 'sphere', 'feedback_onset'); % <-- nothing; parietal p = 0.02 
-%[rois, targets, which_rows] = classify_contrast(context_expt(), 170, 'KL_clusters', 'sphere', 'trial_onset'); % % <-- nothing
+%[rois, targets, which_rows] = classify_contrast(context_expt(), 170, 'KL_clusters', 'sphere', 'feedback_onset'); % <-- nothing; parietal p = 0.02 for 2.667; 
+%[rois, targets, which_rows] = classify_contrast(context_expt(), 170, 'KL_clusters', 'sphere', 'trial_onset'); % % <-- nothing; angular p = 0.04 for 2.667 nosmooth
 
 
 

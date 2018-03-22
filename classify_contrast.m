@@ -17,7 +17,7 @@ function [rois, targets, which_rows] = classify_contrast(EXPT, glmodel, contrast
 %
 
 use_tmaps = false;
-use_nosmooth = false;
+use_nosmooth = true;
 
 if use_tmaps
     get_activations = @get_tmaps;
@@ -37,13 +37,14 @@ Dis = 20;
 Num = 1; % # peak voxels per cluster; default in bspmview is 3
 %r = 1.814;
 r = 2.6667; 
+%r = 6.6667; 
 direct = '+';
 
 % classifier params
 %
 [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
-method = 'cvglmnet';
-%method = 'cvpatternnet';
+%method = 'cvglmnet'; <-- sucks on synthetic data
+method = 'cvpatternnet';
 runs = 1:metadata.runsPerSubject;
 trials = 6:metadata.trainingTrialsPerRun; % TODO arbitrary
 subjs = getGoodSubjects();
@@ -78,8 +79,24 @@ end
 for mask_idx = 1:numel(filenames)
     fprintf('Cluster %d: mask %s\n', mask_idx, filenames{mask_idx});
 
+    % get betas
+    %
     [m, V] = load_mask(filenames{mask_idx});
     activations = get_activations_submask(m, whole_brain_activations);
+
+    % if a voxel is NaN even for 1 trial, ignore it
+    %
+    good_voxels = sum(isnan(activations(data.which_rows & data.isTrain,:)), 1) == 0; 
+    if sum(good_voxels) == 0
+        assert(use_nosmooth); % doesn't happen if we have smoothing b/c we are using the mask that by definition contains no NaNs
+        warning('Skipping cluster -- no good voxels');
+        continue;
+    end
+    if sum(good_voxels) < size(activations, 2)
+        assert(use_nosmooth);
+        activations = activations(:,good_voxels);
+        warning(sprintf('Cluster has only %d good voxels', sum(good_voxels)));
+    end
 
     % one classifier for all subjects -- not standard
     %

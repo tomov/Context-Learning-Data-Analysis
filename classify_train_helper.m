@@ -41,17 +41,17 @@ switch method
         % Evaluate performance
         errors = gsubtract(targets,outputs);
 
-        stats.performance = perform(net,targets,outputs);
-        stats.p = 1 - binocdf(size(targets,2) * stats.performance, size(targets,2), 1/size(targets,1));
+        %stats.performance = perform(net,targets,outputs);
+        %stats.p = 1 - binocdf(size(targets,2) * stats.performance, size(targets,2), 1/size(targets,1));
 
-        stats.trainPerformance = perform(net, targets(:,tr.trainInd), outputs(:,tr.trainInd));
-        stats.p_train = 1 - binocdf(numel(tr.trainInd) * stats.trainPerformance, numel(tr.trainInd), 1/size(targets,1));
+        %stats.trainPerformance = perform(net, targets(:,tr.trainInd), outputs(:,tr.trainInd));
+        %stats.p_train = 1 - binocdf(numel(tr.trainInd) * stats.trainPerformance, numel(tr.trainInd), 1/size(targets,1));
 
-        stats.valPerformance = perform(net, targets(:,tr.valInd), outputs(:,tr.valInd));
-        stats.p_val = 1 - binocdf(numel(tr.valInd) * stats.valPerformance, numel(tr.valInd), 1/size(targets,1));
+        %stats.valPerformance = perform(net, targets(:,tr.valInd), outputs(:,tr.valInd));
+        %stats.p_val = 1 - binocdf(numel(tr.valInd) * stats.valPerformance, numel(tr.valInd), 1/size(targets,1));
 
-        stats.testPerformance = perform(net, targets(:,tr.testInd), outputs(:,tr.testInd));
-        stats.p_test = 1 - binocdf(numel(tr.testInd) * stats.testPerformance, numel(tr.testInd), 1/size(targets,1));
+        %stats.testPerformance = perform(net, targets(:,tr.testInd), outputs(:,tr.testInd));
+        %stats.p_test = 1 - binocdf(numel(tr.testInd) * stats.testPerformance, numel(tr.testInd), 1/size(targets,1));
 
 
         % View the Network
@@ -70,7 +70,7 @@ switch method
 
         accuracy = classify_get_accuracy(outputs, targets); % note this include training data too!
         %accuracy = 100 * stats.performance; % WRONG!!!! this is cross-entropy, NOT accuracy!
-        fprintf('Success rate = %.2f%%\n', stats.testPerformance);    
+        fprintf('Success rate = %.2f%%\n', accuracy);    
 
         classifier = net;
 
@@ -92,49 +92,23 @@ switch method
         %}
    
 
-    case 'cvpatternnet' % manually cross-validated neural network classifier
+    case 'cvpatternnet' % manually cross-validated neural network classifier ; best thing we got so far
         
-        % TODO HACK to get folds such that each fold has 1 irr, 1 mod, and 1 add run
-        % but randomly shuffled
-        %
-        assert(isequal(numel(runs), 9));
-        assert(isequal(numel(subjs), 1));
-        % which group of 3 runs we're in (1st 2nd or 3rd)
-        iter = [1 * ones(numel(trials) * 3, 1); 2 * ones(numel(trials) * 3, 1); 3 * ones(numel(trials) * 3, 1)];
-        % which condition the current run is in
-        [~,cond] = max(targets, [], 2);
-        foldid = NaN(size(targets,1), 1);
-        for c = 1:3 % for each condition
-            f = randperm(3); % randomly assign its runs to foldid
-            for i = 1:3 % for each iteration of that condition
-                assert(sum(iter == i & cond == c) == numel(trials) && sum(isnan(foldid(iter == i & cond == c))) == numel(trials));
-                foldid(iter == i & cond == c) = f(i); % assign that iteration of that condition (i.e. the specific run) to a random fold
-            end
-        end
-        assert(sum(foldid == 1) == numel(trials) * 3);
-        assert(sum(foldid == 2) == numel(trials) * 3);
-        assert(sum(foldid == 3) == numel(trials) * 3);
-        assert(sum(isnan(foldid)) == 0);
-        kfolds = 3;
 
+        [foldid, kfolds] = balanced_folds(runs, subjs, trials, targets);
 
         inputs = inputs'; % ugh MATLAB
         targets = targets';
-
-        nhidden = 20;
 
         %kfolds = 9;
         %cv = cvpartition(size(inputs,2), 'kfold', kfolds);
         %cv = cvpartition_runs(kfolds, subjs, runs, trials, inputs'); DON'T -- then the folds are unbalanced...
 
-        
-        classifier = [];
-
         testOutputs = [];
 
         for i = 1:kfolds
             % setup network
-            net = patternnet(nhidden, 'trainscg', 'crossentropy'); % important to use cross-entropy error for multinomial classification
+            net = patternnet(10, 'trainscg', 'crossentropy'); % default params; important to use cross-entropy error for multinomial classification
             net.divideParam.trainRatio = 75/100;
             net.divideParam.valRatio = 25/100;
             net.divideParam.testRatio = 0/100; % we test manually
@@ -147,7 +121,7 @@ switch method
             stats.folds(i).tr = tr;
 
             % Test the Network
-            outputs = net(inputs);
+            outputs = net(inputs); % TODO optimize, test only
 
             %test_idx = test(cv,i); 
             test_idx = find(foldid == i);
@@ -161,7 +135,8 @@ switch method
         outputs = testOutputs; % only consider the outputs from the test trials (from all folds)
 
         accuracy = classify_get_accuracy(outputs, targets');
-        stats.p = 1 - binocdf(size(targets,2) * accuracy / 100, size(targets,2), 1/size(targets,1));
+        k = floor(size(targets,2) * accuracy / 100) - 1; % P(# corr >= ...) = 1 - P(# corr <= ... - 1)
+        stats.p = 1 - binocdf(k, size(targets,2), 1/size(targets,1));
 
         fprintf('Success rate = %.0f%%, p = %f\n', accuracy, stats.p);
 
@@ -243,6 +218,41 @@ switch method
         classifier = CVfit;
 
 
+
+    case 'cvcvglmnet' % cross-validated cross-validated multinomial GLM classifier (cvglmnet to pick the lambda's; outer CV for us to test). See cvpatternnet
+    
+        opts.alpha = 1; % 0 = ridge penalty; 1 = lasso penalty (force betas to zero); default = 1
+        opts.mtype = 'ungrouped'; % 'grouped' = for multinomial, all betas are in our out together; default = 'ungrouped'
+        opts.nlambda = 1000; % # lambdas to use; default = 100
+        opts.lambda_min = 0.00000001; % as a fraction of lambda_max which is derived from the data; default = 0.0001
+        options = glmnetSet(opts);
+        nfolds = 5;
+        parallel = false;
+        keep = true;
+
+        [foldid, kfolds] = balanced_folds(runs, subjs, trials, targets);
+
+        testOutputs = [];
+        for i = 1:kfolds
+            train_idx = find(foldid ~= i);
+            CVfit = cvglmnet(inputs(train_idx,:), targets(train_idx,:), 'multinomial', options, 'deviance', nfolds, [], parallel, keep);
+
+            outputs = cvglmnetPredict(CVfit, inputs, CVfit.lambda_1se, 'response'); % TODO optimize, test only
+
+            test_idx = find(foldid == i);
+            testOutputs(test_idx,:) = outputs(test_idx,:);
+        end
+
+        outputs = testOutputs; % only consider the outputs from the test trials (from all folds)
+
+        accuracy = classify_get_accuracy(outputs, targets);
+        stats.p = 1 - binocdf(size(targets,2) * accuracy / 100, size(targets,2), 1/size(targets,1));
+        fprintf('Success rate = %.0f%%, p = %f\n', accuracy, stats.p);
+
+        classifier = CVfit;
+
+
+
     case 'fitcecoc' % multinomial SVM classifier, cross-validated
 
         kfolds = 10;
@@ -298,3 +308,29 @@ function c = cvpartition_runs(k, subjs, runs, trials, inputs)
     c.Impl.TestSize = accumarray(i, 1)';
     c.Impl.TrainSize = size(i, 1) - c.Impl.TestSize;
 end
+
+% HACK to get folds such that each fold has 1 irr, 1 mod, and 1 add run
+% but randomly shuffled
+%
+function [foldid, kfolds] = balanced_folds(runs, subjs, trials, targets)
+    assert(isequal(numel(runs), 9));
+    assert(isequal(numel(subjs), 1));
+    % which group of 3 runs we're in (1st 2nd or 3rd)
+    iter = [1 * ones(numel(trials) * 3, 1); 2 * ones(numel(trials) * 3, 1); 3 * ones(numel(trials) * 3, 1)];
+    % which condition the current run is in
+    [~,cond] = max(targets, [], 2);
+    foldid = NaN(size(targets,1), 1);
+    for c = 1:3 % for each condition
+        f = randperm(3); % randomly assign its runs to foldid
+        for i = 1:3 % for each iteration of that condition
+            assert(sum(iter == i & cond == c) == numel(trials) && sum(isnan(foldid(iter == i & cond == c))) == numel(trials));
+            foldid(iter == i & cond == c) = f(i); % assign that iteration of that condition (i.e. the specific run) to a random fold
+        end
+    end
+    assert(sum(foldid == 1) == numel(trials) * 3);
+    assert(sum(foldid == 2) == numel(trials) * 3);
+    assert(sum(foldid == 3) == numel(trials) * 3);
+    assert(sum(isnan(foldid)) == 0);
+    kfolds = 3;
+end
+

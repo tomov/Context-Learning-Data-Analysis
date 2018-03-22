@@ -19,7 +19,7 @@ function [table_Rho, table_P, all_subject_rhos, idx, x, y, z] = rdms_searchlight
 dirname = 'rdms';
 
 use_tmaps = false;
-use_nosmooth = false;
+use_nosmooth = true;
 
 %% Load data and compute first-order RDMs
 %
@@ -31,8 +31,8 @@ which_rows = data.which_rows & data.isTrain; % Look at training trials only
 
 %% Get the model RDMs
 %
-[Model, control_model_idxs, params, which_structures] = rdms_get_model_collins(data, metadata, which_rows);
-%[Model, control_model_idxs, params, which_structures] = rdms_get_model_3(data, metadata, which_rows);
+%[Model, control_model_idxs, params, which_structures] = rdms_get_model_collins(data, metadata, which_rows);
+[Model, control_model_idxs, params, which_structures] = rdms_get_model_3(data, metadata, which_rows);
 
 
 %% Get the searchlight RDMs

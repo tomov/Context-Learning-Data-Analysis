@@ -57,32 +57,37 @@ for event = {'trial_onset', 'feedback_onset'}
     %
     for i=1:length(x)
 
-        % Build spherical mask TODO use create_spherical_mask_helper
+        % Build spherical mask
         %
-        sphere_mask = zeros(size(mask));
-        for newx = floor(x(i) - r) : ceil(x(i) + r)
-            if newx < min_x || newx > max_x, continue; end
-            for newy = floor(y(i) - r) : ceil(y(i) + r)
-                if newy < min_y || newy > max_y, continue; end
-                for newz = floor(z(i) - r) : ceil(z(i) + r)
-                    if newz < min_z || newz > max_z, continue; end
-                    if ~mask(newx, newy, newz), continue; end
-                    if (x(i) - newx)^2 + (y(i) - newy)^2 + (z(i) - newz)^2 > r^2, continue; end
-                    sphere_mask(newx, newy, newz) = 1;
-                end
-            end
-        end
-        sphere_mask = logical(sphere_mask);
+        sphere_mask = create_spherical_mask_helper(mask, x(i), y(i), z(i), r, min_x, max_x, min_y, max_y, min_z, max_z, Vmask);
 
         % Get sphere center coordinates in MNI space
         %
         mni = cor2mni([x(i) y(i) z(i)], Vmask.mat);
 
+        % get activations
+        %
         if use_pregenerated_activations
             sphere_activations = get_activations_submask(sphere_mask, whole_brain_activations); % fast
         else
             sphere_activations = load_activations(sphere_mask, event, data, metadata, use_nosmooth); % old fashioned SUPER SLOW
         end
+
+        % if a voxel is NaN even for 1 trial, ignore it
+        %
+        good_voxels = sum(isnan(sphere_activations(which_rows,:)), 1) == 0; 
+        if sum(good_voxels) == 0
+            assert(use_nosmooth); % doesn't happen if we have smoothing b/c we are using the mask that by definition contains no NaNs
+            warning(sprintf('Skipping sphere at %d [%d %d %d] -- no good voxels', i, x(i), y(i), z(i)));
+            continue;
+        end
+        if sum(good_voxels) < size(sphere_activations, 2)
+            assert(use_nosmooth);
+            sphere_activations = sphere_activations(:,good_voxels);
+            warning(sprintf('Sphere at %d [%d %d %d] has only %d good voxels', i, x(i), y(i), z(i), sum(good_voxels)));
+        end
+
+        assert(sum(sum(isnan(sphere_activations(which_rows,:)))) == 0);
         [sphereRDMs, avgSphereRDM] = compute_rdms(sphere_activations, 'cosine', data, metadata, which_rows);
         searchlight_idx = searchlight_idx + 1;
         Searchlight(searchlight_idx).RDMs = sphereRDMs;
@@ -91,6 +96,7 @@ for event = {'trial_onset', 'feedback_onset'}
         Searchlight(searchlight_idx).color = [0 1 0];
         Searchlight(searchlight_idx).center = [x(i) y(i) z(i)];
         Searchlight(searchlight_idx).radius = r;
+        Searchlight(searchlight_idx).n_voxels = sum(good_voxels);
         Searchlight(searchlight_idx).center_mni = mni;
     end
 

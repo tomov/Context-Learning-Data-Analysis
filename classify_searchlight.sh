@@ -13,10 +13,10 @@ do
 	start_idx=$(((batch - 1) * batch_size + 1))
 	end_idx=$((batch * batch_size))
 
-	outfileprefix="output/classify_searchlight_${start_idx}_${end_idx}_${r}_${event}"
+	outfileprefix="output/classify_searchlight_batch_${start_idx}_${end_idx}_${r}_${event}"
 	echo File prefix = $outfileprefix
 
-	classify_searchlight_call="classify_searchlight(${start_idx},${end_idx},${r},'${event}')"
+	classify_searchlight_call="classify_searchlight_batch(${start_idx},${end_idx},${r},'${event}')"
 	echo $classify_searchlight_call
 
     sbatch_output=`CMD="$classify_searchlight_call" sbatch -p ncf --mem 50000 -t 20-18:20 -o ${outfileprefix}_%j.out --mail-type=END slurm_matlab.sh`
