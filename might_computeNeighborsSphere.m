@@ -1,8 +1,8 @@
-function [voxelsToNeighbors, numberOfNeighbors] = might_computeNeighborsSphere(mask, coords, r)
-% Same as the searchmight computeNeighboursWithinRadius except for spherical searchlight
+function [voxelsToNeighbors, numberOfNeighbors] = might_computeNeighborsSphere(coords, r, mask, activations, which_rows)
+% Same as the searchmight computeNeighboursWithinRadius except for spherical searchlight.
+% Avoids voxels not in mask. Also avoids voxels that are NaN
 % USAGE:
-% [meta.voxelsToNeighbours, meta.numberOfNeighbours] = might_computeNeighborsSphere(mask, meta.colToCoord, r);
-%
+% [meta.voxelsToNeighbours, meta.numberOfNeighbours] = might_computeNeighborsSphere(meta.colToCoord, r, mask, activations, data.which_rows & data.isTrain);
 
 voxelsToNeighbors = zeros(size(coords,1), ceil(2*r+1)^3);
 numberOfNeighbors = zeros(size(coords,1), 1);
@@ -22,6 +22,9 @@ min_z = min(all_z);
 max_z = max(all_z);
 
 max_n = 0;
+
+good_voxels = sum(isnan(activations(which_rows,:)), 1) == 0; 
+assert(numel(good_voxels) == sum(mask(:)));
 
 % for each voxel = sphere center
 %
@@ -44,6 +47,8 @@ for i = 1:size(coords, 1)
 
                 idx = idxs(newx,newy,newz);
                 assert(~isnan(idx));
+                if ~good_voxels(idx), continue; end
+
                 neighbors = [neighbors, idx];
             end
         end

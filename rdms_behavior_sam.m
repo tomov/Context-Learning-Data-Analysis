@@ -36,11 +36,11 @@ r = 2.6667;
 %r = 6.6667; 
 direct = '+';
 
-use_nosmooth = true;
+use_nosmooth = false;
 
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 171, 'KL_structures', p, direct, alpha, Dis, Num, r, {'trial_onset', 'feedback_onset'}, use_nosmooth); %  <------ nothing :( nosmooth: p = 0.009 for angular_R at trial_onset; p = 0.03 for Parietal_Inf at feedback onset
-Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', p, direct, alpha, Dis, Num, r, {'trial_onset', 'feedback_onset'}, use_nosmooth);  % <-- nothing :( nosmooth: some at p = 0.01, 0.03, 0.04 but won't survive...
-%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/M1M2M1_4mm/searchlight_tmap_prior_trial_onset.nii', 0, 'light', p, direct, alpha, Dis, Num, r, {'trial_onset', 'feedback_onset'}, use_nosmooth); % <--  nothing
+%Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii', 0, 'light', p, direct, alpha, Dis, Num, r, {'trial_onset', 'feedback_onset'}, use_nosmooth);  % <-- nothing :( nosmooth: some at p = 0.01, 0.03, 0.04 but won't survive...
+Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, 'rdms/M1M2M1_4mm/searchlight_tmap_prior_trial_onset.nii', 0, 'light', p, direct, alpha, Dis, Num, r, {'trial_onset', 'feedback_onset'}, use_nosmooth); % <--  nothing
 %Neural = rdms_get_spheres_from_contrast(data, metadata, which_trials, context_expt(), 170, 'KL_clusters', p, direct, alpha, Dis, Num, r, {'trial_onset', 'feedback_onset'}, use_nosmooth); %  <---  nothing
 
 
