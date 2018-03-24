@@ -1,10 +1,10 @@
-%{
 addpath('/Users/momchil/Dropbox/Research/libs/SearchmightToolbox.Darwin_i386.0.2.5');
 
 dirname = 'might';
 
 maskfile = 'masks/mask.nii';
-event = 'feedback_onset';
+%event = 'feedback_onset';
+event = 'trial_onset';
 r = 2.6667;
 
 use_tmaps = false;
@@ -14,8 +14,8 @@ if use_tmaps
     get_activations = @get_tmaps;
     load_activations = @load_tmaps;
 else
-    get_activations = @get_activations;
-    load_activations = @load_activations;
+    get_activations = @get_betas;
+    load_activations = @load_betas;
 end
 
 runs = 1:9; 
@@ -28,7 +28,7 @@ z_score = 'z-none';
 [mask] = load_mask(maskfile);
 % load instead
 %
-%[meta] = createMetaFromMask(mask);
+%[meta] = createMetaFromMask(mask); <--- takes forever; load it instead (precomputed)
 load('might/meta.mat');
 
 [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
@@ -39,17 +39,18 @@ dimy = size(mask, 2);
 dimz = size(mask, 3); 
 nvoxels = size(activations, 2);
 
-classifier = 'gnb_searchmight'; % fast GNB
-
 % fix neighbors according to spherical searchlight
 %
 [meta.voxelsToNeighbours, meta.numberOfNeighbours] = might_computeNeighborsSphere(meta.colToCoord, r, mask, activations, data.which_rows & data.isTrain);
 
-%}
 
 
-%{
-ams = nan(numel(subjs), nvoxels); % accuracy map for each subject
+
+
+ams = nan(numel(subjs), nvoxels); % accuracy map for each subject 
+
+alpha = 0.05; % for pFDR q-values
+howmany = zeros(nvoxels, 1); % for each voxel, how many subjects have it significant (according to pFDR)
 
 tic
 subj_idx = 0;
@@ -65,12 +66,16 @@ for subj = subjs
     [labelsGroup, kfolds] = balanced_folds(runs, subj, trials, targets); % 3 balanced folds
     assert(kfolds == 3);
 
-    classifier = 'gnb_searchmight'; % fast GNB
+    classifier = 'gnb_searchmight'; % fast GNB; quick-n-dirty; gives weird axial dashes in accuracy maps, probably b/c of the way the scanner takes the images
+    %classifier = 'lda_shrinkage'; % based on Pereira and Botvinick (2010)
 
     disp('running searchmight');
-    [am,pm] = computeInformationMap(examples,labels,labelsGroup,classifier,'searchlight', ...
+    [am,pm] = computeInformationMap(inputs,labels,labelsGroup,classifier,'searchlight', ...
                                     meta.voxelsToNeighbours,meta.numberOfNeighbours);
     ams(subj_idx,:) = am;
+
+    [~, qm] = mafdr(pm'); % Storey (2002)
+    howmany = howmany + (qm < alpha);
 
     filename = sprintf('%s_accuracy_%s_subj=%d_folds=%d_r=%.4f_%s_use_nosmooth=%d_use_tmaps=%d.nii', classifier, event, subj, max(labelsGroup), r, z_score, use_nosmooth, use_tmaps);
     % initialize an empty accuracy map
@@ -88,8 +93,30 @@ for subj = subjs
 end
 
 
-%}
+%% write map w/ # subjects for which voxel is significant (with pFDR) based on Pereira & Botvinick 2010
+%
 
+% initialize empty countmap 
+filename = sprintf('%s_accuracy_countmap_%s_folds=%d_r=%.4f_%s_use_nosmooth=%d_use_tmaps=%d.nii', classifier, event, max(labelsGroup), r, z_score, use_nosmooth, use_tmaps);
+[~, V, countmap] = load_mask(fullfile('masks', 'spmT_0001.nii'));
+countmap(:) = NaN; % clear
+V.fname = fullfile(dirname, filename); % change immediately!
+
+% write countmap
+%
+[h, p, ci, stats] = ttest(ams, 1/3);
+countmap(mask) = howmany;
+spm_write_vol(V, countmap);
+
+% visualize countmap
+struc = fullfile('masks','mean.nii');
+bspmview(V.fname, struc);
+
+
+
+
+%% write t-map based on Kriegeskorte & Bandettini 2007
+%
 
 % initialize empty tmap
 filename = sprintf('%s_accuracy_tmap_%s_folds=%d_r=%.4f_%s_use_nosmooth=%d_use_tmaps=%d.nii', classifier, event, max(labelsGroup), r, z_score, use_nosmooth, use_tmaps);
@@ -98,14 +125,15 @@ tmap(:) = NaN; % clear
 V.fname = fullfile(dirname, filename); % change immediately!
 
 % write tmap
-% for each voxel, t-test subject accuracies against chance (Kriegeskorte & Bandettini 2007)
+% for each voxel, t-test subject accuracies against chance 
 %
 [h, p, ci, stats] = ttest(ams, 1/3);
 tmap(mask) = stats.tstat;
 spm_write_vol(V, tmap);
 
+%{
 % visualize tmap
 struc = fullfile('masks','mean.nii');
 bspmview(V.fname, struc);
 
-
+%}
