@@ -7,7 +7,7 @@ maskfile = 'masks/mask.nii';
 event = 'trial_onset';
 r = 2.6667;
 
-use_tmaps = false;
+use_tmaps = true;
 use_nosmooth = true;
 
 if use_tmaps
@@ -22,6 +22,7 @@ runs = 1:9;
 trials = 6:20;
 subjs = getGoodSubjects();
 predict_what = 'condition';
+%z_score = 'z-run'; 
 z_score = 'z-none'; 
 
 
@@ -39,6 +40,13 @@ dimy = size(mask, 2);
 dimz = size(mask, 3); 
 nvoxels = size(activations, 2);
 
+if use_tmaps
+    % some NaN's become 0's in the t-maps
+    % note that the betas (and the t-values) can never really be 0
+    %
+    activations(activations == 0) = NaN;
+end
+
 % fix neighbors according to spherical searchlight
 %
 [meta.voxelsToNeighbours, meta.numberOfNeighbours] = might_computeNeighborsSphere(meta.colToCoord, r, mask, activations, data.which_rows & data.isTrain);
@@ -52,7 +60,6 @@ ams = nan(numel(subjs), nvoxels); % accuracy map for each subject
 alpha = 0.05; % for pFDR q-values
 howmany = zeros(nvoxels, 1); % for each voxel, how many subjects have it significant (according to pFDR)
 
-tic
 subj_idx = 0;
 for subj = subjs 
     subj_idx = subj_idx + 1;
@@ -77,6 +84,7 @@ for subj = subjs
     [~, qm] = mafdr(pm'); % Storey (2002)
     howmany = howmany + (qm < alpha);
 
+    disp('saving ouput');
     filename = sprintf('%s_accuracy_%s_subj=%d_folds=%d_r=%.4f_%s_use_nosmooth=%d_use_tmaps=%d.nii', classifier, event, subj, max(labelsGroup), r, z_score, use_nosmooth, use_tmaps);
     % initialize an empty accuracy map
     [~, V, amap] = load_mask(fullfile('masks', 'spmT_0001.nii'));
@@ -115,9 +123,12 @@ bspmview(V.fname, struc);
 
 
 
-%% write t-map based on Kriegeskorte & Bandettini 2007
+%% write t-map based on Kriegeskorte & Bandettini 2007 
+% note those have lots of negative t-values b/c "chance" is not 1/3 according to the classifier but slightly below it
+% so don't use em
 %
 
+%{
 % initialize empty tmap
 filename = sprintf('%s_accuracy_tmap_%s_folds=%d_r=%.4f_%s_use_nosmooth=%d_use_tmaps=%d.nii', classifier, event, max(labelsGroup), r, z_score, use_nosmooth, use_tmaps);
 [~, V, tmap] = load_mask(fullfile('masks', 'spmT_0001.nii'));
@@ -131,7 +142,6 @@ V.fname = fullfile(dirname, filename); % change immediately!
 tmap(mask) = stats.tstat;
 spm_write_vol(V, tmap);
 
-%{
 % visualize tmap
 struc = fullfile('masks','mean.nii');
 bspmview(V.fname, struc);

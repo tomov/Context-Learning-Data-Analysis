@@ -89,7 +89,7 @@ switch z_score
         % do nothing
         
     case 'z-run'
-        inputs = z_run(metadata, runId, newTrialId, participant, subjs, runs, inputs);
+        inputs = z_run(metadata, runId, newTrialId, participant, subjs, runs, trials, inputs);
         
     case 'z-run-voxel'
         inputs = z_run_voxel(metadata, runId, newTrialId, participant, subjs, runs, trials, inputs);
@@ -110,10 +110,10 @@ end % end f'n
 
 
 
-% z-score all voxels within the same run 
+% z-score all voxels (together) within the same run 
 % i.e. mean to subtract = mean of all voxels across the run (n_trials_per_run x n_voxels data points)
 %
-function [inputs] = z_run(metadata, runId, newTrialId, participant, subjs, runs, inputs)
+function [inputs] = z_run(metadata, runId, newTrialId, participant, subjs, runs, trials, inputs)
     for subj = subjs
         for run = runs
             which = strcmp(participant, metadata.allSubjects{subj}) & runId == run;
@@ -127,7 +127,7 @@ function [inputs] = z_run(metadata, runId, newTrialId, participant, subjs, runs,
     end
 end
 
-% z-score each voxel within the same run
+% z-score each voxel (separately from other voxels) within the same run
 % i.e. mean to subtract = mean of given voxel across the run (n_trials_per_run data points)
 %
 function [inputs] = z_run_voxel(metadata, runId, newTrialId, participant, subjs, runs, trials, inputs)
