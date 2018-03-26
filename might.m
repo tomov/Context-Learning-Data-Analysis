@@ -4,11 +4,23 @@ dirname = 'might';
 
 maskfile = 'masks/mask.nii';
 %event = 'feedback_onset';
-event = 'trial_onset';
-r = 2.6667;
+event = 'trial_onset'; % <-- better, but also kinda different
+r = 2.6667; % 4 mm
+%r = 6.6667; % 10 mm
+%r = 4.6667; % 10 mm
 
-use_tmaps = true;
-use_nosmooth = true;
+use_tmaps = false; % <-- slightly better if true; but stick with betas for consistency w/ RDMs
+use_nosmooth = true; 
+
+runs = 1:9; 
+trials = 6:20;
+subjs = getGoodSubjects();
+predict_what = 'condition';
+%z_score = 'z-run';  % <-- better
+%z_score = 'z-run-voxel';  % <-- nothing, though Storey's pFDR fucks up and gives q = 0.048 when none of them are actually significant
+z_score = 'z-none';   % <-- actually not bad
+%z_score = 'z-manual'; % <-- hack; means manually z-score here; also nothing shows up
+%z_score = 'z-random'; % <-- hack; for control, we use random activations
 
 if use_tmaps
     get_activations = @get_tmaps;
@@ -17,13 +29,6 @@ else
     get_activations = @get_betas;
     load_activations = @load_betas;
 end
-
-runs = 1:9; 
-trials = 6:20;
-subjs = getGoodSubjects();
-predict_what = 'condition';
-%z_score = 'z-run'; 
-z_score = 'z-none'; 
 
 
 [mask] = load_mask(maskfile);
@@ -34,7 +39,26 @@ load('might/meta.mat');
 
 [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
 
+disp('loading betas');
+tic
 activations = get_activations(maskfile, event, data, metadata, use_nosmooth);
+if strcmp(z_score, 'z-manual')
+    % z-score each voxel in each run separately
+    %
+    for subj = subjs 
+        for run = runs
+            fprintf('z-scoring subject %d, run %d\n', subj, run);
+            which_rows = strcmp(data.participant, metadata.allSubjects(subj)) & data.runId == run;
+            assert(sum(which_rows) == metadata.trialsPerRun);
+            activations(which_rows, :) = zscore(activations(which_rows,:), [], 1);
+        end
+    end
+end
+if strcmp(z_score, 'z-random')
+    activations = rand(size(activations)); % control
+end
+
+toc
 dimx = size(mask, 1);
 dimy = size(mask, 2); 
 dimz = size(mask, 3); 
@@ -49,8 +73,10 @@ end
 
 % fix neighbors according to spherical searchlight
 %
+disp('computing neighbors');
+tic
 [meta.voxelsToNeighbours, meta.numberOfNeighbours] = might_computeNeighborsSphere(meta.colToCoord, r, mask, activations, data.which_rows & data.isTrain);
-
+toc
 
 
 
@@ -73,8 +99,8 @@ for subj = subjs
     [labelsGroup, kfolds] = balanced_folds(runs, subj, trials, targets); % 3 balanced folds
     assert(kfolds == 3);
 
-    classifier = 'gnb_searchmight'; % fast GNB; quick-n-dirty; gives weird axial dashes in accuracy maps, probably b/c of the way the scanner takes the images
-    %classifier = 'lda_shrinkage'; % based on Pereira and Botvinick (2010)
+    %classifier = 'gnb_searchmight'; % fast GNB; quick-n-dirty; gives weird axial dashes in accuracy maps, probably b/c of the way the scanner takes the images
+    classifier = 'lda_shrinkage'; % based on Pereira and Botvinick (2010)
 
     disp('running searchmight');
     [am,pm] = computeInformationMap(inputs,labels,labelsGroup,classifier,'searchlight', ...
@@ -88,12 +114,25 @@ for subj = subjs
     filename = sprintf('%s_accuracy_%s_subj=%d_folds=%d_r=%.4f_%s_use_nosmooth=%d_use_tmaps=%d.nii', classifier, event, subj, max(labelsGroup), r, z_score, use_nosmooth, use_tmaps);
     % initialize an empty accuracy map
     [~, V, amap] = load_mask(fullfile('masks', 'spmT_0001.nii'));
-    amap(:) = NaN; % clear
     V.fname = fullfile(dirname, filename); % change immediately!
+    amap(:) = NaN; % clear
 
     % write accuracy map
     amap(mask) = am * 100;
     spm_write_vol(V, amap);
+
+    % write thresholded map
+    am(qm >= alpha) = NaN;
+    amap(mask) = am * 100;
+    V.fname = strrep(V.fname, '.nii', sprintf('_alpha=%.3f.nii', alpha));
+    spm_write_vol(V, amap);
+
+    % write p-value map
+    filename = sprintf('%s_p-value_%s_subj=%d_folds=%d_r=%.4f_%s_use_nosmooth=%d_use_tmaps=%d.nii', classifier, event, subj, max(labelsGroup), r, z_score, use_nosmooth, use_tmaps);
+    V.fname = fullfile(dirname, filename);
+    pmap = nan(size(amap));
+    pmap(mask) = pm;
+    spm_write_vol(V, pmap);
 
     % visualize
     %struc = fullfile('masks','mean.nii');
@@ -120,6 +159,7 @@ spm_write_vol(V, countmap);
 struc = fullfile('masks','mean.nii');
 bspmview(V.fname, struc);
 
+disp(V.fname);
 
 
 

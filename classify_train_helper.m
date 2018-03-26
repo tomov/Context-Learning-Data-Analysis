@@ -149,6 +149,40 @@ switch method
         classifier = net;
 
 
+
+    case 'cvfitcnb' % manually cross-validated naive bayes classifier; for compatibility with searchmight 
+        
+        [foldid, kfolds] = balanced_folds(runs, subjs, trials, targets);
+
+        testOutputs = [];
+        [~, labels] = max(targets, [], 2); % from one-hot vector to indices
+
+        for i = 1:kfolds
+            % train
+            train_idx = find(foldid ~= i);
+            Mdl = fitcnb(inputs(train_idx,:), labels(train_idx));
+            
+            % test
+            [~, outputs] = predict(Mdl, inputs);
+
+            % save outputs
+            test_idx = find(foldid == i);
+            testOutputs(test_idx,:) = outputs(test_idx,:);
+        end
+
+        outputs = testOutputs; % only consider the outputs from the test trials (from all folds)
+
+        accuracy = classify_get_accuracy(outputs, targets);
+        k = floor(size(targets,2) * accuracy / 100) - 1; % P(# corr >= ...) = 1 - P(# corr <= ... - 1)
+        stats.p = 1 - binocdf(k, size(targets,2), 1/size(targets,1));
+
+        fprintf('Success rate = %.0f%%, p = %f\n', accuracy, stats.p);
+
+
+        classifier = Mdl;
+
+
+
         
     case 'glmnet' % multinomial GLM classifier
     

@@ -1,7 +1,8 @@
 % HACK to get folds such that each fold has 1 irr, 1 mod, and 1 add run
 % but randomly shuffled
 %
-function [foldid, kfolds] = balanced_folds(runs, subjs, trials, targets)
+function [foldid, kfolds, c] = balanced_folds(runs, subjs, trials, targets)
+    assert(size(targets,1) == numel(runs) * numel(subjs) * numel(trials));
     assert(isequal(numel(runs), 9));
     assert(isequal(numel(subjs), 1));
     % which group of 3 runs we're in (1st 2nd or 3rd)
@@ -21,4 +22,13 @@ function [foldid, kfolds] = balanced_folds(runs, subjs, trials, targets)
     assert(sum(foldid == 3) == numel(trials) * 3);
     assert(sum(isnan(foldid)) == 0);
     kfolds = 3;
+
+
+    % create a cvpartition object with these folds for compatibility with MATLAB's classifiers
+    %
+    assert(isequal(numel(subjs), 1));
+    c = cvpartition(numel(foldid), 'Kfold', 3);
+    c.Impl.indices = foldid;
+    c.Impl.TestSize = accumarray(foldid, 1)';
+    c.Impl.TrainSize = size(foldid, 1) - c.Impl.TestSize;
 end

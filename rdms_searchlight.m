@@ -71,8 +71,14 @@ cols = Model;
 %% Save output
 %
 
+% b/c we skip some in the searchlight
+x = [Searchlight.x];
+y = [Searchlight.y];
+z = [Searchlight.z];
+events = {Searchlight.event};
+
 %which = table_Rho > 0 & table_P < 0.05 / numel(table_P); % Bonferroni correction
 
 filename = sprintf('searchlight_weights_%d-%d.mat', start_idx, end_idx);
 fprintf('SAVING %s\n', filename);
-save(fullfile(dirname, filename), 'table_Rho', 'table_T', 'table_P', 'all_subject_rhos', 'x', 'y', 'z', 'r', 'idx', 'params', 'which_structures', 'use_tmaps', 'use_nosmooth');
+save(fullfile(dirname, filename), 'table_Rho', 'table_T', 'table_P', 'all_subject_rhos', 'x', 'y', 'z', 'events', 'r', 'idx', 'params', 'which_structures', 'use_tmaps', 'use_nosmooth', 'which_rows');

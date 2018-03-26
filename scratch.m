@@ -1,3 +1,15 @@
+
+%{
+p = 0.001;
+direct = '+';
+alpha = 0.05;
+Dis = 20;
+Num = 1; % # peak voxels per cluster; default in bspmview is 3
+
+intersect_with_contrast('might/gnb_searchmight_accuracy_trial_onset_subj=2_folds=3_r=2.6667_z-run_use_nosmooth=1_use_tmaps=0.nii', 'temp.nii', context_expt(), 171, 'KL_structures', p, direct, alpha, Dis, Num)
+
+%}
+
 % for printing average run betas from ANOVA
 %{
 load results/classify_anova_trial_onset.mat;

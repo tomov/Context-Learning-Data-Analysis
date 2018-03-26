@@ -1,12 +1,16 @@
 function smoothen_nii(filename, how)
 % Smoothen a .nii file and display it
+% how = 'gauss' -> 3D Gaussian filter
+% how = 'dilate' -> spherical sliding window max()
 %
 if ~exist('how', 'var')
-    how = 'gauss';
+    how = 'dilate';
 end
 
 [~, V, Y] = load_mask(filename);
 V.fname = 'temp.nii'; % change immediately!
+
+Y(Y < 4) = 0; % threshold
 
 switch how
     case 'gauss'
@@ -22,7 +26,7 @@ switch how
     otherwise
         assert(false);
 end
-
+ 
 
 
 spm_write_vol(V,B);

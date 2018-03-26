@@ -5,6 +5,7 @@
 % - conversely for the additive (irrelevant cue) condition
 % - for modulatory, both cue & context matter 
 % so use a region's similarity with a cue-only RDM, context-only RDM, or both RDM as a (neural) proxy for whether that region "thinks"/"prefers" structures M1, M1', or M2 
+% use spheres around the peak voxels
 % 2) separately, compute P(M1 | test choices) = P(test choices | M1) P(M1) / const = test lik under M1 / const 
 % do it for all structures
 % this tells us which structure the subject's test choices are most consistent with 

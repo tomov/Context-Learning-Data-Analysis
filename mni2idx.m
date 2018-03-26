@@ -13,9 +13,9 @@ function idx = mni2idx(mni,maskfile)
 
 cor = mni2cor(mni, V.mat);
 
-idxs = nan(size(mask));
-idxs(mask) = 1:sum(mask(:));
+cor2idx = nan(size(mask));
+cor2idx(mask) = 1:sum(mask(:));
 
-i = sub2ind(size(idxs), cor(:,1), cor(:,2), cor(:,3));
+i = sub2ind(size(cor2idx), cor(:,1), cor(:,2), cor(:,3));
 
-idx = idxs(i);
+idx = cor2idx(i);

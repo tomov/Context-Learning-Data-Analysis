@@ -88,6 +88,12 @@ switch z_score
     case 'z-none'
         % do nothing
         
+    case 'z-manual'
+        % do nothing
+
+    case 'z-random'
+        % do nothing
+
     case 'z-run'
         inputs = z_run(metadata, runId, newTrialId, participant, subjs, runs, trials, inputs);
         

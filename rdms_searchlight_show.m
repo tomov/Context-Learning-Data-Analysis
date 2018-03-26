@@ -21,7 +21,8 @@ model = 'posterior';
 %model = 'Q_posteosterior';
 %model = 'cond_posterior';
 
-dirname = 'rdms/M1M2M1_4mm';
+%dirname = 'rdms/M1M2M1_4mm';
+dirname = 'rdms/M1M2M1_4mm_nosmooth';
 
 
 
@@ -58,8 +59,8 @@ assert(ismember(event, {'trial_onset', 'feedback_onset'}));
 %
 [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
 which_rows = data.which_rows & data.isTrain; % Look at training trials only
-%Model = rdms_get_model_3(data, metadata, which_rows); % WARNING == TIGHT COUPLING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! sanity check if params are same as in the searchlight file
-Model = rdms_get_model_collins(data, metadata, which_rows); % WARNING == TIGHT COUPLING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! sanity check if params are same as in the searchlight file
+Model = rdms_get_model_3(data, metadata, which_rows); % WARNING == TIGHT COUPLING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! sanity check if params are same as in the searchlight file
+%Model = rdms_get_model_collins(data, metadata, which_rows); % WARNING == TIGHT COUPLING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! sanity check if params are same as in the searchlight file
 model_names = {Model.name};
 assert(ismember(model, model_names));
 
@@ -94,12 +95,36 @@ for i = 1:length(files)
             table_T = table_T .* sign;
             disp(['Computing t-values manually for ', file]);
         end
-        
-        for j = 1:length(x)
-            row_idx = j + isequal(event, 'feedback_onset') * length(x);
-            col_idx = find(ismember(model_names, model));
-            if col_idx <= size(table_T, 2) % in case we're using a model that hasn't been computed in all batches, e.g. weightsPosterior
-                tmap(x(j), y(j), z(j)) = table_T(row_idx, col_idx);
+
+        Searchlight = rdms_get_searchlight(data, metadata, data.which_rows & data.isTrain, x, y, z, r, true, use_tmaps, use_nosmooth); % use pregen'd betas, use tmaps, use nosmooth
+        x = [Searchlight.x];
+        y = [Searchlight.y];
+        z = [Searchlight.z];
+        events = {Searchlight.event};
+        save(file, 'table_Rho', 'table_T', 'table_P', 'all_subject_rhos', 'x', 'y', 'z', 'events', 'r', 'idx', 'params', 'which_structures', 'use_tmaps', 'use_nosmooth', 'which_rows');
+       
+        if isfield(Searchlight, 'event') % new way
+            % when using _nosmooth, sometimes not all searchlights are good
+            % => have to keep 
+            %
+            for j = 1:length(x)
+                if ~isequal(event, events{j}), continue; end
+                row_idx = j;
+                col_idx = find(ismember(model_names, model));
+                if col_idx <= size(table_T, 2) % in case we're using a model that hasn't been computed in all batches, e.g. weightsPosterior
+                    tmap(x(j), y(j), z(j)) = table_T(row_idx, col_idx);
+                end
+            end
+        else % old way
+            % backwards compatibility -- we have all the searchlights when using smoothing; back then 
+            % we didn't 
+            %
+            for j = 1:length(x)
+                row_idx = j + isequal(event, 'feedback_onset') * length(x);
+                col_idx = find(ismember(model_names, model));
+                if col_idx <= size(table_T, 2) % in case we're using a model that hasn't been computed in all batches, e.g. weightsPosterior
+                    tmap(x(j), y(j), z(j)) = table_T(row_idx, col_idx);
+                end
             end
         end
     end
