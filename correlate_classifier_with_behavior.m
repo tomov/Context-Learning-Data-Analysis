@@ -23,7 +23,9 @@ contrast = 'rdms';
 event = 'trial_onset';
 r = 2.6667;
 
-method = 'cvfitcnb'; % gaussian naive bayes, just like searchmight 
+method = 'cvpatternnet'; % NN; BEST performance on the peak LDA voxels; not so much on the GNB peak voxels => LDA is indeed better
+%method = 'cvfitcnb'; % gaussian naive bayes, just like searchmight's gnb_searchmight; MEDIUM performance
+%method = 'cvfitcdiscr'; % linear discriminant analysis, similar to searchmight's lda_shrinkage but not quite; WORST performance
 runs = 1:9; 
 trials = 6:20;
 subjs = getGoodSubjects();
@@ -73,6 +75,8 @@ ttest_means = [];
 ttest_sems = [];
 ttest_ps = [];
 ttest_ts = [];
+
+accs = [];
 
 for i = 1:size(region, 1) % for each ROI
     fprintf('ROI = %s\n', region{i});
@@ -173,4 +177,6 @@ for i = 1:size(region, 1) % for each ROI
     ttest_ps = [ttest_ps; p];
     ttest_means = [ttest_means; mean(liks_classifier) mean(liks_model)];
     ttest_sems = [ttest_sems; (ci(2) - ci(1)) / 2];
+
+    accs = [accs; acc];
 end
