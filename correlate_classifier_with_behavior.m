@@ -13,12 +13,13 @@ which_structures = logical([1 1 0 1 0]);
 [data, metadata, simulated, params] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat', 1, which_structures);
 
 
-%EXPT = context_expt();
-EXPT = 'rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii';
-%glm = 171;
-glm = 0;
-%contrast = 'KL_structures'; 
-contrast = 'rdms';
+EXPT = context_expt();
+glm = 171;
+contrast = 'KL_structures'; 
+
+%EXPT = 'rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii';
+%glm = 0;
+%contrast = 'rdms';
 
 event = 'trial_onset';
 r = 2.6667;
@@ -78,6 +79,14 @@ ttest_ts = [];
 
 accs = [];
 
+clear cached_o;
+% load cached outputs, to avoid having to re-classify
+%
+cached_filename = fullfile('temp', sprintf('corr_class_w_behav_%s_niter=%d.mat', method, n_iter));
+load(cached_filename, 'cached_o');
+loaded_cached = true;
+
+
 for i = 1:size(region, 1) % for each ROI
     fprintf('ROI = %s\n', region{i});
 
@@ -115,13 +124,22 @@ for i = 1:size(region, 1) % for each ROI
 
         % run classifier n_iter times, to account for randomness in the folds. Average outputs (posteriors) 
         %
-        o = zeros(size(targets));
-        for iter = 1:n_iter
-            [~, outputs, accuracy, stats] = classify_train_helper(method, inputs, targets, runs, trials, [subj], []);
-            o = o + outputs;
+        if ~loaded_cached 
+            % actually run classifier
+            %
+            o = zeros(size(targets));
+            for iter = 1:n_iter
+                [~, outputs, accuracy, stats] = classify_train_helper(method, inputs, targets, runs, trials, [subj], []);
+                o = o + outputs;
+            end
+            o = o / n_iter;
+            cached_o{i}{subj} = o;
+        else
+            % load cached outputs
+            o = cached_o{i}{subj};
         end
-        o = o / n_iter;
-        accuracy = classify_get_accuracy(o, targets);
+
+        accuracy = classify_get_accuracy(o, targets); % "average" accuracy, according to average votes across iterations
 
         %if accuracy < 35
         %    fprintf('SKIPPING SUBJECT %d: accuracy too low (%.2f)\n', subj, accuracy);
@@ -143,7 +161,7 @@ for i = 1:size(region, 1) % for each ROI
             [train_x, train_k, train_r, test_x, test_k] = convert_run(data, metadata, subject, run);
             ww_n = simulated.ww_n{which_run & data.trialId == metadata.trainingTrialsPerRun}; % notice we still use the weights from the model
             %P_n = simulated.P(which_run & data.trialId == metadata.trainingTrialsPerRun,:); <-- sanity; pred_classifier should be same as pred_model in that case
-            P_n = mean(outputs(rid == run & tid > 0, :), 1); % the important part
+            P_n = mean(o(rid == run & tid > 0, :), 1); % the important part -- notice we use the average outputs of the n_iter iterations
             train_results.P_n = P_n;
             train_results.ww_n = ww_n;
 
@@ -180,3 +198,5 @@ for i = 1:size(region, 1) % for each ROI
 
     accs = [accs; acc];
 end
+
+%save(cached_filename); % save cached outputs, to avoid having to reclassify each time
