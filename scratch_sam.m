@@ -1,4 +1,4 @@
-
+% RUN using might_group.m
 
 %% classifier results
 %

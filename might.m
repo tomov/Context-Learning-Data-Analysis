@@ -1,3 +1,6 @@
+% Run searchmight on the entire brain
+%
+
 addpath('/Users/momchil/Dropbox/Research/libs/SearchmightToolbox.Darwin_i386.0.2.5');
 
 dirname = 'might';
@@ -21,6 +24,9 @@ predict_what = 'condition';
 z_score = 'z-none';   % <-- actually not bad
 %z_score = 'z-manual'; % <-- hack; means manually z-score here; also nothing shows up
 %z_score = 'z-random'; % <-- hack; for control, we use random activations
+
+%classifier = 'gnb_searchmight'; % fast GNB; quick-n-dirty; gives weird axial dashes in accuracy maps, probably b/c of the way the scanner takes the images
+classifier = 'lda_shrinkage'; % based on Pereira and Botvinick (2010)
 
 if use_tmaps
     get_activations = @get_tmaps;
@@ -98,9 +104,6 @@ for subj = subjs
     %labelsGroup = data.runId(which_rows); % folds = runs; WRONG -- GNB does not take prior properly into account; need balanced folds
     [labelsGroup, kfolds] = balanced_folds(runs, subj, trials, targets); % 3 balanced folds
     assert(kfolds == 3);
-
-    %classifier = 'gnb_searchmight'; % fast GNB; quick-n-dirty; gives weird axial dashes in accuracy maps, probably b/c of the way the scanner takes the images
-    classifier = 'lda_shrinkage'; % based on Pereira and Botvinick (2010)
 
     disp('running searchmight');
     [am,pm] = computeInformationMap(inputs,labels,labelsGroup,classifier,'searchlight', ...

@@ -35,6 +35,9 @@ n_iter = 10; % how many iterations for each subject
 use_tmaps = false; % <-- slightly better if true; but stick with betas for consistency w/ RDMs
 use_nosmooth = true; 
 
+%classifier = 'gnb_searchmight';
+classifier = 'lda_shrinkage';
+
 p = 0.001;
 direct = '+';
 alpha = 0.05;
@@ -51,7 +54,7 @@ end
 
 [V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_clusters(EXPT, glm, contrast, p, direct, alpha, Dis, Num);
 
-file_format = 'might/gnb_searchmight_accuracy_%s_subj=%d_folds=3_r=%.4f_%s_use_nosmooth=%d_use_tmaps=%d.nii';
+file_format = 'might/%s_accuracy_%s_subj=%d_folds=3_r=%.4f_%s_use_nosmooth=%d_use_tmaps=%d.nii';
 maskfile = 'masks/mask.nii';
 
 [mask, Vmask] = load_mask(maskfile);
@@ -88,7 +91,7 @@ for i = 1:size(region, 1) % for each ROI
     for subj = subjs % for each subject
         subject = metadata.allSubjects(subj); % 'con001' ... 'con025'
 
-        filename = sprintf(file_format, event, subj, r, z_score, use_nosmooth, use_tmaps);
+        filename = sprintf(file_format, classifier, event, subj, r, z_score, use_nosmooth, use_tmaps);
         [~, ~, amap] = load_mask(filename); % get accuracy map
 
         [~, j] = max(amap(clust_mask));
@@ -110,7 +113,7 @@ for i = 1:size(region, 1) % for each ROI
         %
         o = zeros(size(targets));
         for iter = 1:n_iter
-            [classifier, outputs, accuracy, stats] = classify_train_helper(method, inputs, targets, runs, trials, [subj], []);
+            [~, outputs, accuracy, stats] = classify_train_helper(method, inputs, targets, runs, trials, [subj], []);
             o = o + outputs;
         end
         o = o / n_iter;
