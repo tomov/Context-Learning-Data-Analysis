@@ -63,15 +63,20 @@ max_z = max(all_z);
 
 %activations = get_activations(maskfile, event, data, metadata, use_nosmooth);
 
-%for i = 1:size(region, 1) % for each ROI
+ttest_means = [];
+ttest_sems = [];
+ttest_ps = [];
+ttest_ts = [];
+
+for i = 1:size(region, 1) % for each ROI
     fprintf('ROI = %s\n', region{i});
 
     clust_idx = CI(cor(i,1), cor(i,2), cor(i,3));
     clust_mask = CI == clust_idx;
     clust_vox = find(clust_mask);
 
-    clust_mask = mask;
-    clust_vox = find(mask);
+    %clust_mask = mask; HACK to do the whole-brain
+    %clust_vox = find(mask);
 
     liks_classifier = []; % avg test log lik for each run for each subject, according to classifier posterior
     liks_model = []; % same but according to model posterior
@@ -107,6 +112,11 @@ max_z = max(all_z);
         end
         o = o / n_iter;
         accuracy = classify_get_accuracy(o, targets);
+
+        %if accuracy < 35
+        %    fprintf('SKIPPING SUBJECT %d: accuracy too low (%.2f)\n', subj, accuracy);
+        %    continue;
+        %end
 
         % use outputs as posteriors in simulations, compare w/ model posterior on test log lik
         %
@@ -152,4 +162,9 @@ max_z = max(all_z);
         acc = [acc, accuracy];
     end
 
-%end
+    [h, p, ci, stat] = ttest(liks_classifier, liks_model) % paired sample t-test TODO transform log likelihoods to make them more Gaussian-y
+    ttest_ts = [ttest_ts; stat.tstat];
+    ttest_ps = [ttest_ps; p];
+    ttest_means = [ttest_means; mean(liks_classifier) mean(liks_model)];
+    ttest_sems = [ttest_sems; (ci(2) - ci(1)) / 2];
+end
