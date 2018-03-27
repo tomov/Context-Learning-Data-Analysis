@@ -14,8 +14,11 @@ which_structures = logical([1 1 0 1 0]);
 
 
 %EXPT = context_expt();
-glm = 171;
-contrast = 'KL_structures';
+EXPT = 'rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii';
+%glm = 171;
+glm = 0;
+%contrast = 'KL_structures'; 
+contrast = 'rdms';
 
 event = 'trial_onset';
 r = 2.6667;
@@ -46,7 +49,7 @@ else
     load_activations = @load_betas;
 end
 
-%[V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_clusters(EXPT, glm, contrast, p, direct, alpha, Dis, Num);
+[V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_clusters(EXPT, glm, contrast, p, direct, alpha, Dis, Num);
 
 file_format = 'might/gnb_searchmight_accuracy_%s_subj=%d_folds=3_r=%.4f_%s_use_nosmooth=%d_use_tmaps=%d.nii';
 maskfile = 'masks/mask.nii';
