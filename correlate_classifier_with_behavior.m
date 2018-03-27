@@ -13,19 +13,20 @@ which_structures = logical([1 1 0 1 0]);
 [data, metadata, simulated, params] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat', 1, which_structures);
 
 
-EXPT = context_expt();
-glm = 171;
-contrast = 'KL_structures'; 
+%EXPT = context_expt();
+%glm = 171;
+%contrast = 'KL_structures'; 
 
-%EXPT = 'rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii';
-%glm = 0;
-%contrast = 'rdms';
+EXPT = 'rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii';
+glm = 0;
+contrast = 'rdms';
 
 event = 'trial_onset';
+%event = 'feedback_onset';
 r = 2.6667;
 
-method = 'cvpatternnet'; % NN; BEST performance on the peak LDA voxels; not so much on the GNB peak voxels => LDA is indeed better
-%method = 'cvfitcnb'; % gaussian naive bayes, just like searchmight's gnb_searchmight; MEDIUM performance
+%method = 'cvpatternnet'; % NN; BEST performance on the peak LDA voxels; not so much on the GNB peak voxels => LDA is indeed better
+method = 'cvfitcnb'; % gaussian naive bayes, just like searchmight's gnb_searchmight; MEDIUM performance
 %method = 'cvfitcdiscr'; % linear discriminant analysis, similar to searchmight's lda_shrinkage but not quite; WORST performance
 runs = 1:9; 
 trials = 6:20;
@@ -34,6 +35,8 @@ predict_what = 'condition';
 z_score = 'z-none';
 
 n_iter = 10; % how many iterations for each subject
+
+trial_cutoff = 1; % average classifier posterior from trials >= trial_cutoff in each run (to smoothen the noise)
 
 use_tmaps = false; % <-- slightly better if true; but stick with betas for consistency w/ RDMs
 use_nosmooth = true; 
@@ -80,11 +83,15 @@ ttest_ts = [];
 accs = [];
 
 clear cached_o;
+cached_filename = fullfile('temp', sprintf('corr_class_w_behav_%s_niter=%d_contrast=%s_event=%s.mat', method, n_iter, contrast, event));
+
 % load cached outputs, to avoid having to re-classify
+% WARNING: make sure it's the correct contrast, etc; basically, never assume you've cached the right thing
 %
-cached_filename = fullfile('temp', sprintf('corr_class_w_behav_%s_niter=%d.mat', method, n_iter));
-load(cached_filename, 'cached_o');
-loaded_cached = true;
+load_cached = true;
+if load_cached
+    load(cached_filename, 'cached_o');
+end
 
 
 for i = 1:size(region, 1) % for each ROI
@@ -107,7 +114,7 @@ for i = 1:size(region, 1) % for each ROI
         filename = sprintf(file_format, classifier, event, subj, r, z_score, use_nosmooth, use_tmaps);
         [~, ~, amap] = load_mask(filename); % get accuracy map
 
-        [~, j] = max(amap(clust_mask));
+        [~, j] = max(amap(clust_mask)); % get voxel with peak accuracy
         [x,y,z] = ind2sub(size(clust_mask), clust_vox(j));
         fprintf('\nsubj = %d, max acc = %.4f\n', subj, amap(x,y,z));
 
@@ -124,7 +131,7 @@ for i = 1:size(region, 1) % for each ROI
 
         % run classifier n_iter times, to account for randomness in the folds. Average outputs (posteriors) 
         %
-        if ~loaded_cached 
+        if ~load_cached 
             % actually run classifier
             %
             o = zeros(size(targets));
@@ -162,15 +169,22 @@ for i = 1:size(region, 1) % for each ROI
             ww_n = simulated.ww_n{which_run & data.trialId == metadata.trainingTrialsPerRun}; % notice we still use the weights from the model
             %P_n = simulated.P(which_run & data.trialId == metadata.trainingTrialsPerRun,:); <-- sanity; pred_classifier should be same as pred_model in that case
             P_n = zeros(size(which_structures));
-            P_n(which_structures) = mean(o(rid == run & tid > 0, :), 1); % the important part -- notice we use the average outputs of the n_iter iterations
+
+            % average classifier posterior from last X trials ~= structure posterior
+            P_n(which_structures) = mean(o(rid == run & tid >= trial_cutoff, :), 1); % the important part -- notice we use the average outputs of the n_iter iterations
+
+            % option #1: this is a very noisy estimate; use it only to bias the model posterior (as opposed to replace it)
+            P_n_model = simulated.P(which_run & data.trialId == metadata.trainingTrialsPerRun, :);
+            P_n = P_n_model + P_n * 0.5; % TODO param, free?
+            P_n = P_n / sum(P_n);
+
+            % option #2: set P_n = MAP structure
+            %[~,map] = max(P_n);
+            %P_n = zeros(size(P_n));
+            %P_n(map) = 1;
+
             train_results.P_n = P_n;
             train_results.ww_n = ww_n;
-
-            % use MAP P_n
-            [~,map] = max(P_n);
-            P_n = zeros(size(P_n));
-            P_n(map) = 1;
-
             test_results = model_test(test_x, test_k, train_results, params); % simulate run using P_n ~= posterior from classifier
 
             pred_classifier = test_results.choices(which_run_test(data.which_rows & ~data.isTrain & strcmp(data.participant, subject) & data.runId == run)); % P(choose sick) on the test trials, according to the classifier
@@ -205,4 +219,7 @@ for i = 1:size(region, 1) % for each ROI
     accs = [accs; acc];
 end
 
-%save(cached_filename); % save cached outputs, to avoid having to reclassify each time
+
+if ~load_cached
+    save(cached_filename); % save cached outputs, to avoid having to reclassify each time
+end

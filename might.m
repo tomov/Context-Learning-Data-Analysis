@@ -6,8 +6,8 @@ addpath('/Users/momchil/Dropbox/Research/libs/SearchmightToolbox.Darwin_i386.0.2
 dirname = 'might';
 
 maskfile = 'masks/mask.nii';
-%event = 'feedback_onset';
-event = 'trial_onset'; % <-- better, but also kinda different
+event = 'feedback_onset';
+%event = 'trial_onset'; % <-- better, but also kinda different
 r = 2.6667; % 4 mm
 %r = 6.6667; % 10 mm
 %r = 4.6667; % 10 mm
