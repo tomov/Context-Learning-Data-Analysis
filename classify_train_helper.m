@@ -173,8 +173,8 @@ switch method
         outputs = testOutputs; % only consider the outputs from the test trials (from all folds)
 
         accuracy = classify_get_accuracy(outputs, targets);
-        k = floor(size(targets,2) * accuracy / 100) - 1; % P(# corr >= ...) = 1 - P(# corr <= ... - 1)
-        stats.p = 1 - binocdf(k, size(targets,2), 1/size(targets,1));
+        k = floor(size(targets,1) * accuracy / 100) - 1; % P(# corr >= ...) = 1 - P(# corr <= ... - 1)
+        stats.p = 1 - binocdf(k, size(targets,1), 1/size(targets,2));
 
         fprintf('Success rate = %.0f%%, p = %f\n', accuracy, stats.p);
 
@@ -206,8 +206,8 @@ switch method
         outputs = testOutputs; % only consider the outputs from the test trials (from all folds)
 
         accuracy = classify_get_accuracy(outputs, targets);
-        k = floor(size(targets,2) * accuracy / 100) - 1; % P(# corr >= ...) = 1 - P(# corr <= ... - 1)
-        stats.p = 1 - binocdf(k, size(targets,2), 1/size(targets,1));
+        k = floor(size(targets,1) * accuracy / 100) - 1; % P(# corr >= ...) = 1 - P(# corr <= ... - 1)
+        stats.p = 1 - binocdf(k, size(targets,1), 1/size(targets,2));
 
         fprintf('Success rate = %.0f%%, p = %f\n', accuracy, stats.p);
 

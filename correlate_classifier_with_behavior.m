@@ -34,11 +34,7 @@ subjs = getGoodSubjects();
 predict_what = 'condition';
 z_score = 'z-none';
 
-n_iter = 10; % how many iterations for each subject
-
-trial_cutoff = 1; % average classifier posterior from trials >= trial_cutoff in each run (to smoothen the noise)
-
-use_tmaps = false; % <-- slightly better if true; but stick with betas for consistency w/ RDMs
+use_tmaps = false;
 use_nosmooth = true; 
 
 %classifier = 'gnb_searchmight';
@@ -49,6 +45,11 @@ direct = '+';
 alpha = 0.05;
 Dis = 20;
 Num = 1; % # peak voxels per cluster; default in bspmview is 3
+
+
+n_iter = 10; % how many iterations for each subject
+trial_cutoff = 1; % average classifier posterior from trials >= trial_cutoff in each run (to smoothen the noise) 
+best_k_voxels = 5; % look at best k voxels in each ROI
 
 if use_tmaps
     get_activations = @get_tmaps;
@@ -88,7 +89,7 @@ cached_filename = fullfile('temp', sprintf('corr_class_w_behav_%s_niter=%d_contr
 % load cached outputs, to avoid having to re-classify
 % WARNING: make sure it's the correct contrast, etc; basically, never assume you've cached the right thing
 %
-load_cached = true;
+load_cached = false;
 if load_cached
     load(cached_filename, 'cached_o');
 end
@@ -111,35 +112,38 @@ for i = 1:size(region, 1) % for each ROI
     for subj = subjs % for each subject
         subject = metadata.allSubjects(subj); % 'con001' ... 'con025'
 
-        filename = sprintf(file_format, classifier, event, subj, r, z_score, use_nosmooth, use_tmaps);
-        [~, ~, amap] = load_mask(filename); % get accuracy map
+        if ~load_cached % optionally, the outputs are precomputed and cached
+            filename = sprintf(file_format, classifier, event, subj, r, z_score, use_nosmooth, use_tmaps);
+            [~, ~, amap] = load_mask(filename); % get accuracy map for subject
 
-        [~, j] = max(amap(clust_mask)); % get voxel with peak accuracy
-        [x,y,z] = ind2sub(size(clust_mask), clust_vox(j));
-        fprintf('\nsubj = %d, max acc = %.4f\n', subj, amap(x,y,z));
+            [~, j] = sort(amap(clust_mask), 'descend');
+            j = j(1:best_k_voxels); % get k voxels with peak accuracy within the ROI
+            [x,y,z] = ind2sub(size(clust_mask), clust_vox(j));
+            fprintf('\nsubj = %d, max acc(s) = %s\n', subj, sprintf('%.2f, ', amap(sub2ind(size(amap),x,y,z))));
 
-        % get sphere around peak accuracy voxel for the given cluster (same sphere as the searchmight)
-        %
-        sphere_mask = create_spherical_mask_helper(mask, x, y, z, r, min_x, max_x, min_y, max_y, min_z, max_z, Vmask);
-        sphere_activations = get_activations_submask(sphere_mask, activations);
-
-        % convert to inputs/targets
-        %
-        [inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, [subj], sphere_activations, predict_what, z_score, data, metadata);
-        inputs = inputs(:, sum(inputs,1) ~= 0); % clear columns of all 0's, previously NaNs b/c of use_nosmooth; we clear those out in might_getNeighbors() for searchmight
-
-
-        % run classifier n_iter times, to account for randomness in the folds. Average outputs (posteriors) 
-        %
-        if ~load_cached 
-            % actually run classifier
+            % average "votes" across top k voxels in ROI
             %
             o = zeros(size(targets));
-            for iter = 1:n_iter
-                [~, outputs, accuracy, stats] = classify_train_helper(method, inputs, targets, runs, trials, [subj], []);
-                o = o + outputs;
+            for k = 1:best_k_voxels % for each of the top k voxels
+                % get sphere around voxel for the given ROI (same sphere as the searchmight)
+                %
+                sphere_mask = create_spherical_mask_helper(mask, x(k), y(k), z(k), r, min_x, max_x, min_y, max_y, min_z, max_z, Vmask);
+                sphere_activations = get_activations_submask(sphere_mask, activations);
+
+                % convert to inputs/targets
+                %
+                [inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, [subj], sphere_activations, predict_what, z_score, data, metadata);
+                inputs = inputs(:, sum(inputs,1) ~= 0); % clear columns of all 0's, previously NaNs b/c of use_nosmooth; we clear those out in might_getNeighbors() for searchmight
+
+                % run classifier n_iter times, to account for randomness in the folds. Average outputs (posteriors) 
+                %
+                for iter = 1:n_iter
+                    [~, outputs, accuracy, stats] = classify_train_helper(method, inputs, targets, runs, trials, [subj], []);
+                    o = o + outputs;
+                end
             end
-            o = o / n_iter;
+
+            o = o / (n_iter * best_k_voxels); % final output for ROI (for that subject) = average across iterations of top k voxels
             cached_o{i}{subj} = o;
         else
             % load cached outputs
@@ -175,7 +179,7 @@ for i = 1:size(region, 1) % for each ROI
 
             % option #1: this is a very noisy estimate; use it only to bias the model posterior (as opposed to replace it)
             P_n_model = simulated.P(which_run & data.trialId == metadata.trainingTrialsPerRun, :);
-            P_n = P_n_model + P_n * 0.5; % TODO param, free?
+            P_n = P_n_model + P_n * 0.1; % TODO param, free?
             P_n = P_n / sum(P_n);
 
             % option #2: set P_n = MAP structure
