@@ -17,16 +17,21 @@ which_structures = logical([1 1 0 1 0]);
 %glm = 171;
 %contrast = 'KL_structures'; 
 
-EXPT = 'rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii';
-glm = 0;
-contrast = 'rdms';
+%EXPT = 'rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii';
+%glm = 0;
+%contrast = 'rdms';
 
-event = 'trial_onset';
-%event = 'feedback_onset';
+EXPT = 'might/lda_shrinkage_accuracy_countmap_feedback_onset_folds=3_r=2.6667_z-none_use_nosmooth=1_use_tmaps=0.nii';
+glm = 0;
+contrast = 'countmap';
+
+
+%event = 'trial_onset';
+event = 'feedback_onset';
 r = 2.6667;
 
-%method = 'cvpatternnet'; % NN; BEST performance on the peak LDA voxels; not so much on the GNB peak voxels => LDA is indeed better
-method = 'cvfitcnb'; % gaussian naive bayes, just like searchmight's gnb_searchmight; MEDIUM performance
+method = 'cvpatternnet'; % NN; BEST performance on the peak LDA voxels; not so much on the GNB peak voxels => LDA is indeed better
+%method = 'cvfitcnb'; % gaussian naive bayes, just like searchmight's gnb_searchmight; MEDIUM performance
 %method = 'cvfitcdiscr'; % linear discriminant analysis, similar to searchmight's lda_shrinkage but not quite; WORST performance
 runs = 1:9; 
 trials = 6:20;
@@ -47,9 +52,9 @@ Dis = 20;
 Num = 1; % # peak voxels per cluster; default in bspmview is 3
 
 
-n_iter = 10; % how many iterations for each subject
+n_iter = 3; % how many iterations for each subject
 trial_cutoff = 1; % average classifier posterior from trials >= trial_cutoff in each run (to smoothen the noise) 
-best_k_voxels = 5; % look at best k voxels in each ROI
+best_k_voxels = 3; % look at best k voxels in each ROI
 
 if use_tmaps
     get_activations = @get_tmaps;
@@ -84,7 +89,7 @@ ttest_ts = [];
 accs = [];
 
 clear cached_o;
-cached_filename = fullfile('temp', sprintf('corr_class_w_behav_%s_niter=%d_contrast=%s_event=%s.mat', method, n_iter, contrast, event));
+cached_filename = fullfile('temp', sprintf('corr_class_w_behav_%s_niter=%d_bestk=%d_contrast=%s_event=%s.mat', method, n_iter, best_k_voxels, contrast, event));
 
 % load cached outputs, to avoid having to re-classify
 % WARNING: make sure it's the correct contrast, etc; basically, never assume you've cached the right thing
@@ -95,7 +100,8 @@ if load_cached
 end
 
 
-for i = 1:size(region, 1) % for each ROI
+%for i = 1:size(region, 1) % for each ROI
+for i = 1:6 % for each ROI
     fprintf('ROI = %s\n', region{i});
 
     clust_idx = CI(cor(i,1), cor(i,2), cor(i,3));
@@ -179,7 +185,7 @@ for i = 1:size(region, 1) % for each ROI
 
             % option #1: this is a very noisy estimate; use it only to bias the model posterior (as opposed to replace it)
             P_n_model = simulated.P(which_run & data.trialId == metadata.trainingTrialsPerRun, :);
-            P_n = P_n_model + P_n * 0.1; % TODO param, free?
+            P_n = P_n_model + P_n * 0.5; % TODO param, free?
             P_n = P_n / sum(P_n);
 
             % option #2: set P_n = MAP structure

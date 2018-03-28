@@ -20,8 +20,8 @@ trials = 6:20;
 subjs = getGoodSubjects();
 predict_what = 'condition';
 %z_score = 'z-run';  % <-- better
-%z_score = 'z-run-voxel';  % <-- nothing, though Storey's pFDR fucks up and gives q = 0.048 when none of them are actually significant
-z_score = 'z-none';   % <-- actually not bad
+z_score = 'z-run-voxel';  % <-- nothing, though Storey's pFDR fucks up and gives q = 0.048 when none of them are actually significant
+%z_score = 'z-none';   % <-- actually not bad
 %z_score = 'z-manual'; % <-- hack; means manually z-score here; also nothing shows up
 %z_score = 'z-random'; % <-- hack; for control, we use random activations
 

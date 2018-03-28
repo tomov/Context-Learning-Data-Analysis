@@ -47,7 +47,11 @@ assert(ismember(direct, {'+', '-', '+/-'}));
 
 % get cluster extent threshold
 %
-extent_thresh = bspm_cluster_correct(tmap_filename, df, direct, p, alpha);
+extent_thresh = bspm_cluster_correct(tmap_filename, df, direct, p, alpha); % FWE; also supports FDR as second argument
+if isinf(extent_thresh)
+    warning('No voxels found after cluster FWE correction. Setting extent threshold = 5.');
+    extent_thresh = 5;
+end
 
 
 % get cluster indices
