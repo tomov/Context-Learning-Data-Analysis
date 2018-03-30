@@ -96,6 +96,9 @@ subj_idx = 0;
 for subj = subjs 
     subj_idx = subj_idx + 1;
     fprintf('    subj %d\n', subj);
+    if subj <= 23
+        continue;
+    end
 
     [inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, subj, activations, predict_what, z_score, data, metadata);
 

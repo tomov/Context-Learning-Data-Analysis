@@ -11,10 +11,12 @@ close all;
 %
 
 event = 'feedback_onset';
+model = 'posterior';
+%event = 'trial_onset';
+%model = 'prior';
 %model = 'ww_prior';
 %event = 'feedback_onset';
 %model = 'ww_posterior';
-model = 'posterior';
 %dirname = 'rdms/betas_smooth';
 %dirname = 'rdms/M1M2M1_25nstarts_tau_w0';
 %event = 'feedback_onset';
@@ -68,6 +70,7 @@ assert(ismember(model, model_names));
 %
 [~, V, tmap] = load_mask(fullfile('masks', 'spmT_0001.nii'));
 tmap(:) = NaN; % clear
+pmap = tmap;
 V.fname = fullfile(dirname, ['searchlight_tmap_', model, '_', event, '.nii']); % change immediately!
 
 %% load all the searchlight results
@@ -96,14 +99,20 @@ for i = 1:length(files)
             disp(['Computing t-values manually for ', file]);
         end
 
-        Searchlight = rdms_get_searchlight(data, metadata, data.which_rows & data.isTrain, x, y, z, r, true, use_tmaps, use_nosmooth); % use pregen'd betas, use tmaps, use nosmooth
-        x = [Searchlight.x];
-        y = [Searchlight.y];
-        z = [Searchlight.z];
-        events = {Searchlight.event};
-        save(file, 'table_Rho', 'table_T', 'table_P', 'all_subject_rhos', 'x', 'y', 'z', 'events', 'r', 'idx', 'params', 'which_structures', 'use_tmaps', 'use_nosmooth', 'which_rows');
+		% this was used to get the coordinates of the nosmooth searchlights when we didn't record them
+        %
+        %if exist(file, 'file')
+        %    fprintf('Skipping %s -- already exists\n', file);
+        %    continue;
+        %end
+        %Searchlight = rdms_get_searchlight(data, metadata, data.which_rows & data.isTrain, x, y, z, r, true, use_tmaps, use_nosmooth); % use pregen'd betas, use tmaps, use nosmooth
+        %x = [Searchlight.x];
+        %y = [Searchlight.y];
+        %z = [Searchlight.z];
+        %events = {Searchlight.event};
+        %save(file, 'table_Rho', 'table_T', 'table_P', 'all_subject_rhos', 'x', 'y', 'z', 'events', 'r', 'idx', 'params', 'which_structures', 'use_tmaps', 'use_nosmooth', 'which_rows');
        
-        if isfield(Searchlight, 'event') % new way
+        if exist('events', 'var') % new way
             % when using _nosmooth, sometimes not all searchlights are good
             % => have to keep 
             %
@@ -115,6 +124,7 @@ for i = 1:length(files)
                     tmap(x(j), y(j), z(j)) = table_T(row_idx, col_idx);
                 end
             end
+            clear events; % for next iteration
         else % old way
             % backwards compatibility -- we have all the searchlights when using smoothing; back then 
             % we didn't 
@@ -124,11 +134,22 @@ for i = 1:length(files)
                 col_idx = find(ismember(model_names, model));
                 if col_idx <= size(table_T, 2) % in case we're using a model that hasn't been computed in all batches, e.g. weightsPosterior
                     tmap(x(j), y(j), z(j)) = table_T(row_idx, col_idx);
+                    pmap(x(j), y(j), z(j)) = table_P(row_idx, col_idx);
                 end
             end
         end
     end
 end
+
+% FDR
+%
+%{
+alpha = 0.05;
+p = pmap(~isnan(pmap));
+fdr = mafdr(p, 'BHFDR', true);
+pmap(~isnan(pmap)) = fdr;
+tmap(pmap >= alpha) = NaN;
+%}
 
 spm_write_vol(V, tmap);
 
