@@ -5,7 +5,8 @@
 dirname = 'might';
 
 maskfile = 'masks/mask.nii';
-event = 'trial_onset';
+event = 'feedback_onset';
+%event = 'trial_onset';
 r = 2.6667;
 
 use_tmaps = false;
@@ -16,6 +17,7 @@ trials = 6:20;
 subjs = getGoodSubjects();
 predict_what = 'condition';
 z_score = 'z-none'; 
+%z_score = 'z-run-voxel';  <-- nothing
 
 classifier = 'lda_shrinkage';
 %classifier = 'gnb_searchmight';

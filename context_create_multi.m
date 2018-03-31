@@ -4521,6 +4521,7 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
 
 
         % M1, M2, M1' with KL structures and summed KL weights
+        % compare w 171
         %
         case 163
             which_structures = logical([1 1 0 1 0]);
@@ -4830,6 +4831,7 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
 
 
         % M1, M2, M1' with KL structures and summed KL weights
+        % compare w 163
         %
         case 171
             which_structures = logical([1 1 0 1 0]);
@@ -4853,11 +4855,11 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
 
             multi.orth{1} = 1; % do orthogonalize them!
                         
-            multi.pmod(1).name{1} = 'KL_weights';
+            multi.pmod(1).name{1} = 'KL_weights'; % <-- orthogonalization makes these betas much bigger (b/c KL_structures residuals are small)
             multi.pmod(1).param{1} = KL_sum';
             multi.pmod(1).poly{1} = 1; % first order        
             
-            multi.pmod(1).name{2} = 'KL_structures';
+            multi.pmod(1).name{2} = 'KL_structures'; % <-- ...but these betas are the same as without orthogonalization
             multi.pmod(1).param{2} = KL_structures';
             multi.pmod(1).poly{2} = 1; % first order                    
 

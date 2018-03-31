@@ -13,15 +13,15 @@ r = 2.6667; % 4 mm
 %r = 4.6667; % 10 mm
 
 use_tmaps = false; % <-- slightly better if true; but stick with betas for consistency w/ RDMs
-use_nosmooth = true; 
+use_nosmooth = false; 
 
 runs = 1:9; 
 trials = 6:20;
 subjs = getGoodSubjects();
 predict_what = 'condition';
 %z_score = 'z-run';  % <-- better
-z_score = 'z-run-voxel';  % <-- nothing, though Storey's pFDR fucks up and gives q = 0.048 when none of them are actually significant
-%z_score = 'z-none';   % <-- actually not bad
+%z_score = 'z-run-voxel';  % <-- nothing, though Storey's pFDR fucks up and gives q = 0.048 when none of them are actually significant
+z_score = 'z-none';   % <-- actually not bad
 %z_score = 'z-manual'; % <-- hack; means manually z-score here; also nothing shows up
 %z_score = 'z-random'; % <-- hack; for control, we use random activations
 
@@ -96,9 +96,6 @@ subj_idx = 0;
 for subj = subjs 
     subj_idx = subj_idx + 1;
     fprintf('    subj %d\n', subj);
-    if subj <= 23
-        continue;
-    end
 
     [inputs, targets, which_rows] = classify_get_inputs_and_targets_helper(runs, trials, subj, activations, predict_what, z_score, data, metadata);
 

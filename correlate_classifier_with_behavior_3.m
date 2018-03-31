@@ -37,7 +37,7 @@ predict_what = 'condition';
 z_score = 'z-none';
 
 use_tmaps = false;
-use_nosmooth = true; 
+use_nosmooth = true;  % = false => nothing
 
 %classifier = 'gnb_searchmight';
 classifier = 'lda_shrinkage';
@@ -49,9 +49,8 @@ Dis = 20;
 Num = 1; % # peak voxels per cluster; default in bspmview is 3
 
 
-n_iter = 3; % how many iterations for each subject
-trial_cutoff = 1; % average classifier posterior from trials >= trial_cutoff in each run (to smoothen the noise) 
 best_k_voxels = 1; % look at best k voxels in each ROI
+
 
 if use_tmaps
     get_activations = @get_tmaps;
@@ -88,6 +87,8 @@ accs = [];
 
 rhos = [];
 ps = [];
+
+figure;
 
 for i = 1:size(region, 1) % for each ROI
     fprintf('\nROI = %s\n', region{i});
@@ -143,5 +144,12 @@ for i = 1:size(region, 1) % for each ROI
     ps = [ps, p];
 
     fprintf('r = %.4f, p = %.4f\n', rho, p);
+
+    subplot(1, numel(region), i);
+    scatter(subj_accs, subj_logliks);
+    lsline;
+    xlabel('acc');
+    ylabel('loglik');
+    title(region{i}, 'interpreter', 'none');
 end
 
