@@ -1,26 +1,11 @@
 % For each ROI, see if average accuracy correlates with test log likelihood (across subjects)
-% ... and it works!
+% using anatomical ROIs
 %
 
 which_structures = logical([1 1 0 1 0]);
 [data, metadata, simulated, params] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat', 1, which_structures);
 
 
-%EXPT = context_expt();
-%glm = 171;
-%contrast = 'KL_structures'; 
-
-EXPT = 'rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii'; % OMG it works.........
-glm = 0;
-contrast = 'rdms';
-
-%EXPT = 'rdms/M1M2M1_4mm/searchlight_tmap_prior_trial_onset.nii'; % REMEMBER to change event too
-%glm = 0;
-%contrast = 'rdms';
-
-%EXPT = 'might/lda_shrinkage_accuracy_countmap_feedback_onset_folds=3_r=2.6667_z-none_use_nosmooth=1_use_tmaps=0.nii'; % hippocampus
-%glm = 0;
-%contrast = 'countmap';
 
 
 %event = 'trial_onset';
@@ -61,7 +46,7 @@ else
     load_activations = @load_betas;
 end
 
-[V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_clusters(EXPT, glm, contrast, p, direct, alpha, Dis, Num);
+%[V, Y, C, CI, region, extent, stat, mni, cor, results_table] = extract_clusters(EXPT, glm, contrast, p, direct, alpha, Dis, Num);
 
 file_format = 'might/%s_accuracy_%s_subj=%d_folds=3_r=%.4f_%s_use_nosmooth=%d_use_tmaps=%d.nii';
 maskfile = 'masks/mask.nii';
@@ -85,14 +70,68 @@ ttest_ts = [];
 
 accs = [];
 
+mask_idx = 0;
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/hippocampus.nii';
+masks(mask_idx).rdm_name = 'hippocampus';
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/ofc.nii';
+masks(mask_idx).rdm_name = 'OFC';
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/med_ofc.nii';
+masks(mask_idx).rdm_name = 'mOFC';
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/vmpfc.nii';
+masks(mask_idx).rdm_name = 'vmPFC';
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/striatum.nii';
+masks(mask_idx).rdm_name = 'Striatum';
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/pallidum.nii';
+masks(mask_idx).rdm_name = 'Pallidum';
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/v1.nii';
+masks(mask_idx).rdm_name = 'V1';
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/m1.nii';
+masks(mask_idx).rdm_name = 'M1';
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/s1.nii';
+masks(mask_idx).rdm_name = 'S1';
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/fusiform.nii';
+masks(mask_idx).rdm_name = 'Fusiform';
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/angular.nii';
+masks(mask_idx).rdm_name = 'Angular';
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/mid_front.nii';
+masks(mask_idx).rdm_name = 'MidFront';
+
+mask_idx = mask_idx + 1;
+masks(mask_idx).filename = 'masks/dl_sup_front.nii';
+masks(mask_idx).rdm_name = 'dlSupFront';
+
 
 rhos = [];
 ps = [];
 
-for i = 1:size(region, 1) % for each ROI
-    fprintf('\nROI = %s\n', region{i});
+for i = 1:numel(masks) % for each ROI
+    fprintf('\nROI = %s\n', masks(i).rdm_name);
 
-    clust_idx = CI(cor(i,1), cor(i,2), cor(i,3));
+    roi_mask = load_mask(masks(i).filename);
 
     %clust_mask = mask; HACK to do the whole-brain
     %clust_vox = find(mask);
@@ -109,8 +148,8 @@ for i = 1:size(region, 1) % for each ROI
 
         filename = sprintf(file_format, classifier, event, subj, r, z_score, use_nosmooth, use_tmaps);
         [~, ~, amap] = load_mask(filename); % get accuracy map for subject
-
-        clust_mask = CI == clust_idx & ~isnan(amap);
+        
+        clust_mask = roi_mask & ~isnan(amap);
         clust_vox = find(clust_mask);
 
         [~, j] = sort(amap(clust_mask), 'descend');
