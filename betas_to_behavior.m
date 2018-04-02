@@ -1,6 +1,6 @@
-function [means, sems, ps, ts] = betas_to_behavior(glmodel, regressor, what, contrast, params, which_structures)
+function [means, sems, ps, ts] = betas_to_behavior(glmodel, regressor, what, params, which_structures, contrast)
 
-% Correlate peak voxels from different contrasts with behavior
+% Correlate peak voxels from different contrasts with behavior within-subjects (i.e. across runs). See if correlation > 0 across subjects.
 % Also tries with clusters of voxels (average the betas)
 %
 % INPUT:
@@ -8,22 +8,16 @@ function [means, sems, ps, ts] = betas_to_behavior(glmodel, regressor, what, con
 % regressor = name of regressor to get betas for
 % what = 'voxel', 'sphere', or 'cluster' -- what area to take around the
 %        peak voxel from each cluster
+% [params, which_structures] = model_default_params();
 % contrast = optional contrast from which to extract the clusters; by
 %            default set to regressor 
-% [params, which_structures] = model_default_params();
 %
 % EXAMPLES:
-% betas_to_behavior(123, 'surprise', 'voxel')
-% betas_to_behavior(148, 'KL_weights', 'voxel')
-% betas_to_behavior(154, 'KL_structures', 'voxel')
-% betas_to_behavior(154, 'KL_weights', 'voxel')
-% betas_to_behavior(154, 'KL_structures', 'sphere')
-% betas_to_behavior(154, 'KL_weights', 'sphere')
-% betas_to_behavior(154, 'KL_structures', 'cluster')
-% betas_to_behavior(154, 'KL_weights', 'cluster')
+% [params, which_structures] = model_params('results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat')
+% [means, sems, ps, ts] = betas_to_behavior(163, 'KL_structures', 'sphere', params, which_structures, 'KL_structures - KL_weights')
 %
 
-if ~exist('contrast', 'var')
+if ~exist('contrast', 'var') || isempty(contrast)
     contrast = regressor;
 end
 
@@ -33,7 +27,8 @@ p = 0.001;
 alpha = 0.05;
 Dis = 20;
 Num = 1; % # peak voxels per cluster; default in bspmview is 3
-r = 1.814;
+%r = 1.814;
+r = 2.6667;
 direct = '+';
 %regressor = 'KL_structures'; % contrasts not supported yet b/c ot load_run_betas
 %what = 'voxel';

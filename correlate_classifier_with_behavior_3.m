@@ -77,13 +77,6 @@ max_z = max(all_z);
 
 %activations = get_activations(maskfile, event, data, metadata, use_nosmooth);
 
-ttest_means = [];
-ttest_sems = [];
-ttest_ps = [];
-ttest_ts = [];
-
-accs = [];
-
 
 rhos = [];
 ps = [];
@@ -111,17 +104,15 @@ for i = 1:size(region, 1) % for each ROI
         filename = sprintf(file_format, classifier, event, subj, r, z_score, use_nosmooth, use_tmaps);
         [~, ~, amap] = load_mask(filename); % get accuracy map for subject
 
-        clust_mask = CI == clust_idx & ~isnan(amap);
+        clust_mask = CI == clust_idx & ~isnan(amap); % b/c the classifier uses unsmoothed betas, some voxels are NaN => exclude them
         clust_vox = find(clust_mask);
 
         [~, j] = sort(amap(clust_mask), 'descend');
         j = j(1:best_k_voxels); % get k voxels with peak accuracy within the ROI
         [x,y,z] = ind2sub(size(clust_mask), clust_vox(j));
-        vox_accs = amap(sub2ind(size(amap),x,y,z));
+        vox_accs = amap(sub2ind(size(amap),x,y,z)); % accuracies of top k voxels in that ROI for that subject
         %fprintf('subj = %d, max acc(s) = %s\n', subj, sprintf('%.2f, ', vox_accs));
 
-        rid = data.runId(which_rows);
-        tid = data.trialId(which_rows);
         run_logliks = [];
         for run = runs % for each run, compute test log likelihood
             which_run_test = data.which_rows & ~data.isTrain & ~data.timeout & strcmp(data.participant, subject) & data.runId == run;
