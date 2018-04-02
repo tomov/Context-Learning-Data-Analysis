@@ -77,22 +77,24 @@ for i = 1:numel(region)
     [x, y, z] = ind2sub(size(clust_mask), clust_vox);
     voxels = [x, y, z];
 
+    %betas = load_run_betas(glmodel, regressor, mni(i,:));
+    %betas = mean(betas, 2);
+
     % get the corresponding betas
     clust_betas = load_run_betas(glmodel, regressor, voxels, false); % n_subjects x n_runs x n_voxels
-
-
     % average betas across runs
-    fprintf('Averaging %d betas\n', size(clust_betas, 2));
     clust_betas = squeeze(mean(clust_betas, 2)); % n_subjects x n_voxels
 
     subj_betas = [];
     subj_logliks = [];
-    for subj_idx = 1:size(clust_betas, 1) % for each subject
+    for subj_idx = 1:metadata.N % for each subject
         subject = metadata.subjects(subj_idx); % 'con001' ... 'con025'
 
         [~, j] = sort(clust_betas(subj_idx, :), 'descend');
         j = j(1:best_k_voxels); % get k voxels with max betas within the ROI
         vox_betas = clust_betas(subj_idx, j); % betas of top k voxels in that ROI for that subject
+
+        %vox_betas = betas(subj_idx);
 
         run_logliks = [];
         for run = 1:metadata.runsPerSubject % for each run, compute test log likelihood
