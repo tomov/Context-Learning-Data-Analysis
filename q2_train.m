@@ -7,9 +7,14 @@ function train_results = q2_train(x, k, r, params, DO_PRINT)
 % r = vector where each element is the outcome on the given trial
 % 
 
-assert(numel(params) == 2);
+assert(numel(params) == 2 || numel(params) == 3);
 learning_rate = params(1);
 inv_softmax_temp = params(2);
+if numel(params) >= 3
+    Q0 = params(3);
+else
+    Q0 = 0.0; % prior outcome expectaiton; collins = 0.5; Sam = 0;
+end
 
 predict = @(Q_n) 1 ./ (1 + exp(-2 * inv_softmax_temp * Q_n + inv_softmax_temp)); % predicts by mapping the expectation to an outcome
 
@@ -23,7 +28,7 @@ alpha = learning_rate;
 
 % initialize Q learning
 %
-Q = zeros(K,D); % analogous to our initialization of the kalman filter weights to 0, i.e. predict no sickness by default
+Q = Q0 * ones(K,D); % analogous to our initialization of the kalman filter weights to 0, i.e. predict no sickness by default
 count = zeros(K,D);
 
 % Store history for plotting and analysis

@@ -318,7 +318,7 @@ switch figure_name
 
         headings = 'Hypotheses & $\\sigma_w^2$ & $\\beta$ & BIC & PXP & Log lik & Pearson''s r \\\\';
 
-        load_cached_values = false;
+        load_cached_values = true;
         cached_file = fullfile('results', 'show_figure_tab_models.mat');
        
         if load_cached_values
@@ -495,6 +495,13 @@ switch figure_name
             models(idx).params_idx = 1;
             models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f, \\tau^2 = %.4f, w_0 = %.4f';
 
+            idx = idx + 1;
+            models(idx).which_structures = 'Q_learning'; 
+            models(idx).name = 'Q learning 2';
+            models(idx).params_file = fullfile('results', 'fit_params_results_q_learning_2_25nstarts.mat');
+            models(idx).params_format = '\\alpha = %.4f, \\beta = %.4f, Q_0 = %.4f';
+            models(idx).params_idx = 1;
+
             [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
 
             for i = 1:numel(models)
@@ -589,7 +596,7 @@ switch figure_name
         for i = 1:numel(models)
             models(i).pilot_pxp = pilot_pxp(i);
             models(i).pxp = pxp(i);
-            fprintf('%s & $%s$ & %.0f & %.4f & %.4f & %.0f & $r = %.2f, p = %f$ \\\\ \n', ...
+            fprintf('%s & $%s$ & %.0f & %.4f & %.4f & %.0f & $r = %.2f, p = %e$ \\\\ \n', ...
                 models(i).name, ...
                 models(i).params_string, ...
                 models(i).bic, ...

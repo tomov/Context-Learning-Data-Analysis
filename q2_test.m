@@ -6,7 +6,7 @@ function test_results = q2_test(x, k, train_results, params, DO_PRINT)
 % k = vector where each element is the context index on the given trial
 % 
 
-assert(numel(params) == 2);
+assert(numel(params) == 2 || numel(params) == 3);
 learning_rate = params(1);
 inv_softmax_temp = params(2);
 

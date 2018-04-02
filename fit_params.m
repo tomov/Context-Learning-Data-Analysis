@@ -123,6 +123,7 @@ for isFmriData = isFmriDataRange
                 param(1).logpdf = @(x) 1;
                 param(1).lb = 0;
                 param(1).ub = 10;
+
             elseif isequal(which_structures, 'Q_learning')
                 param(1).name = 'learning rate';
                 param(1).logpdf = @(x) 1; 
@@ -133,6 +134,14 @@ for isFmriData = isFmriDataRange
                 param(2).logpdf = @(x) 1;
                 param(2).lb = 0;
                 param(2).ub = 10; 
+
+                if nparams >= 3
+                    param(3).name = 'initial Q-value'; 
+                    param(3).logpdf = @(x) 1;
+                    param(3).lb = 0;
+                    param(3).ub = 1; 
+                end
+
             elseif isequal(which_structures, 'simple_collins') 
                 param(1).name = 'learning rate';
                 param(1).logpdf = @(x) 1; 
