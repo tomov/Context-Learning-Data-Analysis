@@ -56,7 +56,7 @@ for n = 1:N % for each trial
         %
         %assert(sum(count(s,:)) == 0 || sum(count(:,a) == 0));
         if sum(count(s,:)) == 0 && sum(count(:,a)) == 0 % no prior experience with cue nor context
-            V_n = 0; % predict no sickness for unseen anything (only happens on first trial; analogous to our zero initialized kalman weights)
+            V_n = Q0; % predict no sickness for unseen anything (only happens on first trial; analogous to our zero initialized kalman weights)
         else % prior experience with either cue or context (or both) -> average over them
             V_n = sum(Q(:,a) .* count(:,a)) + sum(Q(s,:) .* count(s,:));
             V_n = V_n / (sum(count(:,a)) + sum(count(s,:)));

@@ -318,7 +318,7 @@ switch figure_name
 
         headings = 'Hypotheses & $\\sigma_w^2$ & $\\beta$ & BIC & PXP & Log lik & Pearson''s r \\\\';
 
-        load_cached_values = true;
+        load_cached_values = false;
         cached_file = fullfile('results', 'show_figure_tab_models.mat');
        
         if load_cached_values
@@ -499,7 +499,7 @@ switch figure_name
             models(idx).which_structures = 'Q_learning'; 
             models(idx).name = 'Q learning 2';
             models(idx).params_file = fullfile('results', 'fit_params_results_q_learning_2_25nstarts.mat');
-            models(idx).params_format = '\\alpha = %.4f, \\beta = %.4f, Q_0 = %.4f';
+            models(idx).params_format = '\\eta = %.4f, \\beta = %.4f, Q_0 = %.4f';
             models(idx).params_idx = 1;
 
             [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
@@ -646,7 +646,16 @@ switch figure_name
 
     case 'ccnl_bic_bms'
         %glms = [161:165 169];
-        glms = [169 170  171 172 173];
+        % 161 = Collins 2016 BUT w/o orth (SPE vs. FPE)
+        % 162 = Collins like ours (KL_clusters and PEs), no orth
+        % 163 = ours w/ summed KL weights (KL_structures & KL_weights)
+        % 164 = ours w/ summed KL weights, weighted by posterior
+        % 165 = ours w/ MAP KL_weights
+        % 169 = Collins 2016 as is (w/ orth) (SPE vs. FPE)
+        % 177 = ours, value & PE (no orth), suggested by reviewer
+        %
+
+        glms = [161 162 163 164 165 177];
 
         bics = [];
         for glm = glms

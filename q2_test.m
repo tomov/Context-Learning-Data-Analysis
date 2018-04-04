@@ -9,6 +9,11 @@ function test_results = q2_test(x, k, train_results, params, DO_PRINT)
 assert(numel(params) == 2 || numel(params) == 3);
 learning_rate = params(1);
 inv_softmax_temp = params(2);
+if numel(params) >= 3
+    Q0 = params(3);
+else
+    Q0 = 0.0; % prior outcome expectaiton; collins = 0.5; Sam = 0;
+end
 
 predict = @(Q_n) 1 ./ (1 + exp(-2 * inv_softmax_temp * Q_n + inv_softmax_temp)); % predicts by mapping the expectation to an outcome
 
@@ -41,7 +46,7 @@ for n = 1:N % for each trial
         %
         %assert(sum(count(s,:)) == 0 || sum(count(:,a) == 0));
         if sum(train_results.count(s,:)) == 0 && sum(train_results.count(:,a)) == 0 % no prior experience with cue nor context
-            V_n = 0.5; % TODO prior prediciton -- free parameter
+            V_n = Q0; % TODO prior prediciton -- free parameter
         else % prior experience with either cue or context (or both) -> average over them
             V_n = sum(train_results.Q(:,a) .* train_results.count(:,a)) + sum(train_results.Q(s,:) .* train_results.count(s,:));
             V_n = V_n / (sum(train_results.count(:,a)) + sum(train_results.count(s,:)));

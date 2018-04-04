@@ -5070,10 +5070,49 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
             multi.names{2} = 'trial_onset';
             multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
+        %
+        %
+        % ------------------ more random GLMs ---------------------
+        %
+        %
+            
+        % M1, M2, M1' with value & PE
+        %
+        case 177
+            which_structures = logical([1 1 0 1 0]);
+            struct_idx = find(which_structures);
+
+            [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat', 1, which_structures);
+
+            outcomes = data.outcome(which_train);
+            values = simulated.values(which_train, :);
+
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them!
+                        
+            multi.pmod(1).name{1} = 'value';
+            multi.pmod(1).param{1} = values';
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'PE';
+            multi.pmod(1).param{2} = outcomes' - values';
+            multi.pmod(1).poly{2} = 1; % first order        
+            
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+        
+
         otherwise
             assert(false, 'invalid glmodel -- should be one of the above');
-            
-    
+
     end % end of switch statement
 
    if save_output
