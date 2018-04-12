@@ -24,7 +24,7 @@ N = size(x, 1); % # of trials
 D = size(x, 2); % # of stimuli
 K = 3;          % # of contexts
 
-alpha = learning_rate;
+alpha = learning_rate; % eta
 
 % initialize Q learning
 %

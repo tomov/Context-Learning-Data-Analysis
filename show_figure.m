@@ -318,9 +318,9 @@ switch figure_name
 
         headings = 'Hypotheses & $\\sigma_w^2$ & $\\beta$ & BIC & PXP & Log lik & Pearson''s r \\\\';
 
-        load_cached_values = false;
+        load_cached_values = true;
         cached_file = fullfile('results', 'show_figure_tab_models.mat');
-       
+
         if load_cached_values
             load(cached_file);
         else
@@ -332,44 +332,50 @@ switch figure_name
             models(idx).name = 'M1, M2, M3';
             models(idx).params_file = fullfile('results', 'fit_params_results.mat');
             models(idx).params_idx = 1;
-            models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f';
+            models(idx).do_include = false;
 
             idx = idx + 1;
             models(idx).which_structures = [1 0 0 0]; 
             models(idx).name = 'M1';
             models(idx).params_file = fullfile('results', 'fit_params_results.mat');
             models(idx).params_idx = 2;
-            models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f';
+            models(idx).do_include = false;
 
             idx = idx + 1;
             models(idx).which_structures = [0 1 0 0]; 
             models(idx).name = 'M2';
             models(idx).params_file = fullfile('results', 'fit_params_results.mat');
             models(idx).params_idx = 3;
-            models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f';
+            models(idx).do_include = false;
 
             idx = idx + 1;
             models(idx).which_structures = [0 0 1 0]; 
             models(idx).name = 'M3';
             models(idx).params_file = fullfile('results', 'fit_params_results.mat');
             models(idx).params_idx = 4;
-            models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f';
+            models(idx).do_include = false;
 
 
             idx = idx + 1;
             models(idx).which_structures = 'simple_Q'; 
             models(idx).name = 'Q learning';
             models(idx).params_file = fullfile('results', 'fit_params_results_simple_q.mat');
-            models(idx).params_format = '\\beta = %.4f';
             models(idx).params_idx = 1;
+            models(idx).params_format = '\\beta = %.2f';
+            models(idx).do_include = false;
 
 
             idx = idx + 1;
             models(idx).which_structures = 'Q_learning'; 
             models(idx).name = 'Q learning 2';
             models(idx).params_file = fullfile('results', 'fit_params_results_q_learning.mat');
-            models(idx).params_format = '\\alpha = %.4f, \\beta = %.4f';
             models(idx).params_idx = 1;
+            models(idx).params_format = '\\alpha = %.2f, \\beta = %.2f';
+            models(idx).do_include = false;
 
 
             idx = idx + 1;
@@ -377,56 +383,64 @@ switch figure_name
             models(idx).name = 'M1, M2, M1''';
             models(idx).params_file = fullfile('results', 'fit_params_results_reviewer2.mat');
             models(idx).params_idx = 1;
-            models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f';
+            models(idx).do_include = false;
 
             idx = idx + 1;
             models(idx).which_structures = [1 0 1 0 1]; 
             models(idx).name = 'M1, M2'', M3';
             models(idx).params_file = fullfile('results', 'fit_params_results_reviewer2.mat');
             models(idx).params_idx = 2;
-            models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f';
+            models(idx).do_include = false;
 
             idx = idx + 1;
             models(idx).which_structures = [1 0 0 1 1]; 
             models(idx).name = 'M1, M2'', M1''';
             models(idx).params_file = fullfile('results', 'fit_params_results_reviewer2.mat');
             models(idx).params_idx = 3;
-            models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f';
+            models(idx).do_include = false;
 
             idx = idx + 1;
             models(idx).which_structures = [0 0 0 1 0]; 
             models(idx).name = 'M1''';
             models(idx).params_file = fullfile('results', 'fit_params_results_reviewer2.mat');
             models(idx).params_idx = 4;
-            models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f';
+            models(idx).do_include = false;
 
             idx = idx + 1;
             models(idx).which_structures = [0 0 0 0 1]; 
             models(idx).name = 'M2''';
             models(idx).params_file = fullfile('results', 'fit_params_results_reviewer2.mat');
             models(idx).params_idx = 5;
-            models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f';
+            models(idx).do_include = false;
 
             idx = idx + 1;
             models(idx).which_structures = [1 1 1 1 0]; 
             models(idx).name = 'M1, M2, M3, M1''';
             models(idx).params_file = fullfile('results', 'fit_params_results_reviewer2_four.mat');
             models(idx).params_idx = 1;
-            models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f';
+            models(idx).do_include = false;
 
             idx = idx + 1;
             models(idx).which_structures = 'simple_collins'; 
             models(idx).name = 'Collins 2016, $1<\alpha<2$';
             models(idx).params_file = fullfile('results', 'fit_params_results_simple_collins_5nstarts.mat'); % concentration parameter between 1 and 2
             models(idx).params_idx = 1;
-            models(idx).params_format = '\\eta = %.4f, \\beta = %.4f, \\alpha = %.4f';
+            models(idx).params_format = '\\eta = %.2f, \\beta = %.2f, \\alpha = %.2f';
+            models(idx).do_include = false;
 
             idx = idx + 1;
             models(idx).which_structures = 'flat_collins'; 
             models(idx).name = 'Flat RL';
             models(idx).params_file = fullfile('results', 'fit_params_results_flat_collins_5nstarts.mat');
             models(idx).params_idx = 1;
-            models(idx).params_format = '\\eta = %.4f, \\beta = %.4f';
+            models(idx).params_format = '\\eta = %.2f, \\beta = %.2f';
+            models(idx).do_include = false;
 
 
             % these all have 25 nstarts
@@ -437,73 +451,112 @@ switch figure_name
             models(idx).name = 'Collins 2016';
             models(idx).params_file = fullfile('results', 'fit_params_results_simple_collins_25nstarts_0-10alpha.mat');
             models(idx).params_idx = 1;
-            models(idx).params_format = '\\eta = %.4f, \\beta = %.4f, \\alpha = %.4f';
+            models(idx).params_format = '\\eta = %.2f, \\beta = %.2f, \\alpha = %.2f';
+            models(idx).do_include = false;
 
             idx = idx + 1;
             models(idx).which_structures = 'simple_collins'; 
-            models(idx).name = 'Collins 2016';
+            models(idx).name = 'RL + clustering'; % Collins et al 2013, 2016
             models(idx).params_file = fullfile('results', 'fit_params_results_simple_collins_25nstarts_0-10alpha_Q0.mat');
             models(idx).params_idx = 1;
-            models(idx).params_format = '\\eta = %.4f, \\beta = %.4f, \\alpha = %.4f, Q_0 = %.4f';
+            models(idx).params_format = '\\eta = %.2f, \\beta = %.2f, \\alpha = %.2f, Q_0 = %.2f';
+            models(idx).do_include = true;
 
             idx = idx + 1;
             models(idx).which_structures = 'flat_collins'; 
-            models(idx).name = 'Flat RL';
+            models(idx).name = 'RL'; % (flat) Q-learning, as in Collins 2016
             models(idx).params_file = fullfile('results', 'fit_params_results_flat_collins_25nstarts_Q0.mat');
             models(idx).params_idx = 1;
-            models(idx).params_format = '\\eta = %.4f, \\beta = %.4f, Q_0 = %.4f';
+            models(idx).params_format = '\\eta = %.2f, \\beta = %.2f, Q_0 = %.2f';
+            models(idx).do_include = true;
 
             idx = idx + 1;
             models(idx).which_structures = [1 1 1 0 0]; 
             models(idx).name = 'M1, M2, M3';
             models(idx).params_file = fullfile('results', 'fit_params_results_M1M2M3_25nstarts.mat');
             models(idx).params_idx = 1;
-            models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f';
+            models(idx).do_include = false;
 
             idx = idx + 1;
             models(idx).which_structures = [1 1 0 1 0]; 
             models(idx).name = 'M1, M2, M1''';
             models(idx).params_file = fullfile('results', 'fit_params_results_M1M2M1_25nstarts.mat');
             models(idx).params_idx = 1;
-            models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f';
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f';
+            models(idx).do_include = false;
 
             idx = idx + 1;
             models(idx).which_structures = [1 1 1 0 0]; 
             models(idx).name = 'M1, M2, M3';
             models(idx).params_file = fullfile('results', 'fit_params_results_M1M2M3_25nstarts_tau.mat');
             models(idx).params_idx = 1;
-            models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f, \\tau^2 = %.4f';
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f, \\tau^2 = %.2f';
+            models(idx).do_include = false;
 
             idx = idx + 1;
             models(idx).which_structures = [1 1 0 1 0]; 
             models(idx).name = 'M1, M2, M1''';
             models(idx).params_file = fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau.mat');
             models(idx).params_idx = 1;
-            models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f, \\tau^2 = %.4f';
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f, \\tau^2 = %.2f';
+            models(idx).do_include = false;
 
             idx = idx + 1;
             models(idx).which_structures = [1 1 1 0 0]; 
             models(idx).name = 'M1, M2, M3';
             models(idx).params_file = fullfile('results', 'fit_params_results_M1M2M3_25nstarts_tau_w0.mat');
             models(idx).params_idx = 1;
-            models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f, \\tau^2 = %.4f, w_0 = %.4f';
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f, \\tau^2 = %.2f, w_0 = %.2f';
+            models(idx).do_include = false;
 
             idx = idx + 1;
             models(idx).which_structures = [1 1 0 1 0]; 
-            models(idx).name = 'M1, M2, M1''';
+            models(idx).name = 'M1, M2, M3'; % our causal structure learning model (note M1' is called M3 in the paper)
             models(idx).params_file = fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat');
             models(idx).params_idx = 1;
-            models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f, \\tau^2 = %.4f, w_0 = %.4f';
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f, \\tau^2 = %.2e, w_0 = %.2f';
+            models(idx).do_include = true;
 
             idx = idx + 1;
             models(idx).which_structures = 'Q_learning'; 
-            models(idx).name = 'Q learning 2';
+            models(idx).name = 'RL + generalization'; % Q learning with generalization, as proposed by reviewer #1
             models(idx).params_file = fullfile('results', 'fit_params_results_q_learning_2_25nstarts.mat');
-            models(idx).params_format = '\\eta = %.4f, \\beta = %.4f, Q_0 = %.4f';
+            models(idx).params_format = '\\eta = %.2f, \\beta = %.2f, Q_0 = %.2f';
             models(idx).params_idx = 1;
+            models(idx).do_include = true;
+
+            idx = idx + 1;
+            models(idx).which_structures = [1 0 0 0 0]; 
+            models(idx).name = 'M1'; % single structure M1
+            models(idx).params_file = fullfile('results', 'fit_params_results_M1M2M1_separate_25nstarts_tau_w0.mat');
+            models(idx).params_idx = 1;
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f, \\tau^2 = %.2e, w_0 = %.2f';
+            models(idx).do_include = true;
+
+            idx = idx + 1;
+            models(idx).which_structures = [0 1 0 0 0]; 
+            models(idx).name = 'M2'; % single structure M2
+            models(idx).params_file = fullfile('results', 'fit_params_results_M1M2M1_separate_25nstarts_tau_w0.mat');
+            models(idx).params_idx = 2;
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f, \\tau^2 = %.2e, w_0 = %.2f';
+            models(idx).do_include = true;
+
+            idx = idx + 1;
+            models(idx).which_structures = [0 0 0 1 0]; 
+            models(idx).name = 'M3'; % single structure M1' (we call it M3 in paper but M1' here just to confuse ourselves)
+            models(idx).params_file = fullfile('results', 'fit_params_results_M1M2M1_separate_25nstarts_tau_w0.mat');
+            models(idx).params_idx = 3;
+            models(idx).params_format = '\\sigma^2_w = %.2f, \\beta = %.2f, \\tau^2 = %.2e, w_0 = %.2f';
+            models(idx).do_include = true;
+
+            % filter models -- only include some of them
+            models = models(logical([models.do_include]));
 
             [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
 
+            % load & run models, compute log liks, etc
+            %
             for i = 1:numel(models)
                 [r, p] = get_test_choice_correlations(models(i).params_file, models(i).params_idx, models(i).which_structures);
                
@@ -592,19 +645,23 @@ switch figure_name
 
         % Output table
         %
-        disp('Model & params & BIC & pPXP & fPXP & Log lik & Pearson''s r\\');
+        disp('Model & params & BIC & pPXP & fPXP & Pearson''s r\\');
         for i = 1:numel(models)
             models(i).pilot_pxp = pilot_pxp(i);
             models(i).pxp = pxp(i);
-            fprintf('%s & $%s$ & %.0f & %.4f & %.4f & %.0f & $r = %.2f, p = %e$ \\\\ \n', ...
+            if models(i).p > 0.0001
+                p_string = sprintf('p = %.4f', models(i).p);
+            else
+                p_string = sprintf('p < 10^{%.0f}', ceil(log10(models(i).p)));
+            end
+            fprintf('%s & $%s$ & %.0f & %.4f & %.4f & $r = %.2f, %s$ \\\\ \n', ...
                 models(i).name, ...
                 models(i).params_string, ...
                 models(i).bic, ...
                 models(i).pilot_pxp, ...
                 models(i).pxp, ...
-                models(i).total_loglik, ...
                 models(i).r, ...
-                models(i).p);
+                p_string);
         end
 
     case 'KL_structures_154_vs_156'
