@@ -316,8 +316,6 @@ switch figure_name
 
     case 'tab:models'
 
-        headings = 'Hypotheses & $\\sigma_w^2$ & $\\beta$ & BIC & PXP & Log lik & Pearson''s r \\\\';
-
         load_cached_values = true;
         cached_file = fullfile('results', 'show_figure_tab_models.mat');
 
@@ -701,7 +699,7 @@ switch figure_name
         [r, p] = corrcoef(KL_162, KL_163)
 
 
-    case 'ccnl_bic_bms'
+    case 'tab:glms' % ccnl_bic_bms
         %glms = [161:165 169];
         % 161 = Collins 2016 BUT w/o orth (SPE vs. FPE)
         % 162 = Collins like ours (KL_clusters and PEs), no orth
@@ -712,21 +710,83 @@ switch figure_name
         % 177 = ours, value & PE (no orth), suggested by reviewer
         %
 
-        glms = [161 162 163 164 165 177];
+        %glms = [161 162 163 164 165 177];
+        %glms = [163 164 165 177 162 161]; % ordererd as in the paper
 
-        bics = [];
-        for glm = glms
-            bic = ccnl_bic(context_expt(), glm, 'masks/mask.nii', getGoodSubjects());
-            bics = [bics bic];
+        load_cached_values = false;
+        cached_file = fullfile('results', 'show_figure_tab_glms.mat');
+
+        if load_cached_values
+            load(cached_file);
+        else
+
+            idx = 0;
+
+            idx = idx + 1;
+            glm(idx).glmodel = 163;
+            glm(idx).name = 'GLM 1';
+            glm(idx).model = 'M1, M2, M3';
+            glm(idx).pmods = '$KL_{structures}$, $KL_{weights}$ (sum)';
+
+            idx = idx + 1;
+            glm(idx).glmodel = 164;
+            glm(idx).name = 'GLM 2';
+            glm(idx).model = 'M1, M2, M3';
+            glm(idx).pmods = '$KL_{structures}$, $KL_{weights}$ (weighted sum)';
+
+            idx = idx + 1;
+            glm(idx).glmodel = 165;
+            glm(idx).name = 'GLM 3';
+            glm(idx).model = 'M1, M2, M3';
+            glm(idx).pmods = '$KL_{structures}$, $KL_{weights}$ (MAP)';
+
+            idx = idx + 1;
+            glm(idx).glmodel = 177;
+            glm(idx).name = 'GLM 4';
+            glm(idx).model = 'M1, M2, M3';
+            glm(idx).pmods = '$V_n$, $PE = r_n - V_n$';
+
+            idx = idx + 1;
+            glm(idx).glmodel = 162;
+            glm(idx).name = 'GLM 5';
+            glm(idx).model = 'RL + clustering';
+            glm(idx).pmods = '$KL_{clusters}$, $PE$';
+
+            idx = idx + 1;
+            glm(idx).glmodel = 161;
+            glm(idx).name = 'GLM 6';
+            glm(idx).model = 'RL + clustering$, $RL';
+            glm(idx).pmods = 'SPE, FPE';
+
+
+            bics = [];
+            for i = 1:numel(glm)
+                bic = ccnl_bic(context_expt(), glm(i).glmodel, 'masks/mask.nii', getGoodSubjects());
+                glm(i).bic = bic;
+                bics = [bics bic];
+            end
+
+            lme = -0.5 * bics;
+
+            [alpha, exp_r, xp, pxp, bor] = bms(lme);
+
+            save(cached_file);
         end
 
-        lme = -0.5 * bics;
-
-        [alpha, exp_r, xp, pxp, bor] = bms(lme);
+        % output table
+        %
+        disp('GLM & model & pmods & PXP\\');
+        for i = 1:numel(glm)
+            glm(i).pxp = pxp(i);
+            fprintf('%s & %s & %s & %.4f \\\\ \n', ...
+                glm(i).name, ...
+                glm(i).model, ...
+                glm(i).pmods, ...
+                glm(i).pxp);
+        end
 
         pxp
 
-        save shit.mat;
        
 
     case 'fig:behavior'
