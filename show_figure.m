@@ -1287,6 +1287,29 @@ switch figure_name
     case 'KL_weights - KL_structures'
         ccnl_view(context_expt(), 154, 'KL_weights - KL_structures');
         
+    case 'fig:glm163'
+        figure('pos', [100 100 653 492]);
+
+        p = panel();
+        p.pack(1, 3);
+        p.de.margin = 0;
+
+        fontsize = 12;
+        
+        p(1, 1).select();
+        imshow('images/glm163_KL_structures.png'); 
+        title('KL_{structures}', 'FontSize', fontsize);
+
+        p(1, 2).select();
+        imshow('images/glm163_KL_weights.png'); 
+        title('KL_{weights}', 'FontSize', fontsize);
+
+        p(1, 3).select();
+        imshow('images/glm163_KL_structures-KL_weights.png'); 
+        title('KL_{structures} - KL_{weights}', 'FontSize', fontsize);
+
+        p.export('../JNeuro manuscript/figures/glm163.pdf');
+
 
     case 'fig:fmri-results'
     %case 'glm154'
@@ -1300,7 +1323,7 @@ switch figure_name
 
         subplot(2, 2, 1);
         
-        imshow('images/KL_structures_pos.png'); % from GLM 154
+        imshow('images-old/KL_structures_pos.png'); % from GLM 154
         title('Causal structure update', 'FontSize', fontsize);
        
         %
@@ -1309,7 +1332,7 @@ switch figure_name
         
         subplot(2, 2, 2);
         
-        imshow('images/KL_weights_pos.png'); % from GLM 154
+        imshow('images-old/KL_weights_pos.png'); % from GLM 154
         title('Associative weights update', 'FontSize', fontsize);
         
         %
@@ -1318,7 +1341,7 @@ switch figure_name
         
         subplot(2, 2, 3);
         
-        imshow('images/KL_structures-KL_weights.png'); % from GLM 154
+        imshow('images-old/KL_structures-KL_weights.png'); % from GLM 154
         title({'Causal structure update >'; 'associative weights update'}, 'FontSize', fontsize);
         
         %
@@ -1328,9 +1351,10 @@ switch figure_name
         subplot(2, 2, 4);
         
         load results/betas_to_behavior_glm154_KL_structures_sphere_KL_structures.mat
-        %which = 1:numel(region);
-        assert(numel(region) == 14);
-        which = [1:7 12 14]; % exclude motor and visual areas
+        which = 1:numel(region);
+        %assert(numel(region) == 14);
+        %which = [1:7 12 14]; % exclude motor and visual areas
+        warning('this is shit -- result did not reproduce');
         % exclude motor & cerebellum, also reorder them
        % which = [1 4 2 6 5 3];
         
@@ -1408,12 +1432,12 @@ switch figure_name
 
         subplot(1, 2, 1);
         
-        imshow('images/searchlight_prior.png');
+        imshow('images-old/searchlight_prior.png');
         title('Causal structure prior', 'FontSize', fontsize);
         
         g = subplot(1, 2, 2);
         
-        imshow('images/searchlight_posterior.png');
+        imshow('images-old/searchlight_posterior.png');
         title('Causal structure posterior', 'FontSize', fontsize);
         p = get(g, 'position');
         p([3 4]) = p([3 4]) * 1.025;

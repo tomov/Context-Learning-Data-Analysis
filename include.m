@@ -14,6 +14,8 @@ addpath('/Users/momchil/Dropbox/Research/libs/utils/'); % useful one-off utils f
 addpath('/Users/momchil/Dropbox/Research/libs/rsatoolbox/Engines/'); % RSA toolbox
 addpath('/Users/momchil/Dropbox/Research/libs/rsatoolbox/Modules/'); % RSA toolbox
 addpath('/Users/momchil/Dropbox/Research/libs/distributionPlot/'); % for plotting stuff
+addpath('/Users/momchil/Dropbox/Research/libs/panel-2.12/'); % tight subplots
+addpath('/Users/momchil/Dropbox/Research/libs/panel-2.12/demo/'); % tight subplots
 
 
 %addpath('/Users/momchil/Dropbox/Research/context/code'); % the current directory -- b/c ccnl_fmri_glm.m calls functions in it from another directory
