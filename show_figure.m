@@ -1313,19 +1313,19 @@ switch figure_name
 
         p(2, 2).select();
         imshow('images/glm162_PEs.png'); 
-        title('PE', 'FontSize', fontsize);
+        title('CPE', 'FontSize', fontsize);
 
         p(2, 3).select();
         imshow('images/glm162_KL_clusters-PEs.png'); 
-        title('KL_{clusters} - PE', 'FontSize', fontsize);
+        title('KL_{clusters} - CPE', 'FontSize', fontsize);
 
         p.de.margin = 0;
 
         % label subplots
         ax1 = axes('Position',[0 0 1 1],'Visible','off');
         axes(ax1);
-        text(0.065, 0.98, 'A', 'FontSize', 20, 'FontWeight', 'bold');
-        text(0.065, 0.55, 'B', 'FontSize', 20, 'FontWeight', 'bold');
+        text(0.09, 0.98, 'A', 'FontSize', 15, 'FontWeight', 'bold');
+        text(0.09, 0.55, 'B', 'FontSize', 15, 'FontWeight', 'bold');
 
         p.export('../JNeuro manuscript/figures/glm163glm162.pdf');
 
