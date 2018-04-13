@@ -1287,12 +1287,11 @@ switch figure_name
     case 'KL_weights - KL_structures'
         ccnl_view(context_expt(), 154, 'KL_weights - KL_structures');
         
-    case 'fig:glm163'
-        figure('pos', [100 100 653 492]);
+    case 'fig:glm163glm162'
+        figure('pos', [100 100 653 352]);
 
         p = panel();
-        p.pack(1, 3);
-        p.de.margin = 0;
+        p.pack(2, 3);
 
         fontsize = 12;
         
@@ -1308,7 +1307,27 @@ switch figure_name
         imshow('images/glm163_KL_structures-KL_weights.png'); 
         title('KL_{structures} - KL_{weights}', 'FontSize', fontsize);
 
-        p.export('../JNeuro manuscript/figures/glm163.pdf');
+        p(2, 1).select();
+        imshow('images/glm162_KL_clusters.png'); 
+        title('KL_{clusters}', 'FontSize', fontsize);
+
+        p(2, 2).select();
+        imshow('images/glm162_PEs.png'); 
+        title('PE', 'FontSize', fontsize);
+
+        p(2, 3).select();
+        imshow('images/glm162_KL_clusters-PEs.png'); 
+        title('KL_{clusters} - PE', 'FontSize', fontsize);
+
+        p.de.margin = 0;
+
+        % label subplots
+        ax1 = axes('Position',[0 0 1 1],'Visible','off');
+        axes(ax1);
+        text(0.065, 0.98, 'A', 'FontSize', 20, 'FontWeight', 'bold');
+        text(0.065, 0.55, 'B', 'FontSize', 20, 'FontWeight', 'bold');
+
+        p.export('../JNeuro manuscript/figures/glm163glm162.pdf');
 
 
     case 'fig:fmri-results'
