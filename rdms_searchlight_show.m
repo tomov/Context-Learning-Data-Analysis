@@ -23,8 +23,8 @@ model = 'posterior';
 %model = 'Q_posteosterior';
 %model = 'cond_posterior';
 
-%dirname = 'rdms/M1M2M1_4mm';
-dirname = 'rdms/M1M2M1_4mm_nosmooth';
+dirname = 'rdms/M1M2M1_4mm';
+%dirname = 'rdms/M1M2M1_4mm_nosmooth';
 
 
 
@@ -157,5 +157,7 @@ spm_write_vol(V, tmap);
 %
 EXPT = context_expt();
 struc = fullfile('masks','mean.nii');
+
+disp(V.fname)
 
 bspmview(V.fname, struc);

@@ -1,3 +1,5 @@
+function [roi] = correlate_classifier_with_behavior_3()
+
 % For each ROI, see if average accuracy correlates with test log likelihood (across subjects)
 % ... and it works!
 %
@@ -27,9 +29,6 @@ contrast = 'rdms';
 event = 'feedback_onset';
 r = 2.6667;
 
-%method = 'cvpatternnet'; % NN; BEST performance on the peak LDA voxels; not so much on the GNB peak voxels => LDA is indeed better
-method = 'cvfitcnb'; % gaussian naive bayes, just like searchmight's gnb_searchmight; MEDIUM performance
-%method = 'cvfitcdiscr'; % linear discriminant analysis, similar to searchmight's lda_shrinkage but not quite; WORST performance
 runs = 1:9; 
 trials = 6:20;
 subjs = getGoodSubjects();
@@ -78,10 +77,7 @@ max_z = max(all_z);
 %activations = get_activations(maskfile, event, data, metadata, use_nosmooth);
 
 
-rhos = [];
-ps = [];
-
-figure;
+%figure;
 
 for i = 1:size(region, 1) % for each ROI
     fprintf('\nROI = %s\n', region{i});
@@ -130,17 +126,21 @@ for i = 1:size(region, 1) % for each ROI
         subj_logliks = [subj_logliks, mean(run_logliks)];
     end
 
-    [rho, p] = corr(subj_accs', subj_logliks', 'type', 'Pearson');
-    rhos = [rhos, rho];
-    ps = [ps, p];
+    [pearson_r, p] = corr(subj_accs', subj_logliks', 'type', 'Pearson');
 
-    fprintf('r = %.4f, p = %.4f\n', rho, p);
+    fprintf('r = %.4f, p = %.4f\n', pearson_r, p);
 
-    subplot(1, numel(region), i);
-    scatter(subj_accs, subj_logliks);
-    lsline;
-    xlabel('acc');
-    ylabel('loglik');
-    title(region{i}, 'interpreter', 'none');
+    roi(i).name = region{i};
+    roi(i).subj_accs = subj_accs;
+    roi(i).subj_logliks = subj_logliks;
+    roi(i).r = pearson_r;
+    roi(i).p = p;
+
+  %  subplot(1, numel(region), i);
+  %  scatter(subj_accs, subj_logliks);
+  %  lsline;
+  %  xlabel('acc');
+  %  ylabel('loglik');
+  %  title(region{i}, 'interpreter', 'none');
 end
 
