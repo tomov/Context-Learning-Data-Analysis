@@ -1333,10 +1333,35 @@ switch figure_name
         text(0.09, 0.96, 'A', 'FontSize', 15, 'FontWeight', 'bold');
         text(0.09, 0.56, 'B', 'FontSize', 15, 'FontWeight', 'bold');
 
-        p.export('../JNeuro manuscript/figures/glms.pdf');
-        p.export('../JNeuro manuscript/figures/glms.png', '-rp');
-        p.export('../JNeuro manuscript/figures/glms.eps', '-rp');
+        % optionally export directly to paper
+        %p.export('../JNeuro manuscript/figures/glms.pdf');
+        %p.export('../JNeuro manuscript/figures/glms.png', '-rp');
+        %p.export('../JNeuro manuscript/figures/glms.eps', '-rp');
 
+    case 'tab:glm1'
+        ccnl_view(context_expt(), 163, 'KL_structures - KL_weights');
+        extract_results_table('AAL2', 'peak', context_expt(), 163, 'KL_structures - KL_weights', 0.001, '+/-', 0.05, 20, 1);
+
+
+    case 'tab:glm4'
+        ccnl_view(context_expt(), 162, 'KL_clusters - PEs');
+        extract_results_table('AAL2', 'peak', context_expt(), 162, 'KL_clusters - PEs', 0.001, '+/-', 0.05, 20, 1);
+
+
+    case 'tab:rsa'
+        bspmview('rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii', 'masks/mean.nii');
+
+        table = extract_results_table('AAL2', 'peak', 'rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii', 0, 'rsa_posterior_dummyname', 0.001, '+/-', 0.05, 20, 1);
+
+        %roi = correlate_classifier_with_behavior_3();
+        load results/correlate_classifier_with_behavior_3.mat
+
+        disp('\ncorrelation w/ behavior:\n');
+        for i = 1:numel(roi)
+            fprintf('%.2f & %.3f \n', ...
+                roi(i).r, ...
+                roi(i).p);
+        end
 
     case 'fig:rsa'
         figure('pos', [100 100 653 162]);
@@ -1374,24 +1399,29 @@ switch figure_name
             xlabel('accuracy');
             ylabel('test choice log lik');
             title(roi_names{plot_idx - 1}, 'interpreter', 'none');
+
+            str = sprintf('r = %.2f, p = %.3f', roi(i).r, roi(i).p);
+            if i == which(1)
+                text(54, -1.25, str, 'FontSize', 9);
+            else 
+                text(49, -1.25, str, 'FontSize', 9);
+            end
         end
 
-        %p.de.margin = 10;
 
         % label subplots
         ax1 = axes('Position',[0 0 1 1],'Visible','off');
         axes(ax1);
-        %text(0.09, 0.98, 'A', 'FontSize', 15, 'FontWeight', 'bold');
-        %text(0.09, 0.55, 'B', 'FontSize', 15, 'FontWeight', 'bold');
-
         text(0.031, 0.99, 'A', 'FontSize', 20, 'FontWeight', 'bold');
         text(0.35, 0.99, 'B', 'FontSize', 20, 'FontWeight', 'bold');
         text(0.64, 0.99, 'C', 'FontSize', 20, 'FontWeight', 'bold');
 
 
-        print('../JNeuro manuscript/figures/rsa.pdf', '-dpdf');
-        print('../JNeuro manuscript/figures/rsa.eps', '-depsc');
-        print('../JNeuro manuscript/figures/rsa.png', '-dpng');
+        % optionally export directly to paper
+        %print('../JNeuro manuscript/figures/rsa.pdf', '-dpdf');
+        %print('../JNeuro manuscript/figures/rsa.eps', '-depsc');
+        %print('../JNeuro manuscript/figures/rsa.png', '-dpng');
+
 
 
     case 'fig:fmri-results'
