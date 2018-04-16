@@ -42,6 +42,10 @@ switch figure_name
         title('fMRI');
         text(-4, 1.05, 'B', 'FontSize', 20, 'FontWeight', 'bold')
 
+        print('../JNeuro manuscript/figures/learning_curves_2.pdf', '-dpdf');
+        print('../JNeuro manuscript/figures/learning_curves_2.eps', '-depsc');
+        print('../JNeuro manuscript/figures/learning_curves_2.png', '-dpng');
+
     case 'fig:curves_by_condition'
         %
         % Learning curves, model vs. subjects
@@ -457,7 +461,7 @@ switch figure_name
             models(idx).name = 'RL + clustering'; % Collins et al 2013, 2016
             models(idx).params_file = fullfile('results', 'fit_params_results_simple_collins_25nstarts_0-10alpha_Q0.mat');
             models(idx).params_idx = 1;
-            models(idx).params_format = '\\eta = %.4f, \\beta = %.4f, \\alpha = %.4f, Q_0 = %.4f';
+            models(idx).params_format = '\\eta = %.4f, \\beta = %.4f, \\alpha = %.4f, V_0 = %.4f';
             models(idx).do_include = true;
 
             idx = idx + 1;
@@ -465,7 +469,7 @@ switch figure_name
             models(idx).name = 'RL'; % (flat) Q-learning, as in Collins 2016
             models(idx).params_file = fullfile('results', 'fit_params_results_flat_collins_25nstarts_Q0.mat');
             models(idx).params_idx = 1;
-            models(idx).params_format = '\\eta = %.4f, \\beta = %.4f, Q_0 = %.4f';
+            models(idx).params_format = '\\eta = %.4f, \\beta = %.4f, V_0 = %.4f';
             models(idx).do_include = true;
 
             idx = idx + 1;
@@ -520,7 +524,7 @@ switch figure_name
             models(idx).which_structures = 'Q_learning'; 
             models(idx).name = 'RL + generalization'; % Q learning with generalization, as proposed by reviewer #1
             models(idx).params_file = fullfile('results', 'fit_params_results_q_learning_2_25nstarts.mat');
-            models(idx).params_format = '\\eta = %.4f, \\beta = %.4f, Q_0 = %.4f';
+            models(idx).params_format = '\\eta = %.4f, \\beta = %.4f, V_0 = %.4f';
             models(idx).params_idx = 1;
             models(idx).do_include = true;
 
@@ -812,9 +816,10 @@ switch figure_name
         end
 
         bar(P_means);
-        xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
+        %xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
+        xticklabels({'Irrelevant context', 'Modulatory context', 'Irrelevant cue'});
         ylabel('Posterior probability');
-        legend({'M1', 'M2', 'M1'''}, 'Position', [0.15 0.3 1 1]);
+        legend({'M1', 'M2', 'M3'}, 'Position', [0.15 0.3 1 1]); %  note that here we call it M3, but it's actually M1'
         ylim([0 1.1]);
         set(gca,'fontsize',13);
         
@@ -828,6 +833,10 @@ switch figure_name
         subplot(2, 1, 2);
 
         plot_behavior_helper(data, metadata, simulated);
+
+        %print('../JNeuro manuscript/figures/behavior_both_2.pdf', '-dpdf');
+        %print('../JNeuro manuscript/figures/behavior_both_2.eps', '-depsc');
+        %print('../JNeuro manuscript/figures/behavior_both_2.png', '-dpng');
 
 
     case 'RTs_mod'
@@ -1274,6 +1283,16 @@ switch figure_name
     case 'searchlight_prior'
         bspmview('rdms/M1M2M1_4mm/searchlight_tmap_prior_trial_onset.nii', 'masks/mean.nii');
 
+    case 'intersect_rsa_glm163'
+        [file1, name1] = create_mask_from_contrast(context_expt(), 163, 'KL_structures - KL_weights', 0.001, '+', 0.05, 20, 1);
+        %check_mask(file1);
+        [file2, name2] = create_mask_from_contrast('rdms/M1M2M1_4mm/searchlight_tmap_posterior_feedback_onset.nii', 0, 'searchlight_posterior', 0.001, '+', 0.05, 20, 1);
+        %check_mask(file2);
+
+        out = 'masks/KL_structures_and_posterior.nii';
+        intersect_masks({file1, file2}, out)
+        bspmview(out, 'masks/mean.nii');
+
         
     case 'searchlight_posterior_old'
         bspmview('rdms/betas_smooth/searchlight_tmap_posterior_feedback_onset.nii', 'masks/mean.nii');
@@ -1376,6 +1395,8 @@ switch figure_name
         subplot(1,3,1, 'position', [0.0500    0.1000    0.2934    0.8150]);
         %set(h, 'position', [0 0 1 1]);
         %disp(get(h, 'position'));
+
+        % gen'd by passing 'searchlight_posterior' -- look it up somewhere below
         imshow('images/searchlight_posterior.png'); 
         title('Posterior over structures', 'FontSize', fontsize);
 
@@ -1968,7 +1989,8 @@ function plot_behavior_helper(data, metadata, simulated)
     
     hold off;
     
-    xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
+    %xticklabels({'Irrelevant training', 'Modulatory training', 'Additive training'});
+    xticklabels({'Irrelevant context', 'Modulatory context', 'Irrelevant cue'});
     ylabel('Choice probability');
     legend({'x_1c_1', 'x_1c_3', 'x_3c_1', 'x_3c_3'}, 'Position', [0.07 -0.095 1 1]);
     ylim([0 1.1]);
