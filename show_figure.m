@@ -904,8 +904,6 @@ switch figure_name
 
         [h, p, ci, stats] = ttest(mod - irr)
 
-        save shit.mat;
-         
 
     case 'RTs_add'
         % show that additive == irrelevant in terms of feature attention; it's just that 
@@ -937,8 +935,6 @@ switch figure_name
         errorbar(xs, RT_means, RT_sems, '.', 'MarkerSize', 1, 'MarkerFaceColor', [0 0 0], 'LineWidth', 1, 'Color', [0 0 0], 'AlignVertexCenters', 'off');
         hold off;
         xticklabels({'irr old', 'irr new', 'add old', 'add new'});
-
-        save shit.mat;
 
         %[h, p, ci, stats] = ttest2(rt_irr, rt_add)
 
@@ -993,8 +989,6 @@ switch figure_name
             g = [g; repmat(i, numel(RTs), 1)];
             rt = [rt; RTs];
         end
-
-        save shit.mat;
 
         h = bar(RT_means);
         hold on;
@@ -1382,6 +1376,83 @@ switch figure_name
                 roi(i).p);
         end
 
+    case 'single_rdms'
+        % for reviewer
+        %
+        %
+        % example RDMs
+        %
+        [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
+        which_rows = data.which_rows & data.isTrain; % Look at training trials only
+
+        % get searchlight RDM
+        %load('rdms/M1M2M1_4mm/searchlight_weights_139001-140000.mat');
+        % maxt found with rdms_searchlight_show
+        use_tmaps = false;
+        use_nosmooth = false;
+        maxr_x = 23;
+        maxr_y = 28;
+        maxr_z = 57;
+        %Searchlight = rdms_get_searchlight(data, metadata, which_rows, maxr_x, maxr_y, maxr_z, 2.6667, true, use_tmaps, use_nosmooth); % use pregen'd betas, use tmaps, use nosmooth
+        %save('results/fig_rsa_searchlight.mat');
+        load('results/fig_rsa_searchlight.mat');
+        assert(strcmp(Searchlight(2).event, 'feedback_onset'));
+
+        % reorder blocks so theyre the same order across subjects
+        for subj = 1:metadata.N
+            c = data.condition(strcmp(data.participant, metadata.subjects{subj}) & data.isTrain);
+            a(strcmp(c, 'irrelevant')) = 1;
+            a(strcmp(c, 'modulatory')) = 2;
+            a(strcmp(c, 'additive')) = 3;
+            [~,idx] = sort(a);
+            m = Searchlight(2).RDMs(:,:,subj);
+            m1 = m(:,idx);
+            m2 = m1(idx,:);
+            Searchlight(2).RDMs(:,:,subj) = m2;
+        end
+
+        Searchlight(2).RDM = mean(Searchlight(2).RDMs,3);
+
+        subplot(2,4,1);
+        m = Searchlight(2).RDM;
+        m(logical(eye(size(m)))) = NaN;
+        imagesc(Searchlight(2).RDM);
+
+        % get model RDMs
+        [Model, control_model_idxs, params, which_structures] = rdms_get_model_3(data, metadata, which_rows);
+
+        which = [1 control_model_idxs];
+        assert(strcmp(Model(which(1)).name, 'posterior'));
+        assert(strcmp(Model(which(2)).name, 'time'));
+        assert(strcmp(Model(which(3)).name, 'run'));
+
+        plott_idx = 1;
+        for i = which
+            plott_idx = plott_idx + 1;
+            subplot(2,4,plott_idx);
+
+            % reorder blocks so theyre the same order across subjects
+            for subj = 1:metadata.N
+                c = data.condition(strcmp(data.participant, metadata.subjects{subj}) & data.isTrain);
+                a(strcmp(c, 'irrelevant')) = 1;
+                a(strcmp(c, 'modulatory')) = 2;
+                a(strcmp(c, 'additive')) = 3;
+                [~,idx] = sort(a);
+                m = Model(i).RDMs(:,:,subj);
+                m1 = m(:,idx);
+                m2 = m1(idx,:);
+                Model(i).RDMs(:,:,subj) = m2;
+            end
+
+            Model(i).RDM = mean(Model(i).RDMs,3);
+            
+            imagesc(Model(i).RDM)
+            title(Model(i).name);
+        end
+
+        colorbar;
+
+
     case 'fig:rsa'
         figure('pos', [100 100 653 162]);
         %figure;
@@ -1390,6 +1461,10 @@ switch figure_name
         %p.pack(1, 3);
 
         fontsize = 12;
+
+        %
+        % RSA results 
+        %
         
         %p(1, 1).select();
         subplot(1,3,1, 'position', [0.0500    0.1000    0.2934    0.8150]);
@@ -1409,10 +1484,10 @@ switch figure_name
         for i = which 
             plot_idx = plot_idx + 1;
             %p(1, plot_idx).select();
-            h = subplot(1,3,plot_idx);
+            h = subplot(1,3, plot_idx);
             pos = get(h, 'position');
             pos(4) = pos(4) * 0.2;
-            subplot(1,3,plot_idx, 'position', pos);
+            subplot(1,3, plot_idx); %, 'position', pos);
 
             scatter(roi(i).subj_accs, roi(i).subj_logliks);
             %plot(roi(i).subj_accs, roi(i).subj_logliks, 'k.');

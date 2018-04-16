@@ -19,7 +19,7 @@ function [table_Rho, table_P, all_subject_rhos, idx, x, y, z] = rdms_searchlight
 dirname = 'rdms';
 
 use_tmaps = false;
-use_nosmooth = true;
+use_nosmooth = false;
 
 %% Load data and compute first-order RDMs
 %

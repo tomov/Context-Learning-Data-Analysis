@@ -74,6 +74,8 @@ tmap(:) = NaN; % clear
 pmap = tmap;
 V.fname = fullfile(dirname, ['searchlight_tmap_', model, '_', event, '.nii']); % change immediately!
 
+maxt = 0;
+
 %% load all the searchlight results
 %
 files = dir(dirname);
@@ -136,6 +138,17 @@ for i = 1:length(files)
                 if col_idx <= size(table_T, 2) % in case we're using a model that hasn't been computed in all batches, e.g. weightsPosterior
                     tmap(x(j), y(j), z(j)) = table_T(row_idx, col_idx);
                     pmap(x(j), y(j), z(j)) = table_P(row_idx, col_idx);
+                end
+
+                % find the max correlation for displaying
+                t =   table_T(row_idx, col_idx);
+                if t > maxt
+                    maxt = t;
+                    maxt_idx = j;
+                    maxt_file = file;
+                    maxt_x = x(j);
+                    maxt_y = y(j);
+                    maxt_z = z(j);
                 end
             end
         end
