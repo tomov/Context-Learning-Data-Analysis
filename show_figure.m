@@ -282,14 +282,16 @@ switch figure_name
         for i = 1:numel(which_structuress) 
             which_structures = which_structuress{i};
 
-            [r, p] = get_test_choice_correlations([], i, which_structures);
+            %[r, p] = get_test_choice_correlations([], i, which_structures);
 
             switch i
                 case 1
+                    [r, p] = get_test_choice_correlations(fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, logical([1 1 0 1 0]));
                     report.full_r = r;
                     report.full_p = p;
                     report.full_p_pow10 = ceil(log10(p));
                 case 2
+                    %[r, p] = get_test_choice_correlations(fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, logical([1 1 0 1 0]));
                     report.M1_r = r;
                     report.M1_p = p;
                     report.M1_p_pow10 = ceil(log10(p));
@@ -730,11 +732,11 @@ switch figure_name
             glm(idx).model = 'M1, M2, M3';
             glm(idx).pmods = '$KL_{structures}$, $KL_{weights}$ (sum)';
 
-            idx = idx + 1;
-            glm(idx).glmodel = 164;
-            glm(idx).name = 'GLM 2';
-            glm(idx).model = 'M1, M2, M3';
-            glm(idx).pmods = '$KL_{structures}$, $KL_{weights}$ (weighted sum)';
+            %idx = idx + 1;
+            %glm(idx).glmodel = 164;
+            %glm(idx).name = 'GLM 2';
+            %glm(idx).model = 'M1, M2, M3';
+            %glm(idx).pmods = '$KL_{structures}$, $KL_{weights}$ (weighted sum)';
 
             idx = idx + 1;
             glm(idx).glmodel = 165;
@@ -1228,17 +1230,13 @@ switch figure_name
         % behavioral plot for simple Q learning as suggested by reviewer 1
         %
 
-        models(1).which_structures = 'simple_Q'; 
-        models(1).name = 'Q learning';
-        models(1).params_file = fullfile('results', 'fit_params_results_simple_q.mat');
-        models(1).params_format = '\\beta = %.4f';
-        models(1).params_idx = 1;
 
-        models(2).which_structures = 'Q_learning'; 
-        models(2).name = 'Q learning 2';
-        models(2).params_file = fullfile('results', 'fit_params_results_q_learning.mat');
-        models(2).params_format = '\\alpha = %.4f, \\beta = %.4f';
-        models(2).params_idx = 1;
+        models(1).which_structures = 'Q_learning'; 
+        models(1).name = 'RL + generalization'; % Q learning with generalization, as proposed by reviewer #1
+        models(1).params_file = fullfile('results', 'fit_params_results_q_learning_2_25nstarts.mat');
+        models(1).params_format = '\\eta = %.4f, \\beta = %.4f, V_0 = %.4f';
+        models(1).params_idx = 1;
+        models(1).do_include = true;
 
         for i=1:numel(models)
 
@@ -1368,12 +1366,15 @@ switch figure_name
 
         %roi = correlate_classifier_with_behavior_3();
         load results/correlate_classifier_with_behavior_3.mat
+       
 
         disp('\ncorrelation w/ behavior:\n');
         for i = 1:numel(roi)
-            fprintf('%.2f & %.3f \n', ...
+            fprintf('%.2f & %.3f & %.3f \n', ...
                 roi(i).r, ...
-                roi(i).p);
+                roi(i).p, ...
+                1-(1-roi(i).p).^6);
+                
         end
 
     case 'single_rdms'
@@ -1480,7 +1481,7 @@ switch figure_name
         which = [3 5];
 
         plot_idx = 1;
-        roi_names = {'Inferior parietal gyrus (L)', 'Insula (R)'};
+        roi_names = {'Inferior parietal gyrus (L)', 'Anterior insula (R)'};
         for i = which 
             plot_idx = plot_idx + 1;
             %p(1, plot_idx).select();
@@ -2131,69 +2132,6 @@ function plot_curves_helper(data, metadata, simulated, which_rows)
 end
 
 
-
-
-% correlate model choices with subject choices on the test trials
-%
-function [r, p] = get_test_choice_correlations(params_file, params_idx, which_structures)
-    utils; % include some nifty lambdas
-
-    [data, metadata, simulated] = simulate_subjects_helper(true, params_file, params_idx, which_structures);
-
-    %
-    % Choice probabilities in test phase for SUBJECTS
-    %
-
-    Ms = [];
-    SEMs = [];
-    for context = metadata.contextRoles
-        which = data.which_rows & data.isTrain == 0 & strcmp(data.contextRole, context);
-
-        x1c1 = strcmp(data.response.keys(which & data.cueId == 0 & data.contextId == 0), 'left');
-        x1c2 = strcmp(data.response.keys(which & data.cueId == 0 & data.contextId == 2), 'left');
-        x2c1 = strcmp(data.response.keys(which & data.cueId == 2 & data.contextId == 0), 'left');
-        x2c2 = strcmp(data.response.keys(which & data.cueId == 2 & data.contextId == 2), 'left');
-
-    %    M = mean([x1c1 x1c2 x2c1 x2c2]);
-    %    SEM = std([x1c1 x1c2 x2c1 x2c2]) / sqrt(length(x1c1));
-        M = get_means(x1c1, x1c2, x2c1, x2c2);
-        SEM = get_sems(x1c1, x1c2, x2c1, x2c2);
-        Ms = [Ms; M];
-        SEMs = [SEMs; SEM];
-    end
-
-    subject_Ms = Ms; % for stats
-
-    %
-    % TRUE Choice probabilities in test phase for MODEL
-    %
-
-    Ms = [];
-    SEMs = [];
-    for context = metadata.contextRoles
-        which = data.which_rows & data.isTrain == 0 & strcmp(data.contextRole, context);
-
-        x1c1 = simulated.pred(which & data.cueId == 0 & data.contextId == 0);
-        x1c2 = simulated.pred(which & data.cueId == 0 & data.contextId == 2);
-        x2c1 = simulated.pred(which & data.cueId == 2 & data.contextId == 0);
-        x2c2 = simulated.pred(which & data.cueId == 2 & data.contextId == 2);
-
-        %M = mean([x1c1 x1c2 x2c1 x2c2]);
-        %SEM = std([x1c1 x1c2 x2c1 x2c2]) / sqrt(length(x1c1));
-        M = get_means(x1c1, x1c2, x2c1, x2c2);
-        SEM = get_sems(x1c1, x1c2, x2c1, x2c2);
-        Ms = [Ms; M];
-        SEMs = [SEMs; SEM];
-    end
-
-    model_Ms = Ms; % for stats
-
-    % correlate average subject choices with model choices 
-    %
-    [r, p] = corrcoef(subject_Ms(:), model_Ms(:));
-    r = r(1,2);
-    p = p(1,2);
-end
 
 
 

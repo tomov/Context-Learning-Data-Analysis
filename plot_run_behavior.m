@@ -256,7 +256,31 @@ subplot(nplots,1,subplot_idx);
 plot(feedback_onsets, simulated.surprise(which_train), 'o-', 'LineWidth', 2);
 title('KL structures');
 
+subplot_idx = subplot_idx + 1;
+subplot(nplots,1,subplot_idx);
+KL_weights = [];
+for i = struct_idx
+    KL_weights = [KL_weights simulated.KL_weights{i}(which_train)];
+end
+KL_sum = sum(KL_weights, 2);
+plot(feedback_onsets, [ KL_sum], 'o-', 'LineWidth', 2);
+%legend({'M1', 'M2', 'M1''', 'sum'});
+title('KL weights');
 
+subplot_idx = subplot_idx + 1;
+subplot(nplots,1,subplot_idx);
+plot(feedback_onsets, simulated.values(which_train), 'o-', 'LineWidth', 2);
+title('value');
+
+
+subplot_idx = subplot_idx + 1;
+subplot(nplots,1,subplot_idx);
+PE = data.outcome(which_train) - simulated.values(which_train);
+plot(feedback_onsets, PE, 'o-', 'LineWidth', 2);
+title('PE');
+
+
+%{
 subplot_idx = subplot_idx + 1;
 subplot(nplots,1,subplot_idx);
 KL_weights = [];
@@ -290,3 +314,5 @@ for i = 1:sum(which_train)
 end
 plot(feedback_onsets, KL_weights, 'o-', 'LineWidth', 2);
 title('KL weights, MAP');
+
+%}
