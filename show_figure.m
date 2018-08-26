@@ -291,24 +291,26 @@ switch figure_name
                     report.full_p = p;
                     report.full_p_pow10 = ceil(log10(p));
                 case 2
-                    %[r, p] = get_test_choice_correlations(fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat'), 1, logical([1 1 0 1 0]));
+                    [r, p] = get_test_choice_correlations(fullfile('results', 'fit_params_results_M1_25nstarts_tau_w0.mat'), 1, logical([1 0 0 0 0]));
                     report.M1_r = r;
                     report.M1_p = p;
                     report.M1_p_pow10 = ceil(log10(p));
                 case 3
+                    [r, p] = get_test_choice_correlations(fullfile('results', 'fit_params_results_M2_25nstarts_tau_w0.mat'), 1, logical([0 1 0 0 0]));
                     report.M2_r = r;
                     report.M2_p = p;
                     report.M2_p_pow10 = ceil(log10(p));
                 case 4
+                    [r, p] = get_test_choice_correlations(fullfile('results', 'fit_params_results_M3-but-actually-M1_25nstarts_tau_w0.mat'), 1, logical([0 0 0 1 0]));
                     report.M3_r = r;
                     report.M3_p = p;
                     report.M3_p_pow10 = ceil(log10(p));
             end
         end
 
-        fprintf('Correlation between model and subject test behavior: r = %f, p = %.10f (p = 10^%f)\n', r, p, log10(p));
+       % fprintf('Correlation between model and subject test behavior: r = %f, p = %.10f (p = 10^%f)\n', r, p, log10(p));
 
-        paragraph = 'Using parameters fit with data from the behavioral pilot version of the study, the model quantitatively accounted for the generalization pattern on the test trials choices of subjects in the fMRI portion of the study (Figure~\\ref{fig:behavior}B; $r = %.2f, p < 10^{%d}$). As expected, the stimulus-outcome contingencies induced the model to infer a different causal structure in each of the three conditions (Figure~\\ref{fig:behavior}A), leading to the distinct response patterns on the simulated test trials. For comparison, we also ran versions of the model using a single causal structure. Theories corresponding to each of these sub-models have been put forward in the literature as explanations of the role of context during learning, however neither of them has been able to provide a comprehensive account of the behavioral findings on its own. Accordingly, model performance was markedly worse when the hypothesis space was restricted to a single causal structure: the correlation coefficients were $r = %.2f$ for the irrelevant context structure ($M_1$; $p = %.2f$), $r = %.2f$ for the modulatory context structure ($M_2$; $p < %.2f$), and $r = %.2f$ for  the additive context structure ($M_3$; $p < %.4f$).\n';
+        paragraph = 'Using parameters fit with data from the behavioral pilot version of the study, the model quantitatively accounted for the generalization pattern on the test trials choices of subjects in the fMRI portion of the study (Figure~\\ref{fig:behavior}B; $r = %.2f, p < 10^{%d}$). As expected, the stimulus-outcome contingencies induced the model to infer a different causal structure in each of the three conditions (Figure~\\ref{fig:behavior}A), leading to the distinct response patterns on the simulated test trials. For comparison, we also ran versions of the model using a single causal structure. Theories corresponding to each of these sub-models have been put forward in the literature as explanations of the role of context during learning, however neither of them has been able to provide a comprehensive account of the behavioral findings on its own. Accordingly, model performance was markedly worse when the hypothesis space was restricted to a single causal structure: the correlation coefficients were $r = %.2f$ for the irrelevant context structure ($M_1$; $p = %.2f$), $r = %.2f$ for the modulatory context structure ($M_2$; $p < %.2f$), and $r = %.2f$ for  the additive context structure ($M_3$; $p = %.2f$).\n';
         fprintf(paragraph, ...
                 report.full_r, ...
                 report.full_p_pow10, ...
@@ -317,7 +319,7 @@ switch figure_name
                 report.M2_r, ...
                 10^report.M2_p_pow10, ...
                 report.M3_r, ...
-                10^report.M3_p_pow10);
+                report.M3_p);
 
 
     case 'tab:models'
