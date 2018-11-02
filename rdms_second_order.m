@@ -94,7 +94,7 @@ for row_idx = 1:numel(rows)
                 y = col_RDM(cross_run_trig);
                 z = control_RDMs(cross_run_trig_control);
             end
-           
+
             % compute the correlations
             %
             if numel(control_col_idxs) > 0

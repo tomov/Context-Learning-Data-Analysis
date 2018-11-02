@@ -1,6 +1,5 @@
 [B, c1] = ccnl_behavioral_rdms(context_expt(), 1, getGoodSubjects());
 
-
 [data, metadata] = load_data('data/fmri.csv', true, getGoodSubjects());
 which_rows = data.which_rows & data.isTrain; % Look at training trials only
 
