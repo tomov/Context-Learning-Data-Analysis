@@ -12,8 +12,8 @@ close all;
 
 event = 'feedback_onset';% <---------------------------- name of the game
 model = 'posterior';% <---------------------------- name of the game
-%event = 'trial_onset';
-model = 'prior';
+event = 'trial_onset';
+%model = 'prior';
 %model = 'ww_prior';
 %event = 'feedback_onset';
 %model = 'ww_posterior';
@@ -25,7 +25,7 @@ model = 'prior';
 
 
 dirname = 'rdms/M1M2M1_4mm'; % <---------------------------- name of the game
-dirname = 'rdms/control';
+%dirname = 'rdms/control';
 %dirname = 'rdms/M1M2M1_4mm';
 %dirname = 'rdms/M1M2M1_4mm_nosmooth';
 
