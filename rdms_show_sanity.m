@@ -30,6 +30,10 @@ dirname = 'rdms/M1M2M1_4mm'; % <---------------------------- name of the game
 %dirname = 'rdms/M1M2M1_4mm_nosmooth';
 dirname = 'rdms/M1M2M1_4mm_ordered';
 
+EXPT = context_expt();
+rsa_idx = 1;
+model_idx = 1;
+
 
 
 %event = 'feedback_onset';
@@ -79,82 +83,69 @@ V.fname = fullfile(dirname, ['searchlight_tmap_', model, '_', event, '.nii']); %
 
 maxt = 0;
 
+
+
+rsadir = fullfile(EXPT.rsadir,['rsa',num2str(rsa_idx)]);
+
+% create sample rsa
+rsa = EXPT.create_rsa(rsa_idx, 1);
+
+files_ccnl = {};
+% compute t-map, if it hasn't been computed already
+%if ~exist(V.fname, 'file')
+    df = NaN;
+    files = dir(rsadir);
+    for i = 1:length(files)
+        file = files(i).name;
+        if startsWith(file, 'searchlight_') && endsWith(file, '.mat')
+            files_ccnl = [files_ccnl {file}];
+            %df = size(all_subject_rhos, 3) - 1;
+        end
+    end
+
+    %V.descrip = sprintf('SPM{T_[%d.0]}', df); % hack to write the degrees of freedom, to allow thresholding in bspmview
+
+    % save tmap
+    %V.fname
+    %spm_write_vol(V, tmap);
+%end
+
+
+
 %% load all the searchlight results
 %
 files = dir(dirname);
+ccnl_idx = 0;
 for i = 1:length(files)
     file = files(i).name;
     if startsWith(file, 'searchlight_') && endsWith(file, '.mat')
         disp(['Loading ', file]);
         table_T = [];
         load(fullfile(dirname, file));
-        if isempty(table_T)
-            % forgot to keep track of table_T sometimes...
-            % you can get the t-values from the p-values using the fact that:
-            % p = (1 - tcdf(t, df)) * 2
-            % so inverting:
-            % t = icdf('T', 1 - p / 2, df)
-            % note that this doesn't tell you anything about the sign (it's
-            % a two-tailed t-test), so we have to use rho to get it.
-            % as a reminder, this was a 1-sample t-test that rho != 0
-            %
-            df = metadata.N - 1;
-            table_T = icdf('T', 1 - table_P / 2, df);
-            sign = (table_Rho > 0) + (-1) * (table_Rho < 0);
-            table_T = table_T .* sign;
-            disp(['Computing t-values manually for ', file]);
-        end
 
-		% this was used to get the coordinates of the nosmooth searchlights when we didn't record them
-        %
-        %if exist(file, 'file')
-        %    fprintf('Skipping %s -- already exists\n', file);
-        %    continue;
+        ccnl_idx = ccnl_idx + 1;
+        disp(['Loading also ', files_ccnl{ccnl_idx}]);
+        load(fullfile(rsadir, files_ccnl{ccnl_idx}));
+
+        %for j = 1:size(cor, 1)
+        %    tmap(cor(j,1), cor(j,2), cor(j,3)) = T(j, model_idx);
         %end
-        %Searchlight = rdms_get_searchlight(data, metadata, data.which_rows & data.isTrain, x, y, z, r, true, use_tmaps, use_nosmooth); % use pregen'd betas, use tmaps, use nosmooth
-        %x = [Searchlight.x];
-        %y = [Searchlight.y];
-        %z = [Searchlight.z];
-        %events = {Searchlight.event};
-        %save(file, 'table_Rho', 'table_T', 'table_P', 'all_subject_rhos', 'x', 'y', 'z', 'events', 'r', 'idx', 'params', 'which_structures', 'use_tmaps', 'use_nosmooth', 'which_rows');
-       
-        if exist('events', 'var') % new way
-            % when using _nosmooth, sometimes not all searchlights are good
-            % => have to keep 
-            %
-            for j = 1:length(x)
-                if ~isequal(event, events{j}), continue; end
-                row_idx = j;
-                col_idx = find(ismember(model_names, model));
-                if col_idx <= size(table_T, 2) % in case we're using a model that hasn't been computed in all batches, e.g. weightsPosterior
-                    tmap(x(j), y(j), z(j)) = table_T(row_idx, col_idx);
-                end
-            end
-            clear events; % for next iteration
-        else % old way
-            % backwards compatibility -- we have all the searchlights when using smoothing; back then 
-            % we didn't 
-            %
-            for j = 1:length(x)
-                row_idx = j + isequal(event, 'feedback_onset') * length(x);
-                col_idx = find(ismember(model_names, model));
-                if col_idx <= size(table_T, 2) % in case we're using a model that hasn't been computed in all batches, e.g. weightsPosterior
-                    tmap(x(j), y(j), z(j)) = table_T(row_idx, col_idx);
-                    pmap(x(j), y(j), z(j)) = table_P(row_idx, col_idx);
-                end
 
-                % find the max correlation for displaying
-                t =   table_T(row_idx, col_idx);
-                if t > maxt
-                    maxt = t;
-                    maxt_idx = j;
-                    maxt_file = file;
-                    maxt_x = x(j);
-                    maxt_y = y(j);
-                    maxt_z = z(j);
-                end
+        % when using _nosmooth, sometimes not all searchlights are good
+        % => have to keep 
+        %
+        for j = 1:length(x)
+            if ~isequal(event, events{j}), continue; end
+            row_idx = j;
+            col_idx = find(ismember(model_names, model));
+            if col_idx <= size(table_T, 2) % in case we're using a model that hasn't been computed in all batches, e.g. weightsPosterior
+                tmap(x(j), y(j), z(j)) = table_T(row_idx, col_idx);
+
+                assert(col_idx == 1);
+                assert(immse(T(row_idx, 1), table_T(row_idx, col_idx)) < 1e-10);
             end
         end
+        clear events; % for next iteration
     end
 end
 
