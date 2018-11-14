@@ -2,7 +2,7 @@
 %
 
 clear all;
-close all;
+%close all;
 
 % QUESTIONS:
 % 1. P(weights) -- comparing trials across runs? see rdms_get_model.m
@@ -78,6 +78,7 @@ assert(ismember(model, model_names));
 %
 [~, V, tmap] = load_mask(fullfile('masks', 'spmT_0001.nii'));
 tmap(:) = NaN; % clear
+tmap2 = tmap;
 pmap = tmap;
 V.fname = fullfile(dirname, ['searchlight_tmap_', model, '_', event, '.nii']); % change immediately!
 
@@ -123,13 +124,14 @@ for i = 1:length(files)
         table_T = [];
         load(fullfile(dirname, file));
 
+        if strcmp(file, 'searchlight_weights_217001-217783.mat')
+            continue % hack; this one is absent from new rsa TODO fix 
+        end
+
         ccnl_idx = ccnl_idx + 1;
         disp(['Loading also ', files_ccnl{ccnl_idx}]);
         load(fullfile(rsadir, files_ccnl{ccnl_idx}));
 
-        %for j = 1:size(cor, 1)
-        %    tmap(cor(j,1), cor(j,2), cor(j,3)) = T(j, model_idx);
-        %end
 
         % when using _nosmooth, sometimes not all searchlights are good
         % => have to keep 
@@ -140,6 +142,8 @@ for i = 1:length(files)
             col_idx = find(ismember(model_names, model));
             if col_idx <= size(table_T, 2) % in case we're using a model that hasn't been computed in all batches, e.g. weightsPosterior
                 tmap(x(j), y(j), z(j)) = table_T(row_idx, col_idx);
+
+                tmap2(cor(j,1), cor(j,2), cor(j,3)) = T(row_idx, 1);
 
                 assert(col_idx == 1);
                 assert(immse(T(row_idx, 1), table_T(row_idx, col_idx)) < 1e-10);
@@ -159,7 +163,8 @@ pmap(~isnan(pmap)) = fdr;
 tmap(pmap >= alpha) = NaN;
 %}
 
-spm_write_vol(V, tmap);
+%spm_write_vol(V, tmap);
+spm_write_vol(V, tmap2);
 
 %% visualize
 %
