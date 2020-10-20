@@ -262,7 +262,7 @@ for who = metadata.subjects
                 % MCMC that samples from true posterior in asymptote
                 which_structures = [1 1 0 1 0];
 
-                num_particles = 100;
+                num_particles = 1000;
                 init_fn = @() MCMC_ideal_init(train_x, train_k, train_r, subject_params, which_structures, false);
                 choice_fn = @(n, particle) MCMC_ideal_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, which_structures, false);
                 update_fn = @(n, particle) MCMC_ideal_update(n, particle, train_x, train_k, train_r, subject_params, which_structures, false);
@@ -282,7 +282,7 @@ for who = metadata.subjects
                 % like Neurath's ship
                 which_structures = [1 1 0 1 0];
 
-                num_particles = 100;
+                num_particles = 1000;
                 init_fn = @() MCMC_reset_init(train_x, train_k, train_r, subject_params, which_structures, false);
                 choice_fn = @(n, particle) MCMC_reset_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, which_structures, false);
                 update_fn = @(n, particle) MCMC_reset_update(n, particle, train_x, train_k, train_r, subject_params, which_structures, false);
@@ -302,7 +302,7 @@ for who = metadata.subjects
                 % like Neurath's ship
                 which_structures = [1 1 0 1 0];
 
-                num_particles = 100;
+                num_particles = 1000;
                 init_fn = @() MCMC_neurath_init(train_x, train_k, train_r, subject_params, which_structures, false);
                 choice_fn = @(n, particle) MCMC_neurath_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, which_structures, false);
                 update_fn = @(n, particle) MCMC_neurath_update(n, particle, train_x, train_k, train_r, subject_params, which_structures, false);
