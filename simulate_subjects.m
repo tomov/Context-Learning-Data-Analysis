@@ -262,10 +262,30 @@ for who = metadata.subjects
                 % MCMC that samples from true posterior in asymptote
                 which_structures = [1 1 0 1 0];
 
-                num_particles = 10;
+                num_particles = 100;
                 init_fn = @() MCMC_ideal_init(train_x, train_k, train_r, subject_params, which_structures, false);
                 choice_fn = @(n, particle) MCMC_ideal_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, which_structures, false);
                 update_fn = @(n, particle) MCMC_ideal_update(n, particle, train_x, train_k, train_r, subject_params, which_structures, false);
+
+                N = size(train_x,1);
+                train_results = forward(N, num_particles, init_fn, choice_fn, update_fn);
+                simulated.pred(which_train) = train_results.choices;
+
+                test_results = model_test(test_x, test_k, train_results, subject_params);
+                simulated.pred(which_test) = test_results.choices;
+
+
+            elseif isequal(which_structures, 'MCMC_reset')
+
+                % MCMC that samples from true posterior in asymptote
+                % resets posterior to uniform (i.e. forgets data) after each change in belief
+                % like Neurath's ship
+                which_structures = [1 1 0 1 0];
+
+                num_particles = 100;
+                init_fn = @() MCMC_reset_init(train_x, train_k, train_r, subject_params, which_structures, false);
+                choice_fn = @(n, particle) MCMC_reset_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, which_structures, false);
+                update_fn = @(n, particle) MCMC_reset_update(n, particle, train_x, train_k, train_r, subject_params, which_structures, false);
 
                 N = size(train_x,1);
                 train_results = forward(N, num_particles, init_fn, choice_fn, update_fn);
