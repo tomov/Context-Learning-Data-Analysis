@@ -597,13 +597,16 @@ switch figure_name
 
             pilot_lmes = []; % log model evidence
             for i = 1:numel(models)
+                load(models(i).params_file);
+                params = results.x;
+                assert(size(params,1) == 1);
                 K = length(params);
                 subj_bics = []; % bic for each subject using the shared fixed effects params
                 for who = metadata.subjects % only include "good" subjects
                     which_rows = strcmp(data.participant, who);
                     N = sum(which_rows);
 
-                    subj_loglik = model_likfun(data, metadata, models(i).params, models(i).which_structures, which_rows, false); % from mfit_optimize.m
+                    subj_loglik = model_likfun(data, metadata, params, models(i).which_structures, which_rows, false); % from mfit_optimize.m
                     subj_bic = K*log(N) - 2*subj_loglik;
                     subj_bics = [subj_bics; subj_bic];
                 end
@@ -626,13 +629,16 @@ switch figure_name
 
             lmes = []; % log model evidence
             for i = 1:numel(models)
+                load(models(i).params_file);
+                params = results.x;
+                assert(size(params,1) == 1);
                 K = length(params);
                 subj_lmes = [];
                 for who = metadata.subjects % only include "good" subjects
                     which_rows = strcmp(data.participant, who);
                     N = sum(which_rows);
 
-                    subj_loglik = model_likfun(data, metadata, models(i).params, models(i).which_structures, which_rows, false); % from mfit_optimize.m
+                    subj_loglik = model_likfun(data, metadata, params, models(i).which_structures, which_rows, false); % from mfit_optimize.m
                     subj_lmes = [subj_lmes; subj_loglik];
                 end
                 lmes = [lmes, subj_lmes];

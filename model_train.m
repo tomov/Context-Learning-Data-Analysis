@@ -243,7 +243,6 @@ end
  
 assert(mean(sum(valuess(2:end,:) .* Posterior(1:end-1,:), 2) - values(2:end)) < 1e-6);
 
-
 train_results.choices = choices;
 train_results.P_n = P;
 train_results.ww_n = w;

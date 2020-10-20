@@ -1,4 +1,4 @@
-function [train_x, train_k, train_r, test_x, test_k] = convert_run(data, metadata, who, run)
+function [train_x, train_k, train_r, train_a, test_x, test_k, test_a] = convert_run(data, metadata, who, run)
 
 % Convert the stimulus sequence from a run for a given subject into a
 % format that's suitable for the model (i.e. that can be passed to
@@ -32,6 +32,7 @@ train_x = zeros(N, D);
 train_x(sub2ind(size(train_x), 1:N, cues' + 1)) = 1;
 train_k = data.contextId(which_train) + 1;
 train_r = strcmp(data.sick(which_train), 'Yes');
+train_a = data.chose_sick(which_train);
 
 % test trials
 %
@@ -41,5 +42,5 @@ D = 3; % # of stimuli
 test_x = zeros(test_N, D);
 test_x(sub2ind(size(test_x), 1:test_N, test_cues' + 1)) = 1;
 test_k = data.contextId(which_test) + 1;
-
+test_a = data.chose_sick(which_test);
 

@@ -101,7 +101,7 @@ for who = metadata.subjects
 
             % Get the training & test stimuli sequences for that run
             %
-            [train_x, train_k, train_r, test_x, test_k] = convert_run(data, metadata, who, run);
+            [train_x, train_k, train_r, train_a, test_x, test_k] = convert_run(data, metadata, who, run);
 
 
             if isequal(which_structures, 'simple_Q')
@@ -238,6 +238,25 @@ for who = metadata.subjects
                 simulated.values(which_test, :) = test_results.values;
                 simulated.Qs(:,:,which_test) = test_results.Qs;
 
+            elseif isequal(which_structures, 'ideal')
+
+                % ideal observer model from paper, but run via the MCMC pipeline
+                % for sanity
+                which_structures = [1 1 0 1 0];
+
+                num_particles = 1;
+                init_fn = @() ideal_init(train_x, train_k, train_r, subject_params, which_structures, false);
+                choice_fn = @(n, particle) ideal_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, which_structures, false);
+                update_fn = @(n, particle) ideal_update(n, particle, train_x, train_k, train_r, subject_params, which_structures, false);
+
+                N = size(train_x,1);
+                train_results = forward(N, num_particles, init_fn, choice_fn, update_fn);
+                simulated.pred(which_train) = train_results.choices;
+
+                test_results = model_test(test_x, test_k, train_results, subject_params);
+                simulated.pred(which_test) = test_results.choices;
+
+
 
             else
                 assert(~ischar(which_structures));
@@ -245,7 +264,9 @@ for who = metadata.subjects
                 % sequence of stimuli and see what it does.
                 %
                 %[choices, P_n, ww_n, P, ww_after, values, valuess, likelihoods, new_values, new_valuess, Sigma_after, lambdas, ww_before, Sigma_before] = ...
+
                 train_results = model_train(train_x, train_k, train_r, subject_params, which_structures, false);
+
 
                 model_choices = train_results.choices > rand;
                 model_response_keys = {};
@@ -315,6 +336,7 @@ for who = metadata.subjects
                 %
                 %[test_choices, test_values, test_valuess] = ...
                 test_results = model_test(test_x, test_k, train_results, subject_params);
+
 
                 model_test_choices = test_results.choices > rand;
                 model_test_response_keys = {};
