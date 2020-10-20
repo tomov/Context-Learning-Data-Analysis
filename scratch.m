@@ -7,7 +7,7 @@ models(idx).name = 'M1, M2, M3'; % our causal structure learning model (note M1'
 models(idx).params_file = fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat');
 models(idx).params_idx = 1;
 models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f, \\tau^2 = %.4e, w_0 = %.4f';
-models(idx).do_include = true;
+models(idx).do_include = false;
 
 idx = idx + 1;
 models(idx).which_structures = 'ideal'; 
@@ -34,6 +34,14 @@ models(idx).params_idx = 1;
 models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f, \\tau^2 = %.4e, w_0 = %.4f';
 models(idx).do_include = true;
 
+idx = idx + 1;
+models(idx).which_structures = 'MCMC_neurath'; 
+models(idx).name = 'MCMC_neurath';
+models(idx).params_file = fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat');
+models(idx).params_idx = 1;
+models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f, \\tau^2 = %.4e, w_0 = %.4f';
+models(idx).do_include = true;
+
 % filter models -- only include some of them
 models = models(logical([models.do_include]));
 
@@ -49,7 +57,7 @@ for i = 1:numel(models)
     assert(size(params,1) == 1);
     K = length(params);
     subj_lmes = [];
-    for who = metadata.subjects(1) % only include "good" subjects
+    for who = metadata.subjects %(1) % only include "good" subjects
         which_rows = strcmp(data.participant, who); % & data.runId == 2;
         N = sum(which_rows);
 
@@ -63,9 +71,9 @@ end
 %assert(size(lmes, 1) == numel(metadata.subjects)); % rows = subjects
 assert(size(lmes, 2) == numel(models)); % cols = models
 
-%[alpha,exp_r,xp,pxp,bor] = bms(lmes);
-%disp('fMRI PXP');
-%disp(pxp);
+[alpha,exp_r,xp,pxp,bor] = bms(lmes);
+disp('fMRI PXP');
+disp(pxp);
 
 
 %{
