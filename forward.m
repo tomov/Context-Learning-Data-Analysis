@@ -19,10 +19,15 @@ function results = forward(N, num_particles, init_fn, choice_fn, update_fn)
         particles = resample_particles(particles, w);
     end
     
-    particles(i) = update_fn(n, particles(i)); % last update of posterior
+    for i=1:num_particles
+        particles(i) = update_fn(n, particles(i)); % last update of posterior
+    end
 
     results.ww_n = particles(1).w;
     results.choices = choices;
     results.P_n = mean(cat(1,particles.sample), 1);
+    results.samples = mean(cat(3, particles.samples), 3);
+    results.Posterior = mean(cat(3, particles.Posterior), 3);
 
-   % save forward.mat
+    save forward.mat
+

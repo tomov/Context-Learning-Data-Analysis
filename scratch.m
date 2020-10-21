@@ -1,3 +1,15 @@
+load forward.mat
+
+figure;
+subplot(1,2,1);
+plot(results.Posterior(:,[1 2 4]));
+legend({'M1', 'M2', 'M3'});
+title('ideal');
+
+subplot(1,2,2);
+plot(results.samples(:,[1 2 4]));
+legend({'M1', 'M2', 'M3'});
+title('MCMC');
 
 
 %{

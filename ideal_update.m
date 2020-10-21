@@ -140,3 +140,5 @@ tau = sqrt(diffusion_variance);
     %
     %likelihoods = [likelihoods; liks];
     %Posterior = [Posterior; particle.P];
+    particle.Posterior = [particle.Posterior; particle.P];
+    particle.samples = [particle.samples; particle.sample];

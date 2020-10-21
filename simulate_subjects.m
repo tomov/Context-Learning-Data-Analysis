@@ -277,7 +277,6 @@ for who = metadata.subjects
 
             elseif isequal(which_structures, 'MCMC_reset')
 
-                % MCMC that samples from true posterior in asymptote
                 % resets posterior to uniform (i.e. forgets data) after each change in belief
                 % like Neurath's ship
                 which_structures = [1 1 0 1 0];
@@ -297,9 +296,7 @@ for who = metadata.subjects
 
             elseif isequal(which_structures, 'MCMC_neurath')
 
-                % MCMC that samples from true posterior in asymptote
-                % neuraths posterior to uniform (i.e. forgets data) after each change in belief
-                % like Neurath's ship
+                % Neurath's ship
                 which_structures = [1 1 0 1 0];
 
                 num_particles = 1000;

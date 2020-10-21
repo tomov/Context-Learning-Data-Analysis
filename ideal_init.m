@@ -89,6 +89,8 @@ particle.S{5} = repmat(sigma_w^2 * eye(K), 1, 1, D); % note the third dimension 
 particle.P = which_structures / sum(which_structures);
 particle.sample = zeros(size(particle.P));
 
+particle.Posterior = [particle.P]; % history of posterior P(M | h_1:n)
+particle.samples = [particle.sample]; % history of samples
 %{
 % Store history for plotting and analysis
 %
