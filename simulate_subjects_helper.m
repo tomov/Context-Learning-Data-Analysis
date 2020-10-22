@@ -51,11 +51,10 @@ disp(options);
 % safeguards
 %assert(options.isFmriData == true);
 %assert(~options.fixedEffects);
-assert(isequal(options.which_structures, which_structures)); % which_structures provided for sanity check only
+%assert(isequal(options.which_structures, which_structures)); % which_structures provided for sanity check only
 
 % Run the model with the parameters
 %
 simulated = simulate_subjects(data, metadata, params, which_structures, which_rows);
-
 
 

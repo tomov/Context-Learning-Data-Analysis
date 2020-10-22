@@ -68,6 +68,7 @@ function EXPT = context_expt(local)
     
     % TR repetition time
     EXPT.TR = 2; %seconds
+    EXPT.nTRs = 100; 
     % Function handle to create subject multi structure
     EXPT.create_multi = @context_create_multi;
     EXPT.create_rsa = @context_create_rsa;
@@ -79,6 +80,7 @@ function EXPT = context_expt(local)
         EXPT.modeldir = [exptdir, 'glmOutput'];
     end
     EXPT.rsadir = [exptdir, 'rsaOutput'];
+    EXPT.run_duration =  EXPT.nTRs * EXPT.TR;
     
     % Where the data live, but not sure which data
     EXPT.datadir = [exptdir, 'testOutput'];

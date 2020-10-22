@@ -5077,6 +5077,7 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
         %
             
         % M1, M2, M1' with value & PE
+        % copy of 163
         %
         case 177
             which_structures = logical([1 1 0 1 0]);
@@ -5108,7 +5109,132 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
             multi.names{2} = 'trial_onset';
             multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
-        
+
+
+
+
+        % ----------------- ISL ----------------------
+
+        % M1, M2, M1' 
+        %
+        case {178, 179, 180, 181}
+
+            switch glmodel
+                case 178
+                    which_structures = logical([1 1 0 1 0]);
+                case 179
+                    which_structures = 'MCMC_ideal';
+                case 180
+                    which_structures = 'MCMC_reset';
+                case 181
+                    which_structures = 'MCMC_neurath';
+                otherwise
+                    assert(false);
+            end
+
+            [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat', 1, which_structures, which_train | which_test);
+
+            P = simulated.P(which_train,:);
+
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them!
+
+            [R,jb] = rref([ones(size(P,1),1) P]);
+
+            ix = jb(jb ~= 1) - 1;
+            names = {'M1', 'M2', 'nsatheu', 'M3', 'sathoeusnao'};
+
+            for j = 1:length(ix)
+                i = ix(j);
+                multi.pmod(1).name{j} = names{i};
+                multi.pmod(1).param{j} = P(:,i)';
+                multi.pmod(1).poly{j} = 1; % first order                    
+            end
+            
+            % M1 + M2 + M3 = 1
+            %multi.pmod(1).name{3} = 'M3';
+            %multi.pmod(1).param{3} = P(:,4)';
+            %multi.pmod(1).poly{3} = 1; % first order        
+            
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+           
+
+
+        % M1, M2, M1' with KL structures and summed KL weights
+        % copy of 163
+        %
+        case {182, 183, 184, 185}
+            switch glmodel
+                case 182
+                    which_structures = logical([1 1 0 1 0]);
+                case 183
+                    which_structures = 'MCMC_ideal';
+                case 184
+                    which_structures = 'MCMC_reset';
+                case 185
+                    which_structures = 'MCMC_neurath';
+                otherwise
+                    assert(false);
+            end
+
+            [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat', 1, which_structures, which_train | which_test);
+            [~,~,simulated_ideal] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat', 1, [1 1 0 1 0], which_train | which_test);
+
+            P = simulated.P(which_train,:);
+            Q = [[1 1 0 1 0]/3; P(1:end-1,:)];
+            KL_structures = KL_divergence(P, Q); 
+
+            KL_weights = [];
+            for i = [1 2 4]
+                KL_weights = [KL_weights simulated_ideal.KL_weights{i}(which_train)];
+            end
+            KL_sum = sum(KL_weights, 2);
+
+            KL_structures(isinf(KL_structures)) = 10; % TODO hack; happens if few particles
+            assert(~any(isnan(KL_structures)));
+            assert(~any(isinf(KL_structures)));
+            assert(~any(isnan(KL_sum)));
+            assert(~any(isinf(KL_sum)));
+
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = condition;
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them!
+                        
+            multi.pmod(1).name{1} = 'KL_structures';
+            multi.pmod(1).param{1} = KL_structures';
+            multi.pmod(1).poly{1} = 1; % first order                    
+
+            multi.pmod(1).name{2} = 'KL_weights';
+            multi.pmod(1).param{2} = KL_sum';
+            multi.pmod(1).poly{2} = 1; % first order        
+            
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+           
+
+
+
+
+
+
+
+
 
         otherwise
             assert(false, 'invalid glmodel -- should be one of the above');

@@ -94,8 +94,8 @@ particle.sample(ix) = 1;
 
 particle.P_prop = which_structures / sum(which_structures);
 
-particle.Posterior = [particle.P]; % history of posterior P(M | h_1:n)
-particle.samples = [particle.sample]; % history of samples
+particle.Posterior = []; % history of posterior P(M | h_1:n)
+particle.samples = []; % history of samples
 %{
 % Store history for plotting and analysis
 %

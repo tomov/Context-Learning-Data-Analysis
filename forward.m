@@ -25,9 +25,10 @@ function results = forward(N, num_particles, init_fn, choice_fn, update_fn)
 
     results.ww_n = particles(1).w;
     results.choices = choices;
-    results.P_n = mean(cat(1,particles.sample), 1);
+    results.P_n = mean(cat(1,particles.sample), 1); % for model_test.m
+    results.sample = mean(cat(1,particles.sample), 1); 
     results.samples = mean(cat(3, particles.samples), 3);
     results.Posterior = mean(cat(3, particles.Posterior), 3);
 
-    save forward.mat
+    %save forward.mat
 
