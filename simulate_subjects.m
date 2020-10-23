@@ -262,7 +262,7 @@ for who = metadata.subjects
 
                 % MCMC that samples from true posterior in asymptote
 
-                num_particles = 10;
+                num_particles = 1000;
                 init_fn = @() MCMC_ideal_init(train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
                 choice_fn = @(n, particle) MCMC_ideal_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, [1 1 0 1 0], false);
                 update_fn = @(n, particle) MCMC_ideal_update(n, particle, train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
@@ -283,7 +283,7 @@ for who = metadata.subjects
                 % resets posterior to uniform (i.e. forgets data) after each change in belief
                 % like Neurath's ship
 
-                num_particles = 10;
+                num_particles = 1000;
                 init_fn = @() MCMC_reset_init(train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
                 choice_fn = @(n, particle) MCMC_reset_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, [1 1 0 1 0], false);
                 update_fn = @(n, particle) MCMC_reset_update(n, particle, train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
@@ -302,7 +302,7 @@ for who = metadata.subjects
 
                 % Neurath's ship
 
-                num_particles = 10;
+                num_particles = 1000;
                 init_fn = @() MCMC_neurath_init(train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
                 choice_fn = @(n, particle) MCMC_neurath_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, [1 1 0 1 0], false);
                 update_fn = @(n, particle) MCMC_neurath_update(n, particle, train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);

@@ -1,4 +1,5 @@
-rsync -avh --filter='- /*/*/' --include="*/" --include='*.m'  --exclude='*' --rsh="/usr/local/bin/sshpass -p Mainatati13_!_ ssh -o StrictHostKeyChecking=no -l mtomov13" . mtomov13@ncflogin.rc.fas.harvard.edu:/ncf/gershman/Lab/scripts/matlab/ConLearn-ISL/ 
+#rsync -avh --filter='- /*/*/' --include="*/" --include='*.m'  --exclude='*' --rsh="/usr/local/bin/sshpass -p Mainatati13_!_ ssh -o StrictHostKeyChecking=no -l mtomov13" . mtomov13@ncflogin.rc.fas.harvard.edu:/ncf/gershman/Lab/scripts/matlab/ConLearn-ISL/ 
+rsync -avh --filter='- /*/*/' --include="*/"  --include='*.sh' --include='*.m'  --exclude='*' --rsh="/usr/local/bin/sshpass -p Mainatati13_!_ ssh -o StrictHostKeyChecking=no -l mtomov13" . mtomov13@ncflogin.rc.fas.harvard.edu:/ncf/gershman/Lab/scripts/matlab/ConLearn-ISL/ 
 
 #scp *.m mtomov13@ncflogin.rc.fas.harvard.edu:/ncf/gershman/Lab/scripts/matlab/ConLearn/
 #scp rsa_sanity.m mtomov13@ncflogin.rc.fas.harvard.edu:/ncf/gershman/Lab/scripts/matlab/ConLearn/

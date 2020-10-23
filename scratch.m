@@ -1,3 +1,16 @@
+%{
+ccnl_fmri_glm(context_expt,178,getGoodSubjects);
+ccnl_fmri_glm(context_expt,179,getGoodSubjects);
+ccnl_fmri_glm(context_expt,180,getGoodSubjects);
+ccnl_fmri_glm(context_expt,181,getGoodSubjects);
+ccnl_fmri_glm(context_expt,182,getGoodSubjects);
+ccnl_fmri_glm(context_expt,183,getGoodSubjects);
+ccnl_fmri_glm(context_expt,184,getGoodSubjects);
+ccnl_fmri_glm(context_expt,185,getGoodSubjects);
+%}
+
+
+%{
 load forward.mat
 
 figure;
@@ -9,7 +22,7 @@ title('ideal');
 subplot(1,2,2);
 plot(results.samples(:,[1 2 4]));
 legend({'M1', 'M2', 'M3'});
-title('MCMC');
+title('MCMC');%}
 
 
 %{

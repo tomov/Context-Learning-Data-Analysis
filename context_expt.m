@@ -38,7 +38,8 @@ function EXPT = context_expt(local)
     % set main directory
     %
     if local
-        exptdir = '/Users/momchil/Dropbox/research/context/'; % local group level on dropbox
+        exptdir = '/Volumes/fMRI/ConLearn/'; % local group level on dropbox
+        %exptdir = '/Users/momchil/Dropbox/research/context/'; % local group level on dropbox
         %exptdir = '/Volumes/fMRI/ConLearn/'; % local group level on external drive
     else
         exptdir = '/ncf/gershman/Lab/ConLearn/'; % on CBS central server
