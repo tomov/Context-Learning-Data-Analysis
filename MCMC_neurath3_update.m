@@ -24,7 +24,7 @@ predict = @(V_n) 1 ./ (1 + exp(-2 * inv_softmax_temp * V_n + inv_softmax_temp));
 N = size(stimuli, 1); % # of trials
 D = size(stimuli, 2); % # of stimuli
 K = 3;          % # of contexts
-num_structures = 5;
+num_structures = 6;
 
 sigma_r = sqrt(0.01);
 sigma_w = sqrt(prior_variance); % std for gaussian prior over weights, uncertainty; decreasing the learning rate
@@ -43,6 +43,7 @@ tau = sqrt(diffusion_variance);
     x{3} = [x{1}; c];
     x{4} = c;
     x{5} = c;
+    x{6} = 1;
 %{ 
     [V, vals] = model_value_helper(x, w, stimuli(n,:), contexts(n), P);
 
@@ -133,27 +134,63 @@ tau = sqrt(diffusion_variance);
         %
         particle.P = which_structures / sum(which_structures);
     end
-  
+ 
     k = poissrnd(1.6); % lambda from Bramley 2017, table 3 exp 1
 
-    % Metropolis rule
+    % Gibbs sample
     prev_sample = particle.sample;
     for i = 1:k
-        ix = find(particle.sample);
-        assert(ismember(ix, [1 2 4]));
+        ix = find(particle.sample); % current structure
+        edge = randsample(2,1); % which edge to sample, 1 = x->r, 2 = c->r
+        assert(ismember(ix, [1 2 4 6]));
         if ix == 1
-            P_prop = [0.5 0.5 0 0 0];
+            % M1: x->r
+            if edge == 1
+                % sample x->r => either M1 or M6
+                candidates = [1 0 0 0 0 1];
+            else
+                % sample c->r => either M1 or M2
+                candidates = [1 1 0 0 0 0];
+            end 
         elseif ix == 2
-            P_prop = particle.P_prop;
+            % M2: x->r, c->r
+            if edge == 1
+                % sample x->r => either M2 or M4
+                candidates = [0 1 0 1 0 0];
+            else
+                % sample c->r => either M1 or M2
+                candidates = [1 1 0 0 0 0];
+            end 
+        elseif ix == 4
+            % M4: c->r
+            if edge == 1
+                % sample x->r => either M2 or M4
+                candidates = [0 1 0 1 0 0];
+            else
+                % sample c->r => either M4 or M6
+                candidates = [0 0 0 1 0 1];
+            end 
         else
-            P_prop = [0 0.5 0 0.5 0];
+            % M6: none
+            if edge == 1
+                % sample x->r => either M1 or M6
+                candidates = [1 0 0 0 0 1];
+            else
+                % sample c->r => either M4 or M6
+                candidates = [0 0 0 1 0 1];
+            end 
         end
 
-        jx = randsample(length(particle.P), 1, true, P_prop);
-        alpha = particle.P(jx) / particle.P(ix);
-        if rand < alpha
-            ix = jx;
+        P_prop = particle.P .* candidates; % condition on other edge
+        P_prop = P_prop / sum(P_prop); % normalize
+
+        if isnan(P_prop(1))
+            % impossible structures => just sample uniformly
+            P_prop = candidates / sum(candidates);
         end
+        assert(~any(isinf(P_prop)));
+
+        ix = randsample(length(particle.P), 1, true, P_prop);
         particle.sample = zeros(size(particle.P));
         particle.sample(ix) = 1;
 
@@ -162,9 +199,9 @@ tau = sqrt(diffusion_variance);
 
     if ~all(prev_sample == particle.sample)
         % reset evidence
-
         particle.P = which_structures / sum(which_structures);
     end
+
 
 
     % log stuff

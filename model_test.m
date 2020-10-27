@@ -40,6 +40,7 @@ for n = 1:N
     x{3} = [x{1}; c];
     x{4} = c;
     x{5} = c;
+    x{6} = 1;
  
     [V, vals] = model_value_helper(x, w, stimuli(n,:), contexts(n), P);
 

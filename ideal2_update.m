@@ -1,7 +1,7 @@
 function particle=ideal_update(n, particle, stimuli, contexts, rewards, params, which_structures, DO_PRINT)
 
 
-% copy of the loop of model_train.m
+% copy of ideal_update but with M6
 
 assert(numel(params) == 2 || numel(params) == 3 || numel(params) == 4);
 prior_variance = params(1);
@@ -24,7 +24,7 @@ predict = @(V_n) 1 ./ (1 + exp(-2 * inv_softmax_temp * V_n + inv_softmax_temp));
 N = size(stimuli, 1); % # of trials
 D = size(stimuli, 2); % # of stimuli
 K = 3;          % # of contexts
-num_structures = 5;
+num_structures = 6;
 
 sigma_r = sqrt(0.01);
 sigma_w = sqrt(prior_variance); % std for gaussian prior over weights, uncertainty; decreasing the learning rate
@@ -43,6 +43,8 @@ tau = sqrt(diffusion_variance);
     x{3} = [x{1}; c];
     x{4} = c;
     x{5} = c;
+    x{6} = 1;
+
 %{ 
     [V, vals] = model_value_helper(x, w, stimuli(n,:), contexts(n), P);
 
@@ -133,39 +135,8 @@ tau = sqrt(diffusion_variance);
         %
         particle.P = which_structures / sum(which_structures);
     end
-  
-    k = poissrnd(1.6); % lambda from Bramley 2017, table 3 exp 1
 
-    % Metropolis rule
-    prev_sample = particle.sample;
-    for i = 1:k
-        ix = find(particle.sample);
-        assert(ismember(ix, [1 2 4]));
-        if ix == 1
-            P_prop = [0.5 0.5 0 0 0];
-        elseif ix == 2
-            P_prop = particle.P_prop;
-        else
-            P_prop = [0 0.5 0 0.5 0];
-        end
-
-        jx = randsample(length(particle.P), 1, true, P_prop);
-        alpha = particle.P(jx) / particle.P(ix);
-        if rand < alpha
-            ix = jx;
-        end
-        particle.sample = zeros(size(particle.P));
-        particle.sample(ix) = 1;
-
-        %particle.sample
-    end
-
-    if ~all(prev_sample == particle.sample)
-        % reset evidence
-
-        particle.P = which_structures / sum(which_structures);
-    end
-
+    particle.sample = particle.P;
 
     % log stuff
     %

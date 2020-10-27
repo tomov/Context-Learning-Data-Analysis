@@ -4,10 +4,10 @@ clear all;
 
 EXPT = context_expt();
 
-r = 4; % mm
+r = 6; % mm
 
-masks = isl_create_masks(false, r);
-glms = [178 179 180 181];
+masks = isl_create_masks(true, r);
+glms = [1 178 179 180 181];
 
 for c = 1:length(masks)
     mask = masks{c};
@@ -28,10 +28,12 @@ for c = 1:length(masks)
     pxp
 
     pxps(c,:) = pxp;
+    xps(c,:) = xp;
 end
 
 T = table(masks', pxps, xps)
 
 
-save('isl_glm_bms.mat');
+filename = sprintf('isl_glm_bms_r=%.4fmm.mat', r);
+save(fullfile('mat', filename));
 

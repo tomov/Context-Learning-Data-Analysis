@@ -1,3 +1,41 @@
+
+clear all;
+
+[data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
+
+[params, ~] = model_params('results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat')
+%simulated = simulate_subjects(data, metadata, params, 'ideal2');
+simulated = simulate_subjects(data, metadata, params, 'MCMC_neurath3');
+
+
+
+%{
+clear all;
+
+load rdms/rdms_searchlight_isl.mat;
+
+
+names = {Searchlight.name};
+Ts = [];
+Ps = [];
+for r = 1:length(Searchlight)
+    rho1 = squeeze(all_subject_rhos(r,1,:));
+
+    [h,p,ci,stat] = ttest(atanh(rho1));
+    stat.tstat
+
+    for m = 2:4
+        rho2 = squeeze(all_subject_rhos(r,m,:));
+        [h,p,ci,stat] = ttest(atanh(rho1), atanh(rho2));
+        Ts(r,m) = stat.tstat;
+        Ps(r,m) = p;
+    end
+end
+%}
+
+
+
+
 %{
 ccnl_fmri_glm(context_expt,178,getGoodSubjects);
 ccnl_fmri_glm(context_expt,179,getGoodSubjects);
@@ -22,7 +60,9 @@ title('ideal');
 subplot(1,2,2);
 plot(results.samples(:,[1 2 4]));
 legend({'M1', 'M2', 'M3'});
-title('MCMC');%}
+title('MCMC');
+
+%}
 
 
 %{

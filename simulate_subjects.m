@@ -36,7 +36,13 @@ num_structures = 5;
 
 num_particles = 1000;
 
-
+if ischar(which_structures) && startsWith(which_structures, 'MCMC')
+    filename = sprintf('%s_np=1000.mat', which_structures);
+    if exist(fullfile('mat', filename)) == 2
+        load(fullfile('mat', filename));
+        return
+    end
+end
 
 
 
@@ -265,9 +271,29 @@ for who = metadata.subjects
                 simulated.P(which_test,:) = repmat(train_results.sample, sum(which_test), 1); % last one
 
 
+            elseif isequal(which_structures, 'ideal2')
+
+                % ideal observer model with M6 = no cue, no context, but run via the MCMC pipeline
+                % for comparison with MCMC_neurath3
+
+                num_particles = 1;
+                init_fn = @() ideal2_init(train_x, train_k, train_r, subject_params, [1 1 0 1 0 1], false);
+                choice_fn = @(n, particle) ideal2_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, [1 1 0 1 0 1], false);
+                update_fn = @(n, particle) ideal2_update(n, particle, train_x, train_k, train_r, subject_params, [1 1 0 1 0 1], false);
+
+                N = size(train_x,1);
+                train_results = forward(N, num_particles, init_fn, choice_fn, update_fn);
+                simulated.pred(which_train) = train_results.choices;
+                simulated.P(which_train,:) = train_results.samples;
+
+                test_results = model_test(test_x, test_k, train_results, subject_params);
+                simulated.pred(which_test) = test_results.choices;
+                simulated.P(which_test,:) = repmat(train_results.sample, sum(which_test), 1); % last one
+
+
             elseif isequal(which_structures, 'MCMC_ideal')
 
-                % MCMC that samples from true posterior in asymptote
+                % MCMC that samples from true posterior in asymptote, with MH rule
 
                 init_fn = @() MCMC_ideal_init(train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
                 choice_fn = @(n, particle) MCMC_ideal_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, [1 1 0 1 0], false);
@@ -287,7 +313,7 @@ for who = metadata.subjects
             elseif isequal(which_structures, 'MCMC_reset')
 
                 % resets posterior to uniform (i.e. forgets data) after each change in belief
-                % like Neurath's ship
+                % like Neurath's ship, but with MH rule
 
                 init_fn = @() MCMC_reset_init(train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
                 choice_fn = @(n, particle) MCMC_reset_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, [1 1 0 1 0], false);
@@ -305,7 +331,7 @@ for who = metadata.subjects
 
             elseif isequal(which_structures, 'MCMC_neurath')
 
-                % Neurath's ship
+                % Neurath's ship, with MH rule and k = 1
 
                 init_fn = @() MCMC_neurath_init(train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
                 choice_fn = @(n, particle) MCMC_neurath_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, [1 1 0 1 0], false);
@@ -323,7 +349,7 @@ for who = metadata.subjects
 
             elseif isequal(which_structures, 'MCMC_neurath2')
 
-                % Neurath's ship, with k
+                % Neurath's ship, with MH rule and k ~ Pois
 
                 init_fn = @() MCMC_neurath_init(train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
                 choice_fn = @(n, particle) MCMC_neurath_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, [1 1 0 1 0], false);
@@ -337,6 +363,25 @@ for who = metadata.subjects
                 test_results = model_test(test_x, test_k, train_results, subject_params);
                 simulated.pred(which_test) = test_results.choices;
                 simulated.P(which_test,:) = repmat(train_results.sample, sum(which_test), 1); % last one
+
+
+            elseif isequal(which_structures, 'MCMC_neurath3')
+
+                % Neurath's ship, with MH rule and k ~ Pois
+
+                init_fn = @() MCMC_neurath3_init(train_x, train_k, train_r, subject_params, [1 1 0 1 0 1], false);
+                choice_fn = @(n, particle) MCMC_neurath3_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, [1 1 0 1 0 1], false);
+                update_fn = @(n, particle) MCMC_neurath3_update(n, particle, train_x, train_k, train_r, subject_params, [1 1 0 1 0 1], false);
+
+                N = size(train_x,1);
+                train_results = forward(N, num_particles, init_fn, choice_fn, update_fn);
+                simulated.pred(which_train) = train_results.choices;
+                simulated.P(which_train,:) = train_results.samples;
+
+                test_results = model_test(test_x, test_k, train_results, subject_params);
+                simulated.pred(which_test) = test_results.choices;
+                simulated.P(which_test,:) = repmat(train_results.sample, sum(which_test), 1); % last one
+
 
 
 
