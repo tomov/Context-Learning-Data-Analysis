@@ -1,4 +1,5 @@
 
+%{
 clear all;
 
 [data, metadata] = load_data(fullfile('data', 'fmri.csv'), true, getGoodSubjects());
@@ -6,7 +7,7 @@ clear all;
 [params, ~] = model_params('results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat')
 %simulated = simulate_subjects(data, metadata, params, 'ideal2');
 simulated = simulate_subjects(data, metadata, params, 'MCMC_neurath4');
-
+%}
 
 
 %{
@@ -45,6 +46,11 @@ ccnl_fmri_glm(context_expt,182,getGoodSubjects);
 ccnl_fmri_glm(context_expt,183,getGoodSubjects);
 ccnl_fmri_glm(context_expt,184,getGoodSubjects);
 ccnl_fmri_glm(context_expt,185,getGoodSubjects);
+
+ccnl_fmri_glm(context_expt,188,getGoodSubjects);
+ccnl_fmri_glm(context_expt,189,getGoodSubjects);
+ccnl_fmri_glm(context_expt,190,getGoodSubjects);
+ccnl_fmri_glm(context_expt,187,getGoodSubjects);
 %}
 
 

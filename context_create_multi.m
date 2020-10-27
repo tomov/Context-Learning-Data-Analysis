@@ -5117,7 +5117,7 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
 
         % M1, M2, M1' 
         %
-        case {178, 179, 180, 181}
+        case {178, 179, 180, 181, 186, 187, 188, 189, 190}
 
             switch glmodel
                 case 178
@@ -5128,6 +5128,16 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
                     which_structures = 'MCMC_reset';
                 case 181
                     which_structures = 'MCMC_neurath';
+                case 186
+                    which_structures = 'ideal'; % same as 178
+                case 187
+                    which_structures = 'ideal2';
+                case 188
+                    which_structures = 'MCMC_neurath2';
+                case 189
+                    which_structures = 'MCMC_neurath3';
+                case 190
+                    which_structures = 'MCMC_neurath4';
                 otherwise
                     assert(false);
             end
@@ -5135,6 +5145,8 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
             [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat', 1, which_structures, which_train | which_test);
 
             P = simulated.P(which_train,:);
+
+            P
 
             % context role @ feedback/outcome onset
             % 
@@ -5147,7 +5159,7 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
             [R,jb] = rref([ones(size(P,1),1) P]);
 
             ix = jb(jb ~= 1) - 1;
-            names = {'M1', 'M2', 'nsatheu', 'M3', 'sathoeusnao'};
+            names = {'M1', 'M2', 'nsatheu', 'M3', 'sathoeusnao', 'M6'};
 
             for j = 1:length(ix)
                 i = ix(j);

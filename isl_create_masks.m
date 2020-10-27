@@ -1,5 +1,3 @@
-% create RLPFC masks based on Badre et al. 2012
-%
 function masks = isl_create_masks(do_create, sphere)
 
 mni = [ 44 20 -6; ... % AI  context
