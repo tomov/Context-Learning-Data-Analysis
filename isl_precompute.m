@@ -16,9 +16,26 @@ for i = 1:length(Model)
         save(fullfile('mat', filename), 'simulated', 'model_name', 'params');
     end
 end
-%}
 
 model_name = 'MCMC_neurath4';    
+simulated = simulate_subjects(data, metadata, params, model_name);
+filename = sprintf('%s_np=1000.mat', model_name);
+save(fullfile('mat', filename), 'simulated', 'model_name', 'params');
+%}
+
+
+
+model_name = 'MCMC_ideal_w=1';    
+simulated = simulate_subjects(data, metadata, params, model_name);
+filename = sprintf('%s_np=1000.mat', model_name);
+save(fullfile('mat', filename), 'simulated', 'model_name', 'params');
+
+model_name = 'MCMC_reset_w=1';    
+simulated = simulate_subjects(data, metadata, params, model_name);
+filename = sprintf('%s_np=1000.mat', model_name);
+save(fullfile('mat', filename), 'simulated', 'model_name', 'params');
+
+model_name = 'MCMC_neurath_w=1';    
 simulated = simulate_subjects(data, metadata, params, model_name);
 filename = sprintf('%s_np=1000.mat', model_name);
 save(fullfile('mat', filename), 'simulated', 'model_name', 'params');

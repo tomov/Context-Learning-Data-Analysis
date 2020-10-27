@@ -8,7 +8,7 @@ r = 10; % mm
 
 masks = isl_create_masks(true, r);
 %glms = [178 179 180 181  187 188 189 190];
-glms = [178 179 180 181];
+glms = [1 178 179 180 181];
 
 %masks = isl_create_masks_KL(true, r);
 %glms = [182 183 184 185  ];

@@ -401,6 +401,60 @@ for who = metadata.subjects
                 simulated.P(which_test,:) = repmat(train_results.sample, sum(which_test), 1); % last one
 
 
+            elseif isequal(which_structures, 'MCMC_ideal_w=1')
+
+                % MCMC_ideal but importance weights = 1
+
+                init_fn = @() MCMC_ideal_init(train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
+                choice_fn = @(n, particle) MCMC_fake_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, [1 1 0 1 0], false);
+                update_fn = @(n, particle) MCMC_ideal_update(n, particle, train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
+
+                N = size(train_x,1);
+                train_results = forward(N, num_particles, init_fn, choice_fn, update_fn);
+                simulated.pred(which_train) = train_results.choices;
+
+                simulated.P(which_train,:) = train_results.samples;
+
+                test_results = model_test(test_x, test_k, train_results, subject_params);
+                simulated.pred(which_test) = test_results.choices;
+                simulated.P(which_test,:) = repmat(train_results.sample, sum(which_test), 1); % last one
+
+
+
+            elseif isequal(which_structures, 'MCMC_reset_w=1')
+
+                % MCMC_reset but importance weights = 1
+
+                init_fn = @() MCMC_reset_init(train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
+                choice_fn = @(n, particle) MCMC_fake_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, [1 1 0 1 0], false);
+                update_fn = @(n, particle) MCMC_reset_update(n, particle, train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
+
+                N = size(train_x,1);
+                train_results = forward(N, num_particles, init_fn, choice_fn, update_fn);
+                simulated.pred(which_train) = train_results.choices;
+                simulated.P(which_train,:) = train_results.samples;
+
+                test_results = model_test(test_x, test_k, train_results, subject_params);
+                simulated.pred(which_test) = test_results.choices;
+                simulated.P(which_test,:) = repmat(train_results.sample, sum(which_test), 1); % last one
+
+
+            elseif isequal(which_structures, 'MCMC_neurath_w=1')
+
+                % MCMC_neurath but importance weights = 1
+
+                init_fn = @() MCMC_neurath_init(train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
+                choice_fn = @(n, particle) MCMC_fake_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, [1 1 0 1 0], false);
+                update_fn = @(n, particle) MCMC_neurath_update(n, particle, train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
+
+                N = size(train_x,1);
+                train_results = forward(N, num_particles, init_fn, choice_fn, update_fn);
+                simulated.pred(which_train) = train_results.choices;
+                simulated.P(which_train,:) = train_results.samples;
+
+                test_results = model_test(test_x, test_k, train_results, subject_params);
+                simulated.pred(which_test) = test_results.choices;
+                simulated.P(which_test,:) = repmat(train_results.sample, sum(which_test), 1); % last one
 
 
 

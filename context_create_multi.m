@@ -5138,6 +5138,12 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
                     which_structures = 'MCMC_neurath3';
                 case 190
                     which_structures = 'MCMC_neurath4';
+                case 191
+                    which_structures = 'MCMC_ideal_w=1';
+                case 192
+                    which_structures = 'MCMC_reset_w=1';
+                case 193
+                    which_structures = 'MCMC_neurath_w=1';
                 otherwise
                     assert(false);
             end
