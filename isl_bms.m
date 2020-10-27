@@ -41,6 +41,14 @@ models(idx).params_idx = 1;
 models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f, \\tau^2 = %.4e, w_0 = %.4f';
 models(idx).do_include = true;
 
+idx = idx + 1;
+models(idx).which_structures = 'MCMC_neurath2'; 
+models(idx).name = 'MCMC_neurath2';
+models(idx).params_file = fullfile('results', 'fit_params_results_M1M2M1_25nstarts_tau_w0.mat');
+models(idx).params_idx = 1;
+models(idx).params_format = '\\sigma^2_w = %.4f, \\beta = %.4f, \\tau^2 = %.4e, w_0 = %.4f';
+models(idx).do_include = true;
+
 % filter models -- only include some of them
 models = models(logical([models.do_include]));
 

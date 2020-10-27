@@ -32,6 +32,13 @@ if nargin < 6 || isempty(DO_PRINT)
 end
 
 num_structures = 5;
+                
+
+num_particles = 1000;
+
+
+
+
 
 % backwards compatibility: correct for extra structures from old fits
 if numel(which_structures) < num_structures
@@ -262,7 +269,6 @@ for who = metadata.subjects
 
                 % MCMC that samples from true posterior in asymptote
 
-                num_particles = 1000;
                 init_fn = @() MCMC_ideal_init(train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
                 choice_fn = @(n, particle) MCMC_ideal_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, [1 1 0 1 0], false);
                 update_fn = @(n, particle) MCMC_ideal_update(n, particle, train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
@@ -283,7 +289,6 @@ for who = metadata.subjects
                 % resets posterior to uniform (i.e. forgets data) after each change in belief
                 % like Neurath's ship
 
-                num_particles = 1000;
                 init_fn = @() MCMC_reset_init(train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
                 choice_fn = @(n, particle) MCMC_reset_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, [1 1 0 1 0], false);
                 update_fn = @(n, particle) MCMC_reset_update(n, particle, train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
@@ -302,7 +307,6 @@ for who = metadata.subjects
 
                 % Neurath's ship
 
-                num_particles = 1000;
                 init_fn = @() MCMC_neurath_init(train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
                 choice_fn = @(n, particle) MCMC_neurath_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, [1 1 0 1 0], false);
                 update_fn = @(n, particle) MCMC_neurath_update(n, particle, train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
@@ -315,6 +319,25 @@ for who = metadata.subjects
                 test_results = model_test(test_x, test_k, train_results, subject_params);
                 simulated.pred(which_test) = test_results.choices;
                 simulated.P(which_test,:) = repmat(train_results.sample, sum(which_test), 1); % last one
+
+
+            elseif isequal(which_structures, 'MCMC_neurath2')
+
+                % Neurath's ship, with k
+
+                init_fn = @() MCMC_neurath_init(train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
+                choice_fn = @(n, particle) MCMC_neurath_choice(n, particle, train_x, train_k, train_r, train_a, subject_params, [1 1 0 1 0], false);
+                update_fn = @(n, particle) MCMC_neurath2_update(n, particle, train_x, train_k, train_r, subject_params, [1 1 0 1 0], false);
+
+                N = size(train_x,1);
+                train_results = forward(N, num_particles, init_fn, choice_fn, update_fn);
+                simulated.pred(which_train) = train_results.choices;
+                simulated.P(which_train,:) = train_results.samples;
+
+                test_results = model_test(test_x, test_k, train_results, subject_params);
+                simulated.pred(which_test) = test_results.choices;
+                simulated.P(which_test,:) = repmat(train_results.sample, sum(which_test), 1); % last one
+
 
 
 

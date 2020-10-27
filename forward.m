@@ -30,5 +30,4 @@ function results = forward(N, num_particles, init_fn, choice_fn, update_fn)
     results.samples = mean(cat(3, particles.samples), 3);
     results.Posterior = mean(cat(3, particles.Posterior), 3);
 
-    %save forward.mat
 

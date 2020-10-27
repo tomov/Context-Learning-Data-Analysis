@@ -2,7 +2,6 @@
 %
 function masks = isl_create_masks(do_create, sphere)
 
-% RLPFC from Badre et al. 2012
 mni = [ 44 20 -6; ... % AI  context
         -46 -38 44; ... % IPL  context
         42 24 24; ... % IFG  Agency

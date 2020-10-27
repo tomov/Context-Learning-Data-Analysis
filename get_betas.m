@@ -14,7 +14,8 @@ end
 % Load the neural data
 %
 [~, maskname, ~] = fileparts(mask);
-betas_filename = fullfile('betas', ['betas_', regressor_prefix, '_', maskname, suffix, '.mat']);
+%betas_filename = fullfile('betas', ['betas_', regressor_prefix, '_', maskname, suffix, '.mat']);
+betas_filename = fullfile('/Volumes/fMRI/context/code/betas', ['betas_', regressor_prefix, '_', maskname, suffix, '.mat']);
 
 % Try to load the precomputed betas from the single mat file. If they
 % haven't been precomputed yet, load them and save them in a file for

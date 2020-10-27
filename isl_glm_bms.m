@@ -30,7 +30,7 @@ for c = 1:length(masks)
     pxps(c,:) = pxp;
 end
 
-T = table(masks', pxps)
+T = table(masks', pxps, xps)
 
 
 save('isl_glm_bms.mat');

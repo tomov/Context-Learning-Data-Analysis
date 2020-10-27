@@ -42,7 +42,8 @@ min_z = min(all_z);
 max_z = max(all_z);
 
 
-for event = {'trial_onset', 'feedback_onset'}
+%for event = {'trial_onset', 'feedback_onset'}
+for event = {'feedback_onset'}
     event = event{1};
 
     if use_pregenerated_activations
