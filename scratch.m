@@ -5,7 +5,7 @@ clear all;
 
 [params, ~] = model_params('results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat')
 %simulated = simulate_subjects(data, metadata, params, 'ideal2');
-simulated = simulate_subjects(data, metadata, params, 'MCMC_neurath3');
+simulated = simulate_subjects(data, metadata, params, 'MCMC_neurath4');
 
 
 

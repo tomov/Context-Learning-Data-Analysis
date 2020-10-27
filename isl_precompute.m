@@ -18,7 +18,7 @@ for i = 1:length(Model)
 end
 %}
 
-model_name = 'MCMC_neurath3';    
+model_name = 'MCMC_neurath4';    
 simulated = simulate_subjects(data, metadata, params, model_name);
 filename = sprintf('%s_np=1000.mat', model_name);
 save(fullfile('mat', filename), 'simulated', 'model_name', 'params');
