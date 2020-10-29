@@ -5116,6 +5116,7 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
         % ----------------- ISL ----------------------
 
         % M1, M2, M1' 
+        % with linearly independent P's only
         %
         case {178, 179, 180, 181, 186, 187, 188, 189, 190, 191, 192, 193}
 
@@ -5247,6 +5248,59 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
            
 
 
+
+        % M1, M2, M1' 
+        %
+        case {194, 195, 196, 197}
+
+            switch glmodel
+                case 194
+                    which_structures = logical([1 1 0 1 0]);
+                case 195
+                    which_structures = 'MCMC_ideal';
+                case 196
+                    which_structures = 'MCMC_reset';
+                case 197
+                    which_structures = 'MCMC_neurath';
+                otherwise
+                    assert(false);
+            end
+
+            [~,~,simulated] = simulate_subjects_helper(true, 'results/fit_params_results_M1M2M1_25nstarts_tau_w0.mat', 1, which_structures, which_train | which_test);
+
+            P = simulated.P(which_train,:);
+
+            P
+
+            % context role @ feedback/outcome onset
+            % 
+            multi.names{1} = 'feedback_onset';
+            multi.onsets{1} = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            multi.durations{1} = zeros(size(data.contextRole(which_train)));
+
+            multi.orth{1} = 0; % do NOT orthogonalize them!
+
+            ix = [1 2 4];
+            names = {'M1', 'M2', 'nsatheu', 'M3', 'sathoeusnao', 'M6'};
+
+            for j = 1:length(ix)
+                i = ix(j);
+                multi.pmod(1).name{j} = names{i};
+                multi.pmod(1).param{j} = P(:,i)';
+                multi.pmod(1).poly{j} = 1; % first order                    
+            end
+            
+            % M1 + M2 + M3 = 1
+            %multi.pmod(1).name{3} = 'M3';
+            %multi.pmod(1).param{3} = P(:,4)';
+            %multi.pmod(1).poly{3} = 1; % first order        
+            
+            % const @ trial onset (trials 1..20)
+            % 
+            multi.names{2} = 'trial_onset';
+            multi.onsets{2} = cellfun(@str2num, data.actualChoiceOnset(which_train))';
+            multi.durations{2} = zeros(size(data.contextRole(which_train)));
+           
 
 
 

@@ -73,6 +73,7 @@ function EXPT = context_expt(local)
     % Function handle to create subject multi structure
     EXPT.create_multi = @context_create_multi;
     EXPT.create_rsa = @context_create_rsa;
+    EXPT.exptdir = exptdir;
     % Where you want model output data to live
     if local
         %EXPT.modeldir = [exptdir, 'neural'];
