@@ -6,9 +6,11 @@ EXPT = context_expt();
 
 r = 10; % mm
 
-masks = isl_create_masks(true, r);
-%glms = [178 179 180 181  187 188 189 190];
-glms = [1 178 179 180 181];
+masks = isl_create_masks(false, r);
+%glms = [1 178 179 180 181  187 188 189 190];
+%glms = [1 178 179 180 181];
+%glms = [1 178 191 192 193];
+glms = [1 178  179 180 181 191 192 193];
 
 %masks = isl_create_masks_KL(true, r);
 %glms = [182 183 184 185  ];
@@ -40,6 +42,6 @@ end
 T = table(masks', pxps, bors)
 
 
-filename = sprintf('isl_glm_bms3_r=%.4fmm.mat', r);
+filename = sprintf('isl_glm_bms_control_r=%.4fmm.mat', r);
 save(fullfile('mat', filename));
 

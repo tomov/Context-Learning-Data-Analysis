@@ -5117,7 +5117,7 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
 
         % M1, M2, M1' 
         %
-        case {178, 179, 180, 181, 186, 187, 188, 189, 190}
+        case {178, 179, 180, 181, 186, 187, 188, 189, 190, 191, 192, 193}
 
             switch glmodel
                 case 178

@@ -1,3 +1,8 @@
+%{
+ccnl_fmri_glm(context_expt,191,getGoodSubjects);
+ccnl_fmri_glm(context_expt,192,getGoodSubjects);
+%}
+%ccnl_fmri_glm(context_expt,193,getGoodSubjects);
 
 %{
 clear all;

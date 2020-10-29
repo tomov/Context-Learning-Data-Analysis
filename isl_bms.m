@@ -105,6 +105,7 @@ assert(size(lmes, 2) == numel(models)); % cols = models
 [alpha,exp_r,xp,pxp,bor] = bms(lmes);
 
 {models.name}
-disp('fMRI PXP');
-disp(pxp);
+pxp
 bor
+
+save('mat/isl_bms2.mat');
