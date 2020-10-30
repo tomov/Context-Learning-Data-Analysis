@@ -96,4 +96,4 @@ end
 
 save('mat/CV.mat', '-v7.3');
 
-plot_CV;
+CV_plot;
