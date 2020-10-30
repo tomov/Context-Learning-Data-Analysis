@@ -1,11 +1,12 @@
-%clear all;
+clear all;
 
-%CV_expts;
+CV_expts;
 
 r = 10; % mm
 masks = isl_create_masks(false, r);
+masks = masks(1:4);
 
-glmodels = 194:197;
+glmodels = [1 194:197];
 goodSubjs = getGoodSubjects();
 
 for m = 1:length(masks)
@@ -43,18 +44,28 @@ for m = 1:length(masks)
                 B_test = spm_data_read(SPM_test.Vbeta, inds);
                 cd(cdir);
 
-                res = KWY_test - SPM_test.xX.xKXs.X * B_test; % for sanity
-                res_CV = KWY_test - SPM_test.xX.xKXs.X * B_train;
-
-                res2 = ccnl_get_residuals(EXPT_test{k}, glmodel, maskfile, subj, true, true);
-                res2 = res2{1};
-                assert(immse(res, res2) < 1e-9);
+                KWY_pred = SPM_test.xX.xKXs.X * B_train;
+                res_CV = KWY_test - KWY_pred;
 
                 ResMS_CV = sum(res_CV.^2, 1) / SPM_test.xX.trRV;
                 mses{m}(s,g,k) = mean(ResMS_CV);
 
+                r = zeros(1, size(KWY_pred,2));
+                for i = 1:size(KWY_pred, 2)
+                    r(i) = corr(KWY_pred(:,i), KWY_test(:,i));
+                end
+                avg_rs{m}(s,g,k) = mean(r);
+                r_avgs{m}(s,g,k) = corr(mean(KWY_pred,2), mean(KWY_test,2));
+
                 % sanity checks
                 %
+                %{
+                res = KWY_test - SPM_test.xX.xKXs.X * B_test; % for sanity
+                res2 = ccnl_get_residuals(EXPT_test{k}, glmodel, maskfile, subj, true, true);
+                res2 = res2{1};
+                assert(immse(res, res2) < 1e-9);
+                %}
+
                 %{
                 KWX = spm_filter(SPM_test.xX.K, SPM_test.xX.W * SPM_test.xX.X);
                 immse(KWX, SPM_test.xX.xKXs.X)
@@ -78,6 +89,8 @@ for m = 1:length(masks)
     end
 
     mse{m} = mean(mses{m}, 3);
+    avg_r{m} = mean(avg_rs{m}, 3);
+    r_avg{m} = mean(r_avgs{m}, 3);
 
 end
 

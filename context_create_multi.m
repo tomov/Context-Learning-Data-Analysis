@@ -5302,6 +5302,25 @@ function multi = context_create_multi(glmodel, subj, run, save_output)
             multi.durations{2} = zeros(size(data.contextRole(which_train)));
            
 
+        % fb onset beta series
+        % vs. 143 
+        %
+        case 198
+
+            trial_onsets = cellfun(@str2num, data.actualChoiceOnset(which_rows))';
+            multi.names{1} = 'trial_onset';
+            multi.onsets{1} = trial_onsets;
+            multi.durations{1} = zeros(size(trial_onsets));
+           
+            idx = 1;
+            
+            feedback_onsets = cellfun(@str2num, data.actualFeedbackOnset(which_train))';
+            for t=1:metadata.trainingTrialsPerRun
+                idx = idx + 1;
+                multi.names{idx} = ['feedback_onset_', num2str(t)];
+                multi.onsets{idx} = [feedback_onsets(t)];
+                multi.durations{idx} = [0];
+            end
 
 
 

@@ -2,12 +2,12 @@
 % SPM concatenation
 % for CV
 
-for model = 1 % 194 %194:197
+for model = 194 % 195 %194:197
 
     good = getGoodSubjects();
     EXPT = context_expt();
 
-    for s = 1:length(good)
+    for s = 1%:length(good)
         subj = good(s);
 
         ccnl_fmri_glm(context_expt(), model, subj, true);
