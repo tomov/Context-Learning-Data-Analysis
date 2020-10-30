@@ -1,5 +1,8 @@
 % plot results of CV
 
+glmodels = which_structuress;
+glmodels{1} = 'ideal';
+
 figure;
 
 for m = 1:length(masks)
@@ -20,3 +23,8 @@ for m = 1:length(masks)
     xticklabels(glmodels);
     xlabel('GLM');
 end 
+
+m = 3;
+for g = 1:3
+    [h,p,ci,stat] = ttest(atanh(r_avg{m}(:,4)), atanh(r_avg{m}(:,g)))
+end
