@@ -8,8 +8,10 @@ CV_expts;
 EXPTs = [EXPT_train EXPT_test];
 
 good = getGoodSubjects();
+%glmodels = [1 194:197];
+glmodels = 1324;
 
-for model = 194:197
+for model = glmodels 
 
     for e = 1:length(EXPTs)
 
@@ -41,16 +43,18 @@ for model = 194:197
             legend({'M1', 'M2', 'M3'});
             %}
 
-            regs = {'M1', 'M2', 'M3', 'trial_onset', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'constant'};
+            regs = {'irrelevant', 'modulatory', 'additive', 'M1', 'M2', 'M3', 'trial_onset', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'constant'};
 
             X = zeros(size(SPM.xX.X,1),0);
             name = [];
             for i = 1:length(regs)
                 j = contains(SPM.xX.name, regs{i});
-                assert(sum(j) == 6 || sum(j) == 3);
+                assert(sum(j) == 6 || sum(j) == 3 || sum(j) == 0 || sum(j) == 2 || sum(j) == 1);
 
-                name = [name regs(i)];
-                X = [X sum(SPM.xX.X(:,j), 2)];
+                if sum(j) > 0
+                    name = [name regs(i)];
+                    X = [X sum(SPM.xX.X(:,j), 2)];
+                end 
             end
 
             %{

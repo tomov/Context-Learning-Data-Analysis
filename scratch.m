@@ -1,3 +1,12 @@
+beta = SPM_test.xX.pKX * KWY_test;
+assert(immse(beta, B_test) < 1e-9);
+
+b = ccnl_get_beta(EXPT_test{k}, glmodel, 'M1', mask, subj);
+
+%fixed_eff_glms
+
+%CV_glms
+
 
 %{
 ccnl_fmri_glm(context_expt,191,getGoodSubjects);

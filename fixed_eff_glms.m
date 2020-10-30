@@ -2,7 +2,7 @@
 % SPM concatenation
 % for CV
 
-for model = 194:197
+for model = 1 % 194 %194:197
 
     good = getGoodSubjects();
     EXPT = context_expt();
@@ -33,16 +33,18 @@ for model = 194:197
         legend({'M1', 'M2', 'M3'});
         %}
 
-        regs = {'M1', 'M2', 'M3', 'trial_onset', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'constant'};
+        regs = {'irrelevant', 'modulatory', 'additive', 'M1', 'M2', 'M3', 'trial_onset', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'constant'};
 
         X = zeros(size(SPM.xX.X,1),0);
         name = [];
         for i = 1:length(regs)
             j = contains(SPM.xX.name, regs{i});
-            assert(sum(j) == 9);
+            assert(sum(j) == 9 || sum(j) == 3 || sum(j) == 0);
 
-            name = [name regs(i)];
-            X = [X sum(SPM.xX.X(:,j), 2)];
+            if sum(j) > 0
+                name = [name regs(i)];
+                X = [X sum(SPM.xX.X(:,j), 2)];
+            end 
         end
 
         %{
