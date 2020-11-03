@@ -1,5 +1,5 @@
 
-% CV with beta series GLM residuals
+% CV with beta series GLM
 
 % see CV.m
 
@@ -40,6 +40,12 @@ for m = 1:length(masks)
             Y = ccnl_get_beta_series(context_expt(), glmodel, subj, 'feedback_onset', maskfile);
 
             partition_id = ceil([1:size(Y,1)]/60);
+            run_id = ceil([1:size(Y,1)]/20);
+
+            Z = nan(size(Y));
+            for r = 1:9
+                Z(run_id == r, :) = zscore(Y(run_id == r,:), 0, 1);
+            end
 
             for k = 1:3
                 fprintf('m=%d g=%d s=%d k=%d\n', m, g, s, k);
@@ -48,24 +54,24 @@ for m = 1:length(masks)
                 train = partition_id ~= k;
 
                 X_test = X(test,:);
-                Y_test = Y(test,:);
+                Z_test = Z(test,:);
                 X_train = X(train,:);
-                Y_train = Y(train,:);
+                Z_train = Y(train,:);
 
-                b = (X_train' * X_train)^(-1) * X_train' * Y_train; % OLS; see test_gp.m in VGDL matlab repo
+                b = (X_train' * X_train)^(-1) * X_train' * Z_train; % OLS; see test_gp.m in VGDL matlab repo
 
-                Y_pred = X_test * b;
+                Z_pred = X_test * b;
 
-                mses{m}(s,g,k) = immse(Y_pred, Y_test);
-                r = zeros(1, size(Y_pred,2));
-                for i = 1:size(Y_pred, 2)
-                    r(i) = corr(Y_pred(:,i), Y_test(:,i));
+                mses{m}(s,g,k) = immse(Z_pred, Z_test);
+                r = zeros(1, size(Z_pred,2));
+                for i = 1:size(Z_pred, 2)
+                    r(i) = corr(Z_pred(:,i), Z_test(:,i));
                 end
                 avg_rs{m}(s,g,k) = mean(r);
-                r_avgs{m}(s,g,k) = corr(mean(Y_pred,2), mean(Y_test,2));
+                r_avgs{m}(s,g,k) = corr(mean(Z_pred,2), mean(Z_test,2));
 
             end
-            
+
         end
     end
 
@@ -74,6 +80,6 @@ for m = 1:length(masks)
     r_avg{m} = mean(r_avgs{m}, 3);
 end
 
-save('mat/CV_res.mat', '-v7.3');
+save('mat/CV_res_zscore.mat', '-v7.3');
 
 CV_plot;

@@ -57,4 +57,3 @@ disp(options);
 %
 simulated = simulate_subjects(data, metadata, params, which_structures, which_rows);
 
-
