@@ -7,9 +7,12 @@ EXPT = context_expt();
 r = 10; % mm
 
 masks = isl_create_masks(false, r);
+
+masks = {'masks/IFG_Tri_R.nii'};
+
 %glms = [1 178 179 180 181  187 188 189 190];
-%glms = [1 178 179 180 181];
-glms = [178 179 180 181];
+glms = [1 178 179 180 181];
+%glms = [178 179 180 181];
 %glms = [1 178 191 192 193];
 %glms = [1 178  179 180 181 191 192 193];
 %glms = [1 194:197];

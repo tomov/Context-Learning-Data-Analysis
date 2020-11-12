@@ -5,7 +5,8 @@ function results = forward(N, num_particles, init_fn, choice_fn, update_fn)
         particles(i) = init_fn();
         [w(i) c(i)] = choice_fn(1, particles(i));
     end
-    choices = [choices; mean(c)];
+    liks(1) = mean(w);
+    choices = [choices; mean(c)]; % NOTE this only works for Bernoulli choices!
 
     particles = resample_particles(particles, w);
 
@@ -14,7 +15,8 @@ function results = forward(N, num_particles, init_fn, choice_fn, update_fn)
             particles(i) = update_fn(n-1, particles(i));
             [w(i) c(i)] = choice_fn(n, particles(i));
         end
-        choices = [choices; mean(c)];
+        liks(n) = mean(w);
+        choices = [choices; mean(c)]; % NOTE this only works for Bernoulli choices!
     
         particles = resample_particles(particles, w);
     end
@@ -25,6 +27,7 @@ function results = forward(N, num_particles, init_fn, choice_fn, update_fn)
 
     results.ww_n = particles(1).w;
     results.choices = choices;
+    results.liks = liks;
     results.P_n = mean(cat(1,particles.sample), 1); % for model_test.m
     results.sample = mean(cat(1,particles.sample), 1); 
     results.samples = mean(cat(3, particles.samples), 3);
